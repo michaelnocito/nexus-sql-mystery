@@ -1,11 +1,20 @@
-# SQL Foundations — Season 1 Companion Guide
+# Learn SQL Basics — A Beginner's Guide to SQL with Examples and Exercises
 
-A plain-English reference for everything you learned (or will learn) in
-NEXUS Season 1: **The Audit**. Every concept below was used to investigate
-a real embezzlement scheme inside Nexus Analytics Corp.
+**A free, plain-English SQL reference for beginners.**
+Covers SELECT, WHERE, JOIN, GROUP BY, ORDER BY, SUM, COUNT, and more —
+with real examples, practice exercises, and zero jargon.
+
+> Part of the [NEXUS](https://github.com/michaelnocito/nexus-sql-mystery) project —
+> a free game where you learn SQL by solving a corporate fraud mystery.
+> This guide covers every SQL concept taught in Season 1 and works as a
+> standalone reference even if you don't play the game.
 
 This isn't a textbook. It's the cheat sheet your future self will want
 when you sit down at a job and someone says, "Can you pull that data?"
+
+**What's covered:** SELECT, FROM, WHERE, COUNT, SUM, GROUP BY, ORDER BY,
+JOIN, IN, HAVING, primary keys, foreign keys, aliases, subqueries,
+NULL handling, and the SQL order of operations.
 
 ---
 

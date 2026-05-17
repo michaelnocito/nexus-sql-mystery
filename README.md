@@ -155,6 +155,11 @@ By the end, you'll have used every one of these in a real investigation:
 
 You don't memorize syntax. You use it to catch a thief.
 
+> **📘 Want a standalone reference?** The **[SQL Foundations Guide](docs/sql-foundations.md)**
+> covers every concept above with detailed explanations, syntax examples,
+> a quick reference card, 16 practice exercises, and a full glossary.
+> Works on its own even if you don't play the game.
+
 ---
 
 ## Features
@@ -235,6 +240,8 @@ nexus/
 │   └── celebrations.py             <- toast banners, particles, screen flash
 ├── data/
 │   └── world.db                     <- generated at runtime (auto-seeded)
+├── docs/
+│   └── sql-foundations.md           <- SQL reference guide + practice exercises
 └── README.md                        <- you are here
 ```
 
@@ -251,7 +258,8 @@ every experience level is welcome.
 
 **[Spreadsheet Cleaner](https://github.com/michaelnocito/spreadsheet-cleaner)** —
 A Python learning project where you build a real data-cleaning tool in three layers.
-Pairs well with NEXUS if you're learning both SQL and Python.
+Pairs well with NEXUS if you're learning both SQL and Python. Start with NEXUS for
+SQL, then move to Spreadsheet Cleaner for Python — or the other way around.
 
 **[Test Data & Document Generator](https://github.com/michaelnocito/test-data-doc-generator)** —
 Generate fictional PDFs, Word docs, and Excel datasets for testing and demos.
