@@ -1,3 +1,9 @@
+---
+layout: default
+title: "Learn SQL Basics — A Beginner's Guide to SQL with Examples and Exercises"
+description: "Free SQL tutorial for beginners. Learn SELECT, WHERE, JOIN, GROUP BY, ORDER BY, SUM, COUNT with real examples and practice exercises. Plain English, no jargon."
+---
+
 # Learn SQL Basics — A Beginner's Guide to SQL with Examples and Exercises
 
 **A free, plain-English SQL reference for beginners.**
