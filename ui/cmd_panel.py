@@ -423,11 +423,14 @@ class CmdPanel(QWidget):
             sys.stdout = old_out
 
         out = stdout_cap.getvalue()
+        if result_value is not None:
+            out += repr(result_value) + "\n"
+
         if out:
             self.append_output(out, style="output")
 
-        if result_value is not None:
-            self.append_output(repr(result_value) + "\n", style="output")
+        # Notify game for S2 objective checking (Python validators need code + output)
+        self._game.on_exec(code, out)
 
     def _build_namespace(self):
         import builtins

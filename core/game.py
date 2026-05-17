@@ -264,6 +264,19 @@ class GameState:
         # Check if this unlocks the next scene
         self._check_scene_unlock()
 
+    def on_exec(self, code: str, output: str) -> None:
+        """Called after Python code executes in Season 2."""
+        if self.current_season != 2:
+            return
+        for obj in self._active_objectives():
+            if obj["id"] in self.completed:
+                continue
+            try:
+                if obj["validator"](code, output):
+                    self._complete_objective(obj)
+            except Exception:
+                pass
+
     def on_error(self, msg: str) -> None:
         """Called by DatabaseInterface on SQL errors."""
         self.on_output(f"\n⚠  {msg}\n", style="error")
