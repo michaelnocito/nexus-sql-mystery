@@ -1,15 +1,65 @@
 # NEXUS
 
-**Learn SQL by solving a corporate fraud mystery.**
+### Learn SQL by solving a corporate fraud mystery.
 
-NEXUS is a narrative-driven game that teaches SQL (and eventually Python) through an interactive investigation. You play as Alex Chen, a junior data analyst who discovers a $1.87 million embezzlement scheme on their first day at Nexus Analytics Corp.
+A narrative-driven game by [Michael Nocito](https://github.com/michaelnocito).
 
-No slides. No lectures. You write real SQL queries against a live database to uncover the fraud.
+<!--
+VISUAL PLACEMENT 1 — Hero banner / gameplay screenshot
+Future path: docs/images/hero-banner.png
+Alt text: NEXUS — learn SQL by investigating corporate fraud
+To create: a wide screenshot (~1600x900) showing the game in action —
+scene art on the left, narrative + SQL editor on the right, concept card
+popup visible. Capture during a mid-game moment with clues in the sidebar.
+When ready, replace this comment with:
+![NEXUS — learn SQL by investigating corporate fraud](docs/images/hero-banner.png)
+-->
+
+---
+
+It's your first day at Nexus Analytics Corp. You're a junior data analyst.
+Nobody showed you where the coffee is. Nobody showed you where anything is.
+
+By lunch you'll discover $1.87 million in fraudulent payments. Two shell
+companies. One CFO. Thirteen months of fake invoices charged to a department
+called "Special Projects." And the only tool you have is SQL.
+
+No slides. No lectures. You write real queries against a live database,
+and the story moves forward when you find something. Every `SELECT`,
+every `WHERE`, every `JOIN` — they're not exercises. They're evidence.
+
+Things get weird around 6pm. The office empties out. Your monitor flickers.
+A query you didn't type appears on screen for half a second.
+
+Day one isn't over yet.
+
+---
+
+## See It In Action
+
+<!--
+VISUAL PLACEMENT 2 — Gameplay GIF or screenshot
+Future path: docs/images/gameplay.gif (or .png)
+Alt text: Running a SQL query in NEXUS and discovering a clue
+To create: a 10-15 second GIF of typing a query, seeing results,
+and the celebration toast + concept card popup. Or a clean PNG of
+mid-game state showing narrative, SQL results, and clue sidebar.
+When ready, replace this comment with:
+![Running a SQL query in NEXUS and discovering a clue](docs/images/gameplay.gif)
+-->
+
+You type real SQL. The game runs it against a live SQLite database.
+When your query uncovers something, the story advances — you get a clue,
+a concept card explaining what you just learned, and a nudge toward the
+next piece of the puzzle.
+
+No right/wrong binary. No fill-in-the-blank. You investigate.
+
+---
 
 ## Quick Start
 
 ```bash
-# Clone and run
 git clone https://github.com/michaelnocito/nexus-sql-mystery.git
 cd nexus-sql-mystery
 pip install -r requirements.txt
@@ -18,43 +68,131 @@ python main.py
 
 **Requirements:** Python 3.10+ and PySide6. Windows recommended (uses `winsound` for audio cues).
 
+> The game auto-saves your progress. Type `reset` in the game to start fresh.
+
+---
+
 ## What You'll Learn
 
-**Season 1: "The Audit"** (available now)
-- `SELECT`, `FROM`, `WHERE` — querying tables
-- `COUNT`, `SUM` — aggregate functions
-- `GROUP BY`, `ORDER BY` — sorting and grouping
-- `JOIN` — connecting tables
-- `IN` — matching lists of values
-- Primary keys, foreign keys, and how data links together
+Season 1 teaches SQL fundamentals through 13 guided objectives across 6 scenes.
+By the end, you'll have used every one of these in a real investigation:
 
-Each concept is taught through the investigation. You don't memorize syntax — you use it to catch a thief.
+| Concept | What It Does | When You'll Use It |
+|---|---|---|
+| `SELECT` / `FROM` | Pull data from a table | Reading the employee roster |
+| `WHERE` | Filter rows by condition | Finding unverified vendors |
+| `COUNT` | Count rows | Headcount for Sam in accounting |
+| `SUM` | Add up values | Totalling payments to a ghost company |
+| `GROUP BY` | Bundle rows and aggregate | Ranking vendors by total spend |
+| `ORDER BY` | Sort results | Spotting the escalation pattern |
+| `JOIN` | Connect two tables | Linking vendor names to transaction IDs |
+| `IN` | Match a list of values | Querying both shell companies at once |
+| Primary / foreign keys | How tables relate | Understanding why `vendor_id` matters |
+
+You don't memorize syntax. You use it to catch a thief.
+
+---
 
 ## Features
 
 - **Real SQL execution** — your queries run against a live SQLite database
 - **13 guided objectives** across 6 investigation scenes
 - **Concept cards** — unlock SQL reference cards as you progress
-- **The Analyst's Field Guide** — collectible documents that summarize each chapter
+- **The Analyst's Field Guide** — collectible documents that recap each chapter
 - **SQL autocomplete** — Tab-completion for keywords, tables, and columns
 - **Progressive hints** — story-style nudges that escalate to full solutions
+- **Story So Far** — every concept card shows a running recap of your investigation
+- **Celebrations** — toast banners, particle effects, and career motivation messages
 - **Cliffhanger endings** — each episode ends with a dramatic teaser
+- **Spirit guide** — Sam drops contextual tips when you're stuck
 - **Auto-save** — pick up where you left off
+- **Keyboard shortcuts** — Ctrl+Enter run, Ctrl+H hint, Ctrl+S solution, Ctrl+D copy
+
+---
 
 ## Seasons Roadmap
 
-| Season | Title | Skills | Status |
-|--------|-------|--------|--------|
-| 1 | The Audit | SQL fundamentals | Available |
-| 2 | The Ghost in the Machine | Python basics + SQL | Planned |
-| 3 | The Network | Advanced SQL + pandas | Planned |
-| 4 | The Reveal | Advanced Python + SQL | Planned |
+NEXUS is one game built in seasons — each season adds new skills,
+new story, and a new collectible document. All seasons ship in this repo.
+
+| Season | Title | Skills | Story | Status |
+|--------|-------|--------|-------|--------|
+| 1 | **The Audit** | SQL fundamentals | Corporate fraud, $1.87M embezzlement scheme | **Available now** |
+| 2 | **The Ghost in the Machine** | Python basics + SQL | Supernatural twist — server room anomalies, data that shouldn't exist | Planned |
+| 3 | **The Network** | Advanced SQL + pandas | Cross-company investigation, connected conspiracies | Planned |
+| 4 | **The Reveal** | Advanced Python + SQL | Grand conspiracy, full supernatural reveal | Planned |
+
+Each season launch = a new [GitHub Release](https://github.com/michaelnocito/nexus-sql-mystery/releases).
+
+---
+
+## Who This Is For
+
+- **SQL beginners** who learn best by doing real things, not watching tutorials
+- **Career changers** studying data analytics who want something more engaging than textbook exercises
+- **CS students** looking for a portfolio project that's actually interesting
+- **Teachers and bootcamps** who want a guided, narrative SQL lab
+- **Anyone** who liked detective games growing up and wouldn't mind learning a job skill while playing one
+
+No prior SQL experience needed. You bring the curiosity; the game teaches the rest.
+
+---
 
 ## Tech Stack
 
 - **PySide6** — Qt for Python (LGPL)
 - **SQLite** — both game engine and teaching tool
-- **QPainter** — vector scene illustrations (no image assets)
+- **QPainter** — vector scene illustrations (no image assets needed)
+
+---
+
+## Project Structure
+
+```text
+nexus/
+├── main.py                          <- launch the game
+├── requirements.txt                 <- pip install -r requirements.txt
+├── core/
+│   ├── game.py                      <- game state, objectives, hints, save/load
+│   ├── db.py                        <- SQLite interface + seed data
+│   ├── scenes.py                    <- story text, step guidance, cliffhangers
+│   ├── codex.py                     <- SQL concept definitions
+│   └── collectibles.py             <- Field Guide page content
+├── ui/
+│   ├── main_window.py               <- app shell, wires everything together
+│   ├── cmd_panel.py                 <- narrative output + SQL editor
+│   ├── scene_view.py                <- QPainter scene illustrations + clue sidebar
+│   ├── sql_editor.py                <- autocomplete SQL editor widget
+│   ├── concept_popup.py             <- concept card dialog
+│   ├── hud.py                       <- top bar (scene, progress, feature buttons)
+│   ├── codex_panel.py               <- browsable concept reference
+│   ├── collectibles_panel.py        <- Field Guide document viewer
+│   └── celebrations.py             <- toast banners, particles, screen flash
+├── data/
+│   └── world.db                     <- generated at runtime (auto-seeded)
+└── README.md                        <- you are here
+```
+
+---
+
+## Contributing
+
+Found a bug? Have an idea? Open an issue or send a pull request —
+every experience level is welcome.
+
+---
+
+## More Tools
+
+**[Spreadsheet Cleaner](https://github.com/michaelnocito/spreadsheet-cleaner)** —
+A Python learning project where you build a real data-cleaning tool in three layers.
+Pairs well with NEXUS if you're learning both SQL and Python.
+
+**[Test Data & Document Generator](https://github.com/michaelnocito/test-data-doc-generator)** —
+Generate fictional PDFs, Word docs, and Excel datasets for testing and demos.
+Free Windows app, no Python required.
+
+---
 
 ## License
 
@@ -62,4 +200,16 @@ MIT
 
 ---
 
-*Built with SQL, coffee, and a healthy suspicion of shell companies.*
+If this project helped you learn something, the best thing you can do is
+[star the repo](https://github.com/michaelnocito/nexus-sql-mystery)
+— it helps other learners find it.
+
+If you'd like to support the work, a coffee is always appreciated but never expected.
+
+<a href="https://buymeacoffee.com/michaelnocito" target="_blank">
+  <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="50">
+</a>
+
+---
+
+Built with SQL, coffee, and a healthy suspicion of shell companies. | Maintained by [Michael Nocito](https://github.com/michaelnocito)

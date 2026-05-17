@@ -194,7 +194,8 @@ class CmdPanel(QWidget):
         self._narrative.setObjectName("narrative")
         self._narrative.setReadOnly(True)
         self._narrative.setLineWrapMode(QTextEdit.LineWrapMode.WidgetWidth)
-        self._narrative.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self._narrative.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self._narrative.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
         layout.addWidget(self._narrative, stretch=1)
 
         # ── Focus command box ─────────────────────────────────────────────────
@@ -204,18 +205,9 @@ class CmdPanel(QWidget):
         fl.setContentsMargins(20, 10, 20, 10)
         fl.setSpacing(6)
 
-        # Top row: copy (left) + label + reveal toggle (right)
+        # Top row: label + reveal toggle + copy
         top_row = QHBoxLayout()
         top_row.setSpacing(8)
-
-        # Copy button on the LEFT — easy mouse access
-        self._copy_btn = QPushButton("📋  copy")
-        self._copy_btn.setObjectName("copy_btn")
-        self._copy_btn.setFixedHeight(26)
-        self._copy_btn.clicked.connect(self._copy_focus)
-        self._copy_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self._copy_btn.hide()   # only visible when solution is revealed
-        top_row.addWidget(self._copy_btn)
 
         self._focus_label = QLabel("TRY THIS FIRST:")
         self._focus_label.setObjectName("focus_label")
@@ -223,12 +215,20 @@ class CmdPanel(QWidget):
         top_row.addStretch()
 
         # Reveal toggle — Ctrl+S shortcut
-        self._reveal_btn = QPushButton("show solution  (Ctrl+S)")
+        self._reveal_btn = QPushButton("show solution →")
         self._reveal_btn.setObjectName("reveal_btn")
-        self._reveal_btn.setFixedHeight(26)
+        self._reveal_btn.setFixedHeight(24)
         self._reveal_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self._reveal_btn.clicked.connect(self._toggle_reveal)
         top_row.addWidget(self._reveal_btn)
+
+        self._copy_btn = QPushButton("copy")
+        self._copy_btn.setObjectName("copy_btn")
+        self._copy_btn.setFixedHeight(24)
+        self._copy_btn.clicked.connect(self._copy_focus)
+        self._copy_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._copy_btn.hide()   # only visible when solution is revealed
+        top_row.addWidget(self._copy_btn)
         fl.addLayout(top_row)
 
         # Solution command — hidden until player clicks "show solution"
@@ -260,7 +260,7 @@ class CmdPanel(QWidget):
         bar.addWidget(prompt)
         bar.addStretch()
 
-        shortcuts_label = QLabel("Ctrl+Enter run  ·  Ctrl+H hint  ·  Ctrl+S solution")
+        shortcuts_label = QLabel("Ctrl+Enter run  ·  Ctrl+H hint  ·  Ctrl+S solution  ·  Ctrl+D copy")
         shortcuts_label.setStyleSheet(f"color: {TEXT_DIM}; font-size: 10px; font-style: italic;")
         bar.addWidget(shortcuts_label)
 
@@ -288,6 +288,9 @@ class CmdPanel(QWidget):
         reveal_shortcut = QShortcut(QKeySequence("Ctrl+S"), self)
         reveal_shortcut.activated.connect(self._toggle_reveal)
 
+        copy_shortcut = QShortcut(QKeySequence("Ctrl+D"), self)
+        copy_shortcut.activated.connect(self._copy_focus)
+
         QTimer.singleShot(0, self._editor.setFocus)
 
     # ── Focus ─────────────────────────────────────────────────────────────────
@@ -300,7 +303,7 @@ class CmdPanel(QWidget):
         self._solution_revealed = False
         self._focus_cmd.hide()
         self._copy_btn.hide()
-        self._reveal_btn.setText("show solution  (Ctrl+S)")
+        self._reveal_btn.setText("show solution →")
         self._reveal_btn.show()
 
     def _toggle_reveal(self):
@@ -310,11 +313,11 @@ class CmdPanel(QWidget):
         if self._solution_revealed:
             self._focus_cmd.show()
             self._copy_btn.show()
-            self._reveal_btn.setText("hide solution  (Ctrl+S)")
+            self._reveal_btn.setText("← hide solution")
         else:
             self._focus_cmd.hide()
             self._copy_btn.hide()
-            self._reveal_btn.setText("show solution  (Ctrl+S)")
+            self._reveal_btn.setText("show solution →")
 
     def _copy_focus(self):
         from PySide6.QtWidgets import QApplication
@@ -331,36 +334,28 @@ class CmdPanel(QWidget):
         cursor = self._narrative.textCursor()
         cursor.movePosition(QTextCursor.MoveOperation.End)
 
-        # ── Visual grouping: different block backgrounds per style ────────
+        # ── Spacing: insert a thin separator between different content groups ─
         block_fmt = QTextBlockFormat()
         if style == "scene":
-            # Scene intros: left purple border
-            block_fmt.setLeftMargin(12)
-            block_fmt.setProperty(QTextBlockFormat.Property.BlockLeftMargin, 12)
-        elif style == "input":
-            # Player commands: slight grey bg via left/right margins
-            block_fmt.setLeftMargin(8)
-        elif style == "output":
-            # Query results: code background handled by char format
-            block_fmt.setLeftMargin(16)
-            block_fmt.setRightMargin(16)
-        elif style == "success":
-            # Clue found: green-tinted
-            block_fmt.setLeftMargin(8)
+            block_fmt.setTopMargin(16)
+            block_fmt.setBottomMargin(4)
         elif style == "guidance":
-            # Step guidance: blue-tinted left border effect
-            block_fmt.setLeftMargin(12)
-        elif style == "warning":
-            # Hints: amber left margin
-            block_fmt.setLeftMargin(12)
+            block_fmt.setTopMargin(8)
+            block_fmt.setBottomMargin(4)
+        elif style == "input":
+            block_fmt.setTopMargin(12)
+            block_fmt.setBottomMargin(0)
+        elif style == "output":
+            block_fmt.setBottomMargin(8)
+        elif style == "success":
+            block_fmt.setTopMargin(6)
+            block_fmt.setBottomMargin(6)
 
         cursor.setBlockFormat(block_fmt)
         cursor.insertText(text, fmt)
 
-        # Reset block format for next insertion
-        plain_block = QTextBlockFormat()
-        cursor.setBlockFormat(plain_block)
-
+        # Reset block format
+        cursor.setBlockFormat(QTextBlockFormat())
         self._narrative.setTextCursor(cursor)
         self._narrative.ensureCursorVisible()
 
@@ -468,52 +463,34 @@ class CmdPanel(QWidget):
         """Format hint text, rendering SQL code blocks in monospace with a tinted background."""
         import re as _re
 
-        if is_dialogue:
-            prefix = "\n"
-            style = "guidance"
-        else:
-            prefix = "\n💡  "
-            style = "warning"
+        style = "guidance" if is_dialogue else "warning"
+        prefix = "" if is_dialogue else "💡  "
 
         # Split hint into prose vs code parts
-        # Look for patterns like: db.query("...") or db.tables() or SQL keywords on their own line
         parts = _re.split(r'((?:db\.\w+\([^)]*\))|(?:(?:SELECT|WHERE|GROUP BY|ORDER BY|JOIN|FROM|SUM|COUNT|IN)\b[^\n]*))', hint)
 
-        cursor = self._narrative.textCursor()
-        cursor.movePosition(QTextCursor.MoveOperation.End)
-
-        fmt = STYLES.get(style, STYLES["normal"])
-        code_fmt = STYLES["output"]
-
-        # Insert prefix
-        cursor.insertText(prefix, fmt)
-
-        for i, part in enumerate(parts):
+        prose_parts = []
+        for part in parts:
             part = part.strip()
             if not part:
                 continue
-
-            # Check if this part looks like code
             is_code = (
                 part.startswith("db.") or
                 _re.match(r'^(SELECT|WHERE|GROUP BY|ORDER BY|JOIN|FROM|SUM|COUNT|IN)\b', part, _re.IGNORECASE)
             )
-
             if is_code:
-                # Render as copyable code block
-                block_fmt = QTextBlockFormat()
-                block_fmt.setLeftMargin(20)
-                block_fmt.setRightMargin(20)
-                cursor.setBlockFormat(block_fmt)
-                cursor.insertText(f"\n  {part}\n", code_fmt)
-                # Reset
-                cursor.setBlockFormat(QTextBlockFormat())
+                # Flush any accumulated prose
+                if prose_parts:
+                    self.append_output(prefix + " ".join(prose_parts), style=style)
+                    prose_parts = []
+                    prefix = ""
+                self.append_output(f"  {part}", style="output")
             else:
-                cursor.insertText(part + " ", fmt)
+                prose_parts.append(part)
 
-        cursor.insertText("\n", fmt)
-        self._narrative.setTextCursor(cursor)
-        self._narrative.ensureCursorVisible()
+        # Flush remaining prose
+        if prose_parts:
+            self.append_output(prefix + " ".join(prose_parts), style=style)
 
     def _on_reset(self):
         self.append_output("\n⚠  Are you sure? Type  yes  to start a brand new game.\n", style="warning")

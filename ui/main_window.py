@@ -211,18 +211,70 @@ class MainWindow(QMainWindow):
             self._show_concept_card(concept)
 
     def _show_concept_card(self, concept: dict) -> None:
-        # Build context: previous findings + next objective
-        findings = self._game.clues if self._game.clues else None
-
-        # Find the next incomplete objective's label
-        next_obj = ""
-        for obj in self._game.objectives_for_scene(self._game.scene):
-            if obj["id"] not in self._game.completed:
-                next_obj = obj.get("label", "")
-                break
-
-        self._popup.load_concept(concept, findings=findings, next_objective=next_obj)
+        # Build "Story So Far" — narrative recap of what the player did
+        story = self._build_story_recap()
+        self._popup.load_concept(concept, story_so_far=story)
         self._popup.show_centered(self)
+
+    def _build_story_recap(self) -> str:
+        """Build a plain-English narrative of the investigation so far."""
+        from core.game import OBJECTIVES_BY_ID
+
+        # Map objective IDs → story beats (what happened + what you found)
+        STORY_BEATS = {
+            "list_tables":
+                "You logged into the Nexus database and found 5 tables: "
+                "employees, vendors, transactions, departments, and projects.",
+            "examine_employees":
+                "You pulled the employee roster — 10 people including yourself, Alex Chen.",
+            "count_employees":
+                "You counted 10 employees total. Sam from accounting was impressed.",
+            "find_high_spend_vendors":
+                "You ranked vendors by total spend. Two vendors stood out with "
+                "massive payments — vendor IDs 4 and 7.",
+            "spot_unverified_vendors":
+                "You checked which vendors aren't verified. Two came back: "
+                "Apex Solutions LLC and Pinnacle Strategy Group. No address. No phone.",
+            "join_transactions_vendors":
+                "You linked transactions to vendor names and confirmed — all the "
+                "big unverified payments go to Apex and Pinnacle.",
+            "find_approver":
+                "You checked who approved these payments. One employee ID kept "
+                "showing up on every suspicious transaction: employee #4.",
+            "lookup_employee_4":
+                "You looked up employee #4. Marcus Webb — the CFO.",
+            "check_special_projects_budget":
+                "You checked department budgets. Special Projects has $4.8M — "
+                "way more than any other department. That's where the money hides.",
+            "total_apex_spend":
+                "You totalled all payments to Apex Solutions: over $1.2 million "
+                "to a company with no address.",
+            "escalation_pattern":
+                "You pulled Apex transactions by date. The amounts are escalating — "
+                "$87K → $243K in 9 months. He's getting bolder.",
+            "dual_vendor_fraud":
+                "You queried both shell companies together. Same approver, "
+                "same pattern, thirteen months of payments.",
+            "total_fraud_amount":
+                "You calculated the total: $1,869,500 stolen through two "
+                "shell companies, all approved by the CFO.",
+        }
+
+        completed = self._game.completed
+        if not completed:
+            return ""
+
+        # Build recap from completed objectives in order
+        beats = []
+        for oid in completed:
+            beat = STORY_BEATS.get(oid)
+            if beat:
+                beats.append(f"→ {beat}")
+
+        if not beats:
+            return ""
+
+        return "\n".join(beats)
 
     def _open_codex(self) -> None:
         self._codex.refresh()
@@ -304,10 +356,14 @@ class MainWindow(QMainWindow):
             self._particles.burst("success")
             play_chime()
 
-        # ── Delayed concept popup — fires AFTER result is visible ────────────
+        # ── Delayed concept popup — fires AFTER celebration is visible ───────
         if self._game.pending_popups:
             concept_id = self._game.pending_popups.pop(0)
-            QTimer.singleShot(600, lambda cid=concept_id: self._on_popup(cid))
+            # Dismiss toast before showing popup, then open popup
+            def _show_popup_after_toast(cid=concept_id):
+                self._toast._dismiss()
+                QTimer.singleShot(400, lambda: self._on_popup(cid))
+            QTimer.singleShot(3000, _show_popup_after_toast)
 
     # ── Scene rendering ───────────────────────────────────────────────────────
 

@@ -175,6 +175,8 @@ class ToastBanner(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setFixedWidth(520)
+        # QWidget doesn't paint background by default — enable it
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.hide()
 
         self._opacity = QGraphicsOpacityEffect(self)

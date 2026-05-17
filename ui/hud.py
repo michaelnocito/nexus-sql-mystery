@@ -14,7 +14,7 @@ SCENE_TITLE = "#6639ba"
 class HUDBar(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setFixedHeight(48)
+        self.setFixedHeight(56)
         self.setStyleSheet(f"""
             HUDBar {{
                 background: {BG};
@@ -69,35 +69,69 @@ class HUDBar(QWidget):
         layout.addWidget(self._vsep())
         layout.addSpacing(16)
 
-        # Button style (reusable)
-        btn_qss = f"""
-            QPushButton {{
-                background: transparent;
-                color: {ACCENT};
-                border: 1px solid {ACCENT};
-                border-radius: 5px;
-                padding: 4px 14px;
-                font-size: 13px;
-                font-weight: 600;
-            }}
-            QPushButton:hover {{
-                background: {ACCENT};
-                color: white;
-            }}
+        # ── Feature buttons — big, bold, game-feel ─────────────────────────
+        guide_qss = """
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #fbbf24, stop:1 #f59e0b);
+                color: #78350f;
+                border: 2px solid #d97706;
+                border-bottom: 3px solid #b45309;
+                border-radius: 8px;
+                padding: 6px 18px;
+                font-size: 14px;
+                font-weight: 700;
+                min-width: 120px;
+            }
+            QPushButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #fcd34d, stop:1 #fbbf24);
+                border-color: #f59e0b;
+            }
+            QPushButton:pressed {
+                background: #d97706;
+                border-bottom: 2px solid #b45309;
+                padding-top: 7px;
+            }
+        """
+
+        codex_qss = """
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #60a5fa, stop:1 #3b82f6);
+                color: #ffffff;
+                border: 2px solid #2563eb;
+                border-bottom: 3px solid #1d4ed8;
+                border-radius: 8px;
+                padding: 6px 18px;
+                font-size: 14px;
+                font-weight: 700;
+                min-width: 100px;
+            }
+            QPushButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #93c5fd, stop:1 #60a5fa);
+                border-color: #3b82f6;
+            }
+            QPushButton:pressed {
+                background: #2563eb;
+                border-bottom: 2px solid #1d4ed8;
+                padding-top: 7px;
+            }
         """
 
         # Field Guide button
         self.docs_btn = QPushButton("📄  Field Guide")
         self.docs_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.docs_btn.setStyleSheet(btn_qss)
+        self.docs_btn.setStyleSheet(guide_qss)
         layout.addWidget(self.docs_btn)
 
-        layout.addSpacing(8)
+        layout.addSpacing(10)
 
         # Codex button
         self.codex_btn = QPushButton("📖  Codex")
         self.codex_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.codex_btn.setStyleSheet(btn_qss)
+        self.codex_btn.setStyleSheet(codex_qss)
         layout.addWidget(self.codex_btn)
 
     def set_scene(self, title):

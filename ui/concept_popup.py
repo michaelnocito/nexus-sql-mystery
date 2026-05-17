@@ -127,34 +127,52 @@ class ConceptPopup(QDialog):
         esc = QShortcut(QKeySequence("Escape"), self)
         esc.activated.connect(self.accept)
 
+        # Enter/Return also dismisses
+        enter = QShortcut(QKeySequence("Return"), self)
+        enter.activated.connect(self.accept)
+
     def _build_ui(self):
         outer = QVBoxLayout(self)
         outer.setContentsMargins(0, 0, 0, 0)
 
-        # Scrollable container for tall content
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        scroll.setStyleSheet(f"""
-            QScrollArea {{
+        # Card frame (gives us rounded corners with border)
+        card = QFrame()
+        card.setObjectName("card")
+        card.setStyleSheet(f"""
+            QFrame#card {{
                 background: {PANEL_BG};
                 border: 1px solid {BORDER};
                 border-radius: 10px;
             }}
         """)
-        outer.addWidget(scroll)
+        outer.addWidget(card)
 
-        card = QWidget()
-        card.setStyleSheet(f"background: {PANEL_BG};")
-        scroll.setWidget(card)
+        # Use a scroll area INSIDE the card so tall content scrolls
+        card_outer = QVBoxLayout(card)
+        card_outer.setContentsMargins(0, 0, 0, 0)
 
-        layout = QVBoxLayout(card)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setStyleSheet(f"""
+            QScrollArea {{ background: {PANEL_BG}; border: none; }}
+            QScrollBar:vertical {{ width: 6px; background: {PANEL_BG}; }}
+            QScrollBar::handle:vertical {{ background: {BORDER}; border-radius: 3px; min-height: 20px; }}
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{ height: 0; }}
+        """)
+        card_outer.addWidget(scroll)
+
+        inner = QWidget()
+        inner.setStyleSheet(f"background: {PANEL_BG};")
+        scroll.setWidget(inner)
+
+        layout = QVBoxLayout(inner)
         layout.setContentsMargins(28, 24, 28, 24)
         layout.setSpacing(14)
 
         # ── Header row: chip + close X ───────────────────────────────────────
         header_row = QHBoxLayout()
-        self._header = QLabel("PROGRESS REPORT")
+        self._header = QLabel("CONCEPT UNLOCKED")
         self._header.setObjectName("header")
         header_row.addWidget(self._header)
         header_row.addStretch()
@@ -180,41 +198,52 @@ class ConceptPopup(QDialog):
         header_row.addWidget(close_x)
         layout.addLayout(header_row)
 
-        # ── Previous Findings (recap) ────────────────────────────────────────
-        self._findings_label = self._section("📋  PREVIOUS FINDINGS")
-        layout.addWidget(self._findings_label)
-
-        self._findings_box = QFrame()
-        self._findings_box.setStyleSheet(f"""
+        # ── STORY SO FAR — bright, unmissable recap ─────────────────────────
+        self._story_box = QFrame()
+        self._story_box.setStyleSheet(f"""
             QFrame {{
-                background: #f0f6fc;
-                border: 1px solid {BORDER};
-                border-radius: 6px;
-                padding: 0;
+                background: #eff6ff;
+                border: 2px solid #3b82f6;
+                border-radius: 8px;
             }}
         """)
-        findings_layout = QVBoxLayout(self._findings_box)
-        findings_layout.setContentsMargins(12, 8, 12, 8)
-        findings_layout.setSpacing(4)
-        self._findings_text = QLabel()
-        self._findings_text.setObjectName("body_text")
-        self._findings_text.setWordWrap(True)
-        self._findings_text.setStyleSheet(f"color: {TEXT_MAIN}; font-size: 12px; border: none; background: transparent;")
-        findings_layout.addWidget(self._findings_text)
-        layout.addWidget(self._findings_box)
+        story_layout = QVBoxLayout(self._story_box)
+        story_layout.setContentsMargins(14, 10, 14, 10)
+        story_layout.setSpacing(6)
 
-        # ── What You Just Learned (current objective) ────────────────────────
-        self._current_label = self._section("🔍  WHAT YOU JUST DISCOVERED")
-        layout.addWidget(self._current_label)
+        story_header = QLabel("📖  STORY SO FAR")
+        story_header.setStyleSheet(f"""
+            color: #1d4ed8;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            background: transparent;
+            border: none;
+        """)
+        story_layout.addWidget(story_header)
 
-        # Divider
-        layout.addWidget(self._make_hsep())
+        self._story_text = QLabel()
+        self._story_text.setWordWrap(True)
+        self._story_text.setStyleSheet(f"""
+            color: {TEXT_MAIN};
+            font-size: 13px;
+            line-height: 1.4;
+            background: transparent;
+            border: none;
+        """)
+        story_layout.addWidget(self._story_text)
+
+        self._story_box.hide()  # hidden until populated
+        layout.addWidget(self._story_box)
 
         # ── Title ────────────────────────────────────────────────────────────
         self._title = QLabel()
         self._title.setObjectName("title")
         self._title.setWordWrap(True)
         layout.addWidget(self._title)
+
+        # Divider
+        layout.addWidget(self._make_hsep())
 
         # ── WHAT ─────────────────────────────────────────────────────────────
         self._what_label = self._section("WHAT IS IT?")
@@ -265,16 +294,6 @@ class ConceptPopup(QDialog):
         self._gotcha.setWordWrap(True)
         layout.addWidget(self._gotcha)
 
-        # ── Next Objective ───────────────────────────────────────────────────
-        layout.addWidget(self._make_hsep())
-        self._next_label = self._section("📍  YOUR NEXT MOVE")
-        layout.addWidget(self._next_label)
-        self._next_text = QLabel()
-        self._next_text.setObjectName("body_text")
-        self._next_text.setWordWrap(True)
-        self._next_text.setStyleSheet(f"color: {ACCENT}; font-size: 13px; font-weight: 600;")
-        layout.addWidget(self._next_text)
-
         layout.addSpacing(6)
 
         # ── Dismiss button ───────────────────────────────────────────────────
@@ -287,44 +306,24 @@ class ConceptPopup(QDialog):
         btn_row.addWidget(self._btn)
         layout.addLayout(btn_row)
 
-    def load_concept(self, concept: dict, findings: list[str] = None,
-                     next_objective: str = "") -> None:
-        """Populate the card with concept + investigation context."""
+    def load_concept(self, concept: dict, **kwargs) -> None:
+        """Populate the card with a concept from core/codex.py.
+        Optional kwargs: story_so_far (str) — narrative recap shown at top.
+        """
+        # Story recap — bright blue box at the top
+        story = kwargs.get("story_so_far", "")
+        if story:
+            self._story_text.setText(story)
+            self._story_box.show()
+        else:
+            self._story_box.hide()
+
         self._title.setText(concept.get("title", ""))
         self._what.setText(concept.get("what", ""))
         self._why.setText(concept.get("why", ""))
         self._syntax.setText(concept.get("syntax", ""))
         self._analogy.setText(concept.get("analogy", ""))
         self._gotcha.setText(concept.get("gotcha", ""))
-
-        # Previous findings recap
-        if findings:
-            # Show last 5 findings max, with checkmarks
-            recent = findings[-5:]
-            findings_html = ""
-            for f in recent:
-                clean = f
-                if f.startswith("[CLUE"):
-                    parts = f.split("]", 1)
-                    if len(parts) == 2:
-                        clean = parts[1].strip()
-                findings_html += f"✓  {clean}\n"
-            self._findings_text.setText(findings_html.strip())
-            self._findings_box.show()
-            self._findings_label.show()
-        else:
-            self._findings_box.hide()
-            self._findings_label.hide()
-
-        # Next objective
-        if next_objective:
-            self._next_text.setText(next_objective)
-            self._next_text.show()
-            self._next_label.show()
-        else:
-            self._next_text.hide()
-            self._next_label.hide()
-
         self.adjustSize()
 
     def show_centered(self, parent: "QWidget") -> None:
