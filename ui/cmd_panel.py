@@ -204,29 +204,31 @@ class CmdPanel(QWidget):
         fl.setContentsMargins(20, 10, 20, 10)
         fl.setSpacing(6)
 
-        # Top row: label + reveal toggle + copy
+        # Top row: copy (left) + label + reveal toggle (right)
         top_row = QHBoxLayout()
         top_row.setSpacing(8)
+
+        # Copy button on the LEFT — easy mouse access
+        self._copy_btn = QPushButton("📋  copy")
+        self._copy_btn.setObjectName("copy_btn")
+        self._copy_btn.setFixedHeight(26)
+        self._copy_btn.clicked.connect(self._copy_focus)
+        self._copy_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._copy_btn.hide()   # only visible when solution is revealed
+        top_row.addWidget(self._copy_btn)
 
         self._focus_label = QLabel("TRY THIS FIRST:")
         self._focus_label.setObjectName("focus_label")
         top_row.addWidget(self._focus_label)
         top_row.addStretch()
 
-        self._reveal_btn = QPushButton("show solution →")
+        # Reveal toggle — Ctrl+S shortcut
+        self._reveal_btn = QPushButton("show solution  (Ctrl+S)")
         self._reveal_btn.setObjectName("reveal_btn")
-        self._reveal_btn.setFixedHeight(24)
+        self._reveal_btn.setFixedHeight(26)
         self._reveal_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self._reveal_btn.clicked.connect(self._toggle_reveal)
         top_row.addWidget(self._reveal_btn)
-
-        self._copy_btn = QPushButton("copy")
-        self._copy_btn.setObjectName("copy_btn")
-        self._copy_btn.setFixedHeight(24)
-        self._copy_btn.clicked.connect(self._copy_focus)
-        self._copy_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self._copy_btn.hide()   # only visible when solution is revealed
-        top_row.addWidget(self._copy_btn)
         fl.addLayout(top_row)
 
         # Solution command — hidden until player clicks "show solution"
@@ -248,7 +250,7 @@ class CmdPanel(QWidget):
         input_layout.setContentsMargins(0, 0, 0, 0)
         input_layout.setSpacing(0)
 
-        # Top bar: prompt label + hint button
+        # Top bar: prompt label + shortcut hints + hint button
         bar = QHBoxLayout()
         bar.setContentsMargins(12, 6, 12, 2)
         bar.setSpacing(8)
@@ -258,11 +260,11 @@ class CmdPanel(QWidget):
         bar.addWidget(prompt)
         bar.addStretch()
 
-        run_label = QLabel("Ctrl+Enter to run")
-        run_label.setStyleSheet(f"color: {TEXT_DIM}; font-size: 11px; font-style: italic;")
-        bar.addWidget(run_label)
+        shortcuts_label = QLabel("Ctrl+Enter run  ·  Ctrl+H hint  ·  Ctrl+S solution")
+        shortcuts_label.setStyleSheet(f"color: {TEXT_DIM}; font-size: 10px; font-style: italic;")
+        bar.addWidget(shortcuts_label)
 
-        self._hint_btn = QPushButton("hint")
+        self._hint_btn = QPushButton("💡 hint  (Ctrl+H)")
         self._hint_btn.setObjectName("hint_btn")
         self._hint_btn.clicked.connect(self._on_hint)
         self._hint_btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -278,6 +280,14 @@ class CmdPanel(QWidget):
 
         layout.addWidget(input_frame)
 
+        # ── Keyboard shortcuts ───────────────────────────────────────────────
+        from PySide6.QtGui import QShortcut, QKeySequence
+        hint_shortcut = QShortcut(QKeySequence("Ctrl+H"), self)
+        hint_shortcut.activated.connect(self._on_hint)
+
+        reveal_shortcut = QShortcut(QKeySequence("Ctrl+S"), self)
+        reveal_shortcut.activated.connect(self._toggle_reveal)
+
         QTimer.singleShot(0, self._editor.setFocus)
 
     # ── Focus ─────────────────────────────────────────────────────────────────
@@ -290,19 +300,21 @@ class CmdPanel(QWidget):
         self._solution_revealed = False
         self._focus_cmd.hide()
         self._copy_btn.hide()
-        self._reveal_btn.setText("show solution →")
+        self._reveal_btn.setText("show solution  (Ctrl+S)")
         self._reveal_btn.show()
 
     def _toggle_reveal(self):
+        if not self._focus_frame.isVisible():
+            return
         self._solution_revealed = not self._solution_revealed
         if self._solution_revealed:
             self._focus_cmd.show()
             self._copy_btn.show()
-            self._reveal_btn.setText("← hide solution")
+            self._reveal_btn.setText("hide solution  (Ctrl+S)")
         else:
             self._focus_cmd.hide()
             self._copy_btn.hide()
-            self._reveal_btn.setText("show solution →")
+            self._reveal_btn.setText("show solution  (Ctrl+S)")
 
     def _copy_focus(self):
         from PySide6.QtWidgets import QApplication
