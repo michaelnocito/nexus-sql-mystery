@@ -15,7 +15,7 @@ from ui.cmd_panel import CmdPanel
 from ui.concept_popup import ConceptPopup
 from ui.codex_panel import CodexPanel
 from ui.collectibles_panel import CollectiblesPanel
-from ui.celebrations import ToastBanner, ScreenFlash, play_chime, play_victory_chime
+from ui.celebrations import ToastBanner, ScreenFlash, ParticleOverlay, play_chime, play_victory_chime
 
 from core.db import DatabaseInterface
 from core.game import GameState
@@ -173,6 +173,7 @@ class MainWindow(QMainWindow):
         # ── Celebration overlays ──────────────────────────────────────────────
         self._toast = ToastBanner(central)
         self._flash = ScreenFlash(central)
+        self._particles = ParticleOverlay(central)
 
         # ── Codex browser ────────────────────────────────────────────────────
         self._codex = CodexPanel(
@@ -210,7 +211,17 @@ class MainWindow(QMainWindow):
             self._show_concept_card(concept)
 
     def _show_concept_card(self, concept: dict) -> None:
-        self._popup.load_concept(concept)
+        # Build context: previous findings + next objective
+        findings = self._game.clues if self._game.clues else None
+
+        # Find the next incomplete objective's label
+        next_obj = ""
+        for obj in self._game.objectives_for_scene(self._game.scene):
+            if obj["id"] not in self._game.completed:
+                next_obj = obj.get("label", "")
+                break
+
+        self._popup.load_concept(concept, findings=findings, next_objective=next_obj)
         self._popup.show_centered(self)
 
     def _open_codex(self) -> None:
@@ -267,27 +278,30 @@ class MainWindow(QMainWindow):
         # Green screen flash on every objective
         self._flash.flash("#16a34a", peak_alpha=35, duration=450)
 
-        # Toast banner
+        # Toast banner + particles
         if pct == 100:
-            # Final objective — big gold celebration
+            # Final objective — massive celebration
             self._toast.show_toast(
                 "🏆  CASE CLOSED  🏆\nYou uncovered $1,869,500 in fraud.",
-                style="gold", duration=5000
+                style="final", duration=15000,
             )
+            self._particles.burst("final")
             play_victory_chime()
         elif done % 3 == 0:
-            # Every 3rd clue — milestone toast
+            # Every 3rd clue — milestone toast + particle burst
             self._toast.show_toast(
                 f"🔥  {done} clues found — keep digging!",
-                style="gold", duration=2500
+                style="gold", duration=10000,
             )
+            self._particles.burst("gold")
             play_chime()
         else:
-            # Regular objective
+            # Regular objective — center-screen with career messaging
             self._toast.show_toast(
                 f"✔  {label}",
-                style="success", duration=2200
+                style="success", duration=10000,
             )
+            self._particles.burst("success")
             play_chime()
 
         # ── Delayed concept popup — fires AFTER result is visible ────────────

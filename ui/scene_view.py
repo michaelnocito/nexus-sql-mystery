@@ -606,54 +606,98 @@ class SceneView(QWidget):
     # ── Clue sidebar ────────────────────────────────────────────────────────
 
     def _draw_clue_sidebar(self, p: QPainter, w: int, h: int, top_y: int, clue_h: int):
-        """Draw a sticky-note style clue list in the bottom of the scene panel."""
-        # Background — warm parchment color
-        bg_color = QColor("#1e2d4a")
-        p.fillRect(0, top_y, w, clue_h, bg_color)
+        """Draw a prominent checklist-style clue tracker in the bottom of the scene panel."""
+        # Background — slightly lighter panel, distinct from scene art
+        bg_grad = QLinearGradient(0, top_y, 0, h)
+        bg_grad.setColorAt(0, QColor("#1e2d4a"))
+        bg_grad.setColorAt(1, QColor("#162236"))
+        p.fillRect(0, top_y, w, clue_h, bg_grad)
 
-        # Top border accent line
-        p.setPen(QPen(QColor("#79b8ff"), 2))
+        # Top accent line — bright, eye-catching
+        p.setPen(QPen(QColor("#56d364"), 3))
         p.drawLine(0, top_y, w, top_y)
 
-        # Header
-        p.setFont(QFont("Segoe UI", 12, QFont.Weight.Bold))
+        # Header — large and prominent
+        p.setFont(QFont("Segoe UI", 14, QFont.Weight.Bold))
         p.setPen(QPen(QColor("#e3b97a")))
-        header_y = top_y + 24
-        p.drawText(14, header_y, f"📋  CLUE LOG  ({len(self._clues)})")
+        header_y = top_y + 28
+        p.drawText(14, header_y, f"INVESTIGATION LOG")
 
-        # Clue entries — styled like sticky notes
+        # Progress bar
+        total_objectives = 13
+        done = len(self._clues)
+        bar_x = 14
+        bar_y = header_y + 10
+        bar_w = w - 28
+        bar_h = 6
+
+        # Bar background
+        p.setBrush(QBrush(QColor("#2d4268")))
+        p.setPen(Qt.PenStyle.NoPen)
+        p.drawRoundedRect(bar_x, bar_y, bar_w, bar_h, 3, 3)
+
+        # Bar fill
+        fill_w = int(bar_w * min(done / total_objectives, 1.0))
+        if fill_w > 0:
+            fill_grad = QLinearGradient(bar_x, 0, bar_x + fill_w, 0)
+            fill_grad.setColorAt(0, QColor("#22c55e"))
+            fill_grad.setColorAt(1, QColor("#16a34a"))
+            p.setBrush(QBrush(fill_grad))
+            p.drawRoundedRect(bar_x, bar_y, fill_w, bar_h, 3, 3)
+
+        # Progress text
         p.setFont(QFont("Segoe UI", 10))
-        entry_y = header_y + 20
-        max_visible = (clue_h - 50) // 22
+        p.setPen(QPen(QColor("#768ea8")))
+        p.drawText(bar_x, bar_y + 20, f"{done} of {total_objectives} clues found")
 
-        # Show most recent clues first (reversed), up to max_visible
+        # Clue entries — checklist style with checkmarks
+        entry_y = bar_y + 38
+        row_h = 26
+        max_visible = (h - entry_y - 8) // row_h
+
+        # Show all clues, most recent first
         visible_clues = self._clues[-max_visible:] if len(self._clues) > max_visible else self._clues
 
         for i, clue in enumerate(visible_clues):
-            if entry_y + 18 > h - 4:
+            if entry_y + row_h > h - 4:
                 break
 
-            # Strip the "[CLUE #N]" prefix for display
+            # Strip the "[CLUE #N]" prefix for clean display
             display = clue
             if clue.startswith("[CLUE"):
                 parts = clue.split("]", 1)
                 if len(parts) == 2:
-                    num = parts[0].replace("[CLUE #", "").strip()
-                    display = f"#{num}  {parts[1].strip()}"
+                    display = parts[1].strip()
 
-            # Alternate subtle background for readability
+            # Alternate row backgrounds
             if i % 2 == 0:
-                p.fillRect(8, entry_y - 12, w - 16, 20, QColor(255, 255, 255, 8))
+                p.fillRect(6, entry_y - 4, w - 12, row_h - 2, QColor(255, 255, 255, 6))
 
-            p.setPen(QPen(QColor("#56d364") if i == len(visible_clues) - 1 else QColor("#cdd9e5")))
-            p.drawText(18, entry_y, display)
-            entry_y += 22
+            # Checkmark icon
+            is_latest = (i == len(visible_clues) - 1)
+            check_color = QColor("#56d364") if is_latest else QColor("#4ade80")
+            p.setFont(QFont("Segoe UI", 12))
+            p.setPen(QPen(check_color))
+            p.drawText(12, entry_y + 14, "✓")
 
-        # If there are hidden clues, show a "..." indicator
+            # Clue text
+            text_color = QColor("#e6edf3") if is_latest else QColor("#cdd9e5")
+            p.setFont(QFont("Segoe UI", 11, QFont.Weight.Bold if is_latest else QFont.Weight.Normal))
+            p.setPen(QPen(text_color))
+
+            # Truncate if too wide
+            metrics = p.fontMetrics()
+            available_w = w - 44
+            display_text = metrics.elidedText(display, Qt.TextElideMode.ElideRight, available_w)
+            p.drawText(32, entry_y + 14, display_text)
+
+            entry_y += row_h
+
+        # If there are hidden clues, show count
         if len(self._clues) > max_visible:
             p.setPen(QPen(QColor("#768ea8")))
             p.setFont(QFont("Segoe UI", 9, QFont.Weight.Normal, True))
-            p.drawText(18, entry_y, f"… and {len(self._clues) - max_visible} earlier clue(s)")
+            p.drawText(32, entry_y + 12, f"+ {len(self._clues) - max_visible} earlier")
 
     # ── Utility ───────────────────────────────────────────────────────────────
 
