@@ -33,22 +33,25 @@ SCENES = {
         "title":       "Your Desk — Analytics Department",
         "art_key":     "desk",
         "intro": (
-            "Day one at Nexus Analytics Corp.\n\n"
-            "Your monitor glows. There's a sticky note on your keyboard\n"
-            "from Diana Reeves, Senior Analyst:\n\n"
+            "First day at Nexus Analytics Corp. Nobody told you where the\n"
+            "good coffee is. Nobody told you where anything is, actually.\n\n"
+            "Your monitor blinks awake. There's a sticky note on your keyboard,\n"
+            "handwriting that somehow manages to be both neat and threatening:\n\n"
             "  'Welcome aboard, Alex. Get familiar with the database\n"
-            "   before the 9am standup. — D.R.'\n\n"
-            "She left you a tool called  db  that connects to the\n"
-            "company database. Time to see what's in it."
+            "   before the 9am standup. Don't be late. — Diana Reeves'\n\n"
+            "Diana left you a tool called  db  that connects to the\n"
+            "company database. Seems straightforward enough.\n\n"
+            "Famous last words."
         ),
         "focus_label": "Try this first:",
         "focus":       'db.tables()',
         "objectives":  ["list_tables", "examine_employees", "count_employees"],
         "ambient": [
-            "The office is mostly empty. It's 7:43am.",
-            "Somewhere down the hall a coffee machine gurgles.",
-            "Your phone shows 3 unread Slack messages. You ignore them.",
-            "The Analytics floor smells like dry-erase markers.",
+            "The office is mostly empty. It's 7:43am. Only psychopaths are here this early.",
+            "Somewhere down the hall, a coffee machine makes a sound like a cat in distress.",
+            "Your phone shows 3 unread Slack messages. All from 'Fun Committee.' You ignore them.",
+            "The Analytics floor smells like dry-erase markers and ambition.",
+            "Someone left a half-eaten donut on the printer. Corporate America.",
         ],
         "exits": {SCENE_DB_TERMINAL: "server_room"},
     },
@@ -58,21 +61,25 @@ SCENES = {
         "title":       "Server Room — Basement Level B1",
         "art_key":     "server_room",
         "intro": (
-            "The elevator opens onto a grey corridor.\n"
-            "A laminated sign: B1 — Authorized Personnel Only.\n\n"
-            "Diana badge-swiped you in earlier this week.\n"
-            "'The real data is down here,' she said. 'Don't touch the red switches.'\n\n"
-            "The transaction log is enormous. Every payment the company has ever made.\n"
-            "Something feels off. Start by figuring out which vendors get the most money."
+            "The elevator descends to B1. The doors open onto a grey corridor\n"
+            "lit by the kind of fluorescent lights that make everyone look guilty.\n\n"
+            "A laminated sign: AUTHORIZED PERSONNEL ONLY.\n"
+            "(Diana badge-swiped you in. 'The real data is down here,' she said.\n"
+            "'Don't touch the red switches. I mean it, Alex.')\n\n"
+            "The transaction log is massive. Every payment Nexus has ever made.\n"
+            "You start scrolling and something catches your eye — certain vendors\n"
+            "are getting a LOT of money.\n\n"
+            "That weird feeling in your stomach? That's called instinct. Follow it."
         ),
         "focus_label": "Investigate vendor spend:",
         "focus":       'db.query("SELECT vendor_id, SUM(amount) as total\\n  FROM transactions\\n  GROUP BY vendor_id\\n  ORDER BY total DESC")',
         "objectives":  ["find_high_spend_vendors", "spot_unverified_vendors", "join_transactions_vendors"],
         "ambient": [
             "The server racks hum at a frequency you can feel in your molars.",
-            "A blinking red LED on rack 3. You decide not to ask.",
-            "The temperature in here is exactly 68°F. Always.",
-            "Your query results scroll past. Numbers don't lie.",
+            "A blinking red LED on rack 3. Don't touch the red switches. DON'T.",
+            "The temperature is exactly 68°F. It has been 68°F since 2019. Always.",
+            "Your query results scroll past. Numbers don't lie. People do.",
+            "You swear one of the server fans just coughed.",
         ],
         "exits": {SCENE_HR_FILES: "hr_office"},
     },
@@ -82,21 +89,25 @@ SCENES = {
         "title":       "HR Office — 2nd Floor",
         "art_key":     "hr_office",
         "intro": (
-            "Vanessa Cole's office is empty. Her monitor shows an out-of-office screensaver.\n\n"
+            "Vanessa Cole's office. Her monitor shows a screensaver of kittens.\n"
+            "She's at lunch. She's always at lunch from 11:30 to 1:15. Like clockwork.\n\n"
             "The filing cabinet is labeled PERSONNEL — CONFIDENTIAL.\n"
-            "You're not supposed to be in here. But you found two vendors with no address\n"
-            "and no verification, pulling in hundreds of thousands of dollars.\n\n"
-            "Every transaction has an approved_by column. Someone signed off on this.\n"
-            "Find out who."
+            "(You tell yourself you'll just take a quick look.)\n\n"
+            "Here's what's bugging you: you found two vendors with no address,\n"
+            "no verification, pulling in hundreds of thousands of dollars.\n"
+            "Somebody approved those payments. Every single one.\n\n"
+            "The approved_by column has an employee ID.\n"
+            "Time to put a name to a number."
         ),
         "focus_label": "Find the approver:",
         "focus":       'db.query("SELECT approved_by, COUNT(*) as approvals\\n  FROM transactions\\n  GROUP BY approved_by\\n  ORDER BY approvals DESC")',
         "objectives":  ["find_approver", "lookup_employee_4", "check_special_projects_budget"],
         "ambient": [
-            "The filing cabinet drawer slides open with a metallic shink.",
-            "Org charts. Performance reviews. Salary bands. The usual.",
-            "A framed poster: 'PEOPLE ARE OUR GREATEST ASSET.' You almost laugh.",
-            "You keep one ear on the hallway.",
+            "The filing cabinet drawer slides open with a metallic shink. You flinch.",
+            "Org charts. Performance reviews. Someone got a 2% raise. Thrilling.",
+            "A framed poster: 'PEOPLE ARE OUR GREATEST ASSET.' Sure, Vanessa.",
+            "You keep one ear on the hallway. If anyone asks, you're looking for a stapler.",
+            "There's a motivational calendar on the wall. Today's quote: 'Trust the process.'",
         ],
         "exits": {SCENE_CFO_DEPT: "cfo_office"},
     },
@@ -106,21 +117,25 @@ SCENES = {
         "title":       "CFO's Office — Executive Floor",
         "art_key":     "cfo_office",
         "intro": (
-            "Corner office. Floor-to-ceiling windows. A view of downtown.\n\n"
-            "Marcus Webb's desktop is open to a budget dashboard.\n"
-            "His wastebasket has a crumpled printout — Apex Solutions LLC invoice.\n"
-            "$243,000. Dated last December.\n\n"
-            "You need hard numbers. Pull the total spend to Apex (vendor_id = 4)\n"
-            "and then look at how the amounts have changed over time."
+            "Corner office. Floor-to-ceiling windows. Downtown Austin in the distance.\n"
+            "This is where the money lives.\n\n"
+            "Marcus Webb's desktop is open — he left a budget dashboard running.\n"
+            "Rookie move, Marcus.\n\n"
+            "But it's the wastebasket that gets you. A crumpled printout:\n"
+            "Apex Solutions LLC. $243,000. Dated last December.\n"
+            "He didn't even shred it.\n\n"
+            "You need hard numbers. Total spend to Apex. The pattern over time.\n"
+            "Your hands are shaking slightly. You tell yourself it's the coffee."
         ),
         "focus_label": "Quantify the damage:",
         "focus":       'db.query("SELECT SUM(amount) as total_paid\\n  FROM transactions\\n  WHERE vendor_id = 4")',
         "objectives":  ["total_apex_spend", "escalation_pattern"],
         "ambient": [
             "A Bloomberg terminal scrolls market data nobody's reading.",
-            "Family photo on the desk. Two kids. A golden retriever.",
-            "His screensaver kicks in. A Nexus logo bounces corner to corner.",
-            "You hear the elevator ping. You hold your breath. It passes.",
+            "Family photo on the desk. Two kids. A golden retriever named 'Buddy.' Nice.",
+            "His screensaver kicks in. A Nexus logo bouncing corner to corner. Hypnotic.",
+            "You hear the elevator ping. You hold your breath. It passes. Exhale.",
+            "A 'World's Best Boss' mug. The irony could power a small city.",
         ],
         "exits": {SCENE_AUDIT_TRAIL: "your_desk"},
     },
@@ -130,21 +145,26 @@ SCENES = {
         "title":       "Your Desk — Building the Case",
         "art_key":     "desk_night",
         "intro": (
-            "It's 6:47pm. The Analytics floor is empty.\n\n"
-            "You've been at this for hours. Two vendor IDs — 4 and 7.\n"
-            "Apex Solutions LLC and Pinnacle Strategy.\n"
-            "Both unverified. Both without a real address. Both approved by the CFO.\n\n"
-            "Now you build the complete picture. Pull all transactions for both vendors.\n"
-            "Calculate the total. This is what goes in the report."
+            "6:47pm. Everyone's gone home.\n\n"
+            "The cleaning crew won't reach this floor for another hour.\n"
+            "It's just you, your monitor, and a coffee that stopped being\n"
+            "drinkable around 3pm.\n\n"
+            "You've got the pieces. Two vendor IDs — 4 and 7.\n"
+            "Apex Solutions LLC. Pinnacle Strategy.\n"
+            "Both unverified. Both ghosts. Both signed off by the CFO.\n\n"
+            "Now you build the case. Pull everything for both vendors.\n"
+            "Calculate the total. This is the number that goes in the report.\n\n"
+            "No more gut feelings. Just data."
         ),
         "focus_label": "Complete the audit:",
         "focus":       'db.query("SELECT vendor_id, SUM(amount) as total\\n  FROM transactions\\n  WHERE vendor_id IN (4, 7)\\n  GROUP BY vendor_id")',
         "objectives":  ["dual_vendor_fraud", "total_fraud_amount"],
         "ambient": [
-            "The cleaning crew vacuums somewhere two floors up.",
-            "Your cold coffee tastes like regret.",
-            "Outside the window: Austin at night. Office towers and traffic.",
-            "You've run 30+ queries today. You know what you found.",
+            "The cleaning crew vacuums somewhere two floors up. At least someone's working.",
+            "Your cold coffee tastes like regret and poor life choices.",
+            "Outside: Austin at night. Office towers glowing. People going home to dinner.",
+            "You've run 30+ queries today. Your keyboard has feelings about this.",
+            "The office plant by the window is dead. Has been for months. Nobody noticed.",
         ],
         "exits": {SCENE_CONFRONTATION: "coo_office"},
     },
@@ -154,26 +174,32 @@ SCENES = {
         "title":       "COO's Office — The Reckoning",
         "art_key":     "coo_office",
         "intro": (
-            "Rachel Kim's office is smaller than Marcus's. Intentionally, you suspect.\n\n"
-            "'Close the door,' she says.\n\n"
+            "Rachel Kim's office is smaller than Marcus's.\n"
+            "Intentionally, you suspect. Rachel doesn't need a corner office\n"
+            "to make you nervous.\n\n"
+            "'Close the door,' she says. Not a request.\n\n"
             "You lay it out. Apex Solutions. Pinnacle Strategy. $1.87 million.\n"
-            "Thirteen months. All approved by the CFO. All charged to Special Projects.\n"
+            "Thirteen months. Every payment approved by the CFO.\n"
+            "Every dollar charged to 'Special Projects.'\n"
             "Both vendors: no address, not verified, contact emails that bounce.\n\n"
-            "Rachel doesn't say anything for a long time.\n\n"
+            "Rachel doesn't say anything for what feels like a week.\n\n"
             "'How did you find this?'\n\n"
-            "You: 'SQL.'\n\n"
+            "'SQL.'\n\n"
             "She almost smiles. Almost.\n\n"
-            "'I need this in writing. Everything. Every query output. Tonight.'\n\n"
-            "You nod.\n\n"
-            "You open a new file. You start typing.\n\n"
+            "'I need this in writing. Everything. Every query, every output.\n"
+            "Tonight. Before Marcus gets back from his quote-unquote\n"
+            "business trip to Cabo.'\n\n"
+            "You nod. You open a new file. You start typing.\n\n"
             "────────────────────────────────────────────────\n"
             "              CASE CLOSED.\n"
             "────────────────────────────────────────────────\n\n"
             "You uncovered $1,870,000 in fraudulent payments.\n"
-            "Marcus Webb was placing them with shell companies he controlled.\n"
-            "Nexus Analytics Corp will never be the same.\n\n"
-            "And you did it with SQL.\n\n"
-            "Congratulations, Data Analyst."
+            "Marcus Webb was routing company money to shell companies\n"
+            "he controlled. Thirteen months. Two fake vendors. Zero shame.\n\n"
+            "Nexus Analytics Corp will never be the same.\n"
+            "Neither will you.\n\n"
+            "And you did it all with SQL.\n\n"
+            "Not bad for day one, Alex."
         ),
         "focus_label":  "",
         "focus":        "",

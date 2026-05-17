@@ -228,10 +228,9 @@ class GameState:
             except Exception:
                 pass  # validator bugs should never crash the game
 
-        # Route concept popup if one is queued
-        if self.pending_popups:
-            concept = self.pending_popups.pop(0)
-            self.on_popup(concept)
+        # Concept popup is now deferred — MainWindow fires it via QTimer
+        # after the query result has rendered in the narrative panel.
+        # See MainWindow._on_progress() for the delayed popup trigger.
 
     def _complete_objective(self, obj: dict) -> None:
         self.completed.append(obj["id"])
@@ -378,29 +377,34 @@ class GameState:
 
 SCENE_INTROS = {
     SCENE_DB_TERMINAL: (
-        "You plug your laptop into the secure terminal in the server room.\n"
-        "The fan hum is louder here. Nobody comes down to B1 unless they have to.\n"
-        "The full transaction log is open in front of you. Start digging."
+        "You plug into the secure terminal. The server room hums like a living thing.\n"
+        "Nobody comes down to B1 unless they have to.\n"
+        "The full transaction log is open. Every payment. Every vendor. Every dollar.\n\n"
+        "Something in this data doesn't add up. Start digging."
     ),
     SCENE_HR_FILES: (
-        "The HR filing cabinet is unlocked — Vanessa's still at lunch.\n"
+        "Vanessa's still at lunch. The filing cabinet is unlocked.\n"
         "You pull the personnel records. Every transaction has an approved_by field.\n"
-        "Time to find out who signed off on those payments."
+        "Someone signed off on those suspicious payments.\n\n"
+        "Time to find out who."
     ),
     SCENE_CFO_DEPT: (
-        "You're standing outside Marcus Webb's office. He's in a board meeting until 4pm.\n"
-        "His assistant waves you in to drop off a 'budget report.'\n"
-        "You have maybe 20 minutes. His desktop is still logged in."
+        "Marcus Webb — board meeting until 4pm.\n"
+        "His assistant waves you in to 'drop off a budget report.'\n"
+        "You have maybe 20 minutes. His desktop is still logged in.\n\n"
+        "Don't waste them."
     ),
     SCENE_AUDIT_TRAIL: (
-        "Back at your desk. You've got the pieces — now build the full picture.\n"
-        "You need numbers that will hold up. Gut feelings don't go in an audit report."
+        "Back at your desk. The office is dark. Everyone's gone home.\n"
+        "You've got the pieces — now build the case.\n"
+        "Numbers that hold up. Evidence that doesn't blink.\n\n"
+        "Gut feelings don't go in an audit report. SQL does."
     ),
     SCENE_CONFRONTATION: (
-        "You have everything. Apex Solutions LLC. Pinnacle Strategy. $1.87M.\n"
-        "All approved by the CFO. All billed to Special Projects.\n"
+        "You have everything. Apex Solutions. Pinnacle Strategy. $1.87M.\n"
+        "All approved by the CFO. All billed to 'Special Projects.'\n\n"
         "Your phone buzzes: Rachel Kim (COO) — 'Got a minute? My office.'\n"
-        "This is it."
+        "Four words that change everything."
     ),
 }
 
@@ -410,59 +414,59 @@ SCENE_INTROS = {
 
 HINTS = {
     "list_tables": [
-        "The database is a black box until you know what's in it. What command shows you the tables?",
-        "Try: db.tables()  — or write the SQL yourself: SELECT name FROM sqlite_master WHERE type='table'",
+        "Diana's note said to get familiar with the database. You can't investigate what you can't see — what's even in this thing?",
+        "Use db.tables() to see what's available. Or if you're feeling fancy: db.query(\"SELECT name FROM sqlite_master WHERE type='table'\")",
     ],
     "examine_employees": [
-        "Start simple. Pick one table and look at everything in it.",
-        "Try: db.query(\"SELECT * FROM employees\")",
+        "You know the tables now. Pick one and peek inside — the employees table seems like a good place to start.",
+        "db.query(\"SELECT * FROM employees\")  — SELECT * means 'show me everything.'",
     ],
     "count_employees": [
-        "How many people work at Nexus? SQL has a function for counting rows.",
-        "Try: db.query(\"SELECT COUNT(*) FROM employees\")",
+        "Sam from accounting just pinged you: 'Hey new person — quick question. How many of us are there?' SQL can count.",
+        "db.query(\"SELECT COUNT(*) FROM employees\")  — COUNT(*) counts every row in the table.",
     ],
     "find_high_spend_vendors": [
-        "You want to know which vendors are getting the most money. Think: group the transactions by vendor, then add up the amounts.",
-        "Keyword: GROUP BY.  Also: SUM(amount).",
-        "Try: db.query(\"SELECT vendor_id, SUM(amount) FROM transactions GROUP BY vendor_id ORDER BY SUM(amount) DESC\")",
+        "28 transactions. You could read them all, or you could be smart about it. Which vendors are getting the biggest checks?",
+        "GROUP BY bundles rows together. SUM(amount) adds them up. Put the biggest first with ORDER BY ... DESC.",
+        "db.query(\"SELECT vendor_id, SUM(amount) FROM transactions GROUP BY vendor_id ORDER BY SUM(amount) DESC\")",
     ],
     "spot_unverified_vendors": [
-        "Not every vendor on the list has been properly vetted. The vendors table has a column that tracks this.",
-        "Look for vendors WHERE verified = 0",
-        "Try: db.query(\"SELECT * FROM vendors WHERE verified = 0\")",
+        "Some of these vendor numbers look suspicious. But are they legit companies? The vendors table should tell you who's been verified.",
+        "The verified column is 1 for yes, 0 for no. Use WHERE to filter.",
+        "db.query(\"SELECT * FROM vendors WHERE verified = 0\")",
     ],
     "join_transactions_vendors": [
-        "Right now you have vendor IDs in your transactions — not names. To see names, you need to connect two tables.",
-        "The keyword is JOIN. You're linking transactions.vendor_id to vendors.id.",
-        "Try: db.query(\"SELECT t.*, v.name FROM transactions t JOIN vendors v ON t.vendor_id = v.id\")",
+        "Vendor IDs are just numbers. You need names. The trick? Connect the transactions table to the vendors table.",
+        "JOIN links two tables on a shared column — transactions.vendor_id matches vendors.id.",
+        "db.query(\"SELECT t.*, v.name FROM transactions t JOIN vendors v ON t.vendor_id = v.id\")",
     ],
     "find_approver": [
-        "Every transaction was approved by someone. Check the approved_by column — is it always the same person?",
-        "Try: db.query(\"SELECT approved_by, COUNT(*) FROM transactions GROUP BY approved_by ORDER BY COUNT(*) DESC\")",
+        "Every one of these transactions was approved by somebody. The approved_by column has their employee ID. Is it always the same person?",
+        "db.query(\"SELECT approved_by, COUNT(*) FROM transactions GROUP BY approved_by ORDER BY COUNT(*) DESC\")",
     ],
     "lookup_employee_4": [
-        "You found an employee ID that keeps showing up. Now look up who that actually is.",
-        "Try: db.query(\"SELECT * FROM employees WHERE id = 4\")",
+        "That employee ID keeps showing up. It's time to put a face to the number.",
+        "db.query(\"SELECT * FROM employees WHERE id = 4\")  — one row, one person, one answer.",
     ],
     "check_special_projects_budget": [
-        "Follow the money. Which department has the largest budget? Query the departments table.",
-        "Try: db.query(\"SELECT * FROM departments ORDER BY budget DESC\")",
+        "All the suspicious money flows through 'Special Projects.' How does that department's budget compare to the others?",
+        "db.query(\"SELECT * FROM departments ORDER BY budget DESC\")  — biggest budgets first.",
     ],
     "total_apex_spend": [
-        "You know Apex Solutions (vendor_id 4) is suspicious. How much have they been paid in total?",
-        "Try: db.query(\"SELECT SUM(amount) FROM transactions WHERE vendor_id = 4\")",
+        "Apex Solutions LLC. Unverified. No address. No phone number. How much has Nexus paid this ghost company?",
+        "db.query(\"SELECT SUM(amount) FROM transactions WHERE vendor_id = 4\")  — brace yourself.",
     ],
     "escalation_pattern": [
-        "Pull all transactions to vendor 4, ordered by date. Watch what happens to the amounts over time.",
-        "Try: db.query(\"SELECT date, amount, description FROM transactions WHERE vendor_id = 4 ORDER BY date\")",
+        "Pull the Apex transactions in order by date. Watch the amounts. Month by month. See if you notice anything.",
+        "db.query(\"SELECT date, amount, description FROM transactions WHERE vendor_id = 4 ORDER BY date\")",
     ],
     "dual_vendor_fraud": [
-        "Both suspicious vendors (ids 4 and 7) need to appear in one query. SQL has an IN clause for this.",
-        "Try: db.query(\"SELECT * FROM transactions WHERE vendor_id IN (4, 7) ORDER BY date\")",
+        "Two shell companies. Same pattern. SQL's IN clause lets you query for both in a single shot.",
+        "db.query(\"SELECT * FROM transactions WHERE vendor_id IN (4, 7) ORDER BY date\")",
     ],
     "total_fraud_amount": [
-        "Get the grand total paid to both shell companies combined.",
-        "Try: db.query(\"SELECT SUM(amount) FROM transactions WHERE vendor_id IN (4, 7)\")",
+        "Last query. The number that goes in the report. Total payments to both shell companies combined.",
+        "db.query(\"SELECT SUM(amount) FROM transactions WHERE vendor_id IN (4, 7)\")  — this is the figure Rachel needs.",
     ],
 }
 

@@ -315,7 +315,37 @@ class CmdPanel(QWidget):
         fmt = STYLES.get(style, STYLES["normal"])
         cursor = self._narrative.textCursor()
         cursor.movePosition(QTextCursor.MoveOperation.End)
+
+        # ── Visual grouping: different block backgrounds per style ────────
+        block_fmt = QTextBlockFormat()
+        if style == "scene":
+            # Scene intros: left purple border
+            block_fmt.setLeftMargin(12)
+            block_fmt.setProperty(QTextBlockFormat.Property.BlockLeftMargin, 12)
+        elif style == "input":
+            # Player commands: slight grey bg via left/right margins
+            block_fmt.setLeftMargin(8)
+        elif style == "output":
+            # Query results: code background handled by char format
+            block_fmt.setLeftMargin(16)
+            block_fmt.setRightMargin(16)
+        elif style == "success":
+            # Clue found: green-tinted
+            block_fmt.setLeftMargin(8)
+        elif style == "guidance":
+            # Step guidance: blue-tinted left border effect
+            block_fmt.setLeftMargin(12)
+        elif style == "warning":
+            # Hints: amber left margin
+            block_fmt.setLeftMargin(12)
+
+        cursor.setBlockFormat(block_fmt)
         cursor.insertText(text, fmt)
+
+        # Reset block format for next insertion
+        plain_block = QTextBlockFormat()
+        cursor.setBlockFormat(plain_block)
+
         self._narrative.setTextCursor(cursor)
         self._narrative.ensureCursorVisible()
 
@@ -403,7 +433,72 @@ class CmdPanel(QWidget):
 
     def _on_hint(self):
         hint = self._game.get_hint()
+        # Check which hint tier we're on for the current objective
+        for obj in self._game.objectives_for_scene(self._game.scene):
+            if obj["id"] not in self._game.completed:
+                attr = f"_hint_idx_{obj['id']}"
+                idx = getattr(self._game, attr, 0)
+                # idx was just incremented by get_hint(), so idx=1 means first hint was just given
+                if idx == 1:
+                    # First hint: show as story dialogue, not as "hint"
+                    self._append_hint_formatted(hint, is_dialogue=True)
+                else:
+                    # Subsequent hints: show as explicit hint with 💡
+                    self._append_hint_formatted(hint, is_dialogue=False)
+                return
+        # Fallback
         self.append_output(f"\n💡  {hint}\n", style="warning")
+
+    def _append_hint_formatted(self, hint: str, is_dialogue: bool = False):
+        """Format hint text, rendering SQL code blocks in monospace with a tinted background."""
+        import re as _re
+
+        if is_dialogue:
+            prefix = "\n"
+            style = "guidance"
+        else:
+            prefix = "\n💡  "
+            style = "warning"
+
+        # Split hint into prose vs code parts
+        # Look for patterns like: db.query("...") or db.tables() or SQL keywords on their own line
+        parts = _re.split(r'((?:db\.\w+\([^)]*\))|(?:(?:SELECT|WHERE|GROUP BY|ORDER BY|JOIN|FROM|SUM|COUNT|IN)\b[^\n]*))', hint)
+
+        cursor = self._narrative.textCursor()
+        cursor.movePosition(QTextCursor.MoveOperation.End)
+
+        fmt = STYLES.get(style, STYLES["normal"])
+        code_fmt = STYLES["output"]
+
+        # Insert prefix
+        cursor.insertText(prefix, fmt)
+
+        for i, part in enumerate(parts):
+            part = part.strip()
+            if not part:
+                continue
+
+            # Check if this part looks like code
+            is_code = (
+                part.startswith("db.") or
+                _re.match(r'^(SELECT|WHERE|GROUP BY|ORDER BY|JOIN|FROM|SUM|COUNT|IN)\b', part, _re.IGNORECASE)
+            )
+
+            if is_code:
+                # Render as copyable code block
+                block_fmt = QTextBlockFormat()
+                block_fmt.setLeftMargin(20)
+                block_fmt.setRightMargin(20)
+                cursor.setBlockFormat(block_fmt)
+                cursor.insertText(f"\n  {part}\n", code_fmt)
+                # Reset
+                cursor.setBlockFormat(QTextBlockFormat())
+            else:
+                cursor.insertText(part + " ", fmt)
+
+        cursor.insertText("\n", fmt)
+        self._narrative.setTextCursor(cursor)
+        self._narrative.ensureCursorVisible()
 
     def _on_reset(self):
         self.append_output("\n⚠  Are you sure? Type  yes  to start a brand new game.\n", style="warning")

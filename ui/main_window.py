@@ -6,7 +6,7 @@ from PySide6.QtWidgets import (
     QMainWindow, QWidget, QHBoxLayout, QVBoxLayout,
     QSplitter, QFrame, QApplication,
 )
-from PySide6.QtCore import Qt, QSize
+from PySide6.QtCore import Qt, QSize, QTimer
 from PySide6.QtGui import QFont, QFontDatabase, QIcon
 
 from ui.hud import HUDBar
@@ -182,6 +182,7 @@ class MainWindow(QMainWindow):
         self._hud.codex_btn.clicked.connect(self._open_codex)
 
         # ── Initial scene render ─────────────────────────────────────────────
+        self._scene_view.set_clues(self._game.clues)
         self._render_current_scene()
 
     # ── Game callbacks ────────────────────────────────────────────────────────
@@ -217,6 +218,9 @@ class MainWindow(QMainWindow):
         self._update_focus_box()
         self._show_next_objective_guidance()
 
+        # ── Update clue sidebar ──────────────────────────────────────────────
+        self._scene_view.set_clues(self._game.clues)
+
         # ── Celebration ──────────────────────────────────────────────────────
         from core.game import OBJECTIVES_BY_ID
         obj = OBJECTIVES_BY_ID.get(completed_objective_id, {})
@@ -248,6 +252,11 @@ class MainWindow(QMainWindow):
                 style="success", duration=2200
             )
             play_chime()
+
+        # ── Delayed concept popup — fires AFTER result is visible ────────────
+        if self._game.pending_popups:
+            concept_id = self._game.pending_popups.pop(0)
+            QTimer.singleShot(600, lambda cid=concept_id: self._on_popup(cid))
 
     # ── Scene rendering ───────────────────────────────────────────────────────
 

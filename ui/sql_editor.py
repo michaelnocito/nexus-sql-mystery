@@ -126,10 +126,29 @@ class LineNumberArea(QWidget):
 
 # ── SQL Editor widget ─────────────────────────────────────────────────────────
 
+    # ── Autocomplete candidates ────────────────────────────────────────────────
+
+AUTOCOMPLETE_WORDS = sorted(
+    list(SQL_KEYWORDS) + list(SQL_FUNCTIONS) + [
+        # Table names
+        "employees", "transactions", "vendors", "departments", "save_state",
+        # Column names
+        "id", "name", "title", "department_id", "salary", "hire_date", "email",
+        "vendor_id", "amount", "date", "description", "approved_by", "category",
+        "contact_email", "address", "verified",
+        "budget", "head_count",
+        # db methods
+        "db.tables()", "db.query(", "db.schema(",
+    ],
+    key=str.lower,
+)
+
+
 class SQLEditor(QPlainTextEdit):
     """
     Multi-line SQL input with syntax highlighting and line numbers.
     Emits execute_requested(str) on Ctrl+Enter or Shift+Enter.
+    Tab triggers autocomplete for SQL keywords, table names, and column names.
     """
 
     execute_requested = Signal(str)
@@ -155,7 +174,7 @@ class SQLEditor(QPlainTextEdit):
             }}
         """)
 
-        self.setPlaceholderText("type SQL or Python here…    Ctrl+Enter to run")
+        self.setPlaceholderText("type SQL or Python here…    Ctrl+Enter to run  |  Tab to autocomplete")
         self.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
 
         # Syntax highlighter
@@ -173,6 +192,11 @@ class SQLEditor(QPlainTextEdit):
         self._history: list[str] = []
         self._hist_idx: int = -1
 
+        # Autocomplete state
+        self._ac_matches: list[str] = []
+        self._ac_idx: int = 0
+        self._ac_prefix: str = ""
+
     # ── Key handling ──────────────────────────────────────────────────────────
 
     def keyPressEvent(self, event):
@@ -185,10 +209,19 @@ class SQLEditor(QPlainTextEdit):
                 self._execute()
                 return
             # Plain Enter → newline (normal behavior)
+            self._ac_matches = []  # reset autocomplete on newline
 
-        # Tab → insert 2 spaces
-        if key == Qt.Key.Key_Tab and not (mods & Qt.KeyboardModifier.ShiftModifier):
-            self.insertPlainText("  ")
+        # Tab → autocomplete (or cycle matches), Shift+Tab → 2 spaces
+        if key == Qt.Key.Key_Tab:
+            if mods & Qt.KeyboardModifier.ShiftModifier:
+                self.insertPlainText("  ")
+                return
+            self._autocomplete()
+            return
+
+        # Escape → cancel autocomplete cycle
+        if key == Qt.Key.Key_Escape:
+            self._ac_matches = []
             return
 
         # Ctrl+Up / Ctrl+Down → history navigation
@@ -200,7 +233,61 @@ class SQLEditor(QPlainTextEdit):
                 self._hist_down()
                 return
 
+        # Any other key resets autocomplete cycling
+        self._ac_matches = []
         super().keyPressEvent(event)
+
+    def _autocomplete(self):
+        """Tab-triggered autocomplete: match partial word against SQL keywords, tables, columns."""
+        cursor = self.textCursor()
+
+        if self._ac_matches:
+            # Already cycling — remove the last completion and insert the next
+            # Remove the previously inserted completion (everything after prefix)
+            for _ in range(len(self._ac_matches[self._ac_idx]) - len(self._ac_prefix)):
+                cursor.deletePreviousChar()
+            self._ac_idx = (self._ac_idx + 1) % len(self._ac_matches)
+            suffix = self._ac_matches[self._ac_idx][len(self._ac_prefix):]
+            cursor.insertText(suffix)
+            self.setTextCursor(cursor)
+            return
+
+        # Extract the word fragment before the cursor
+        cursor.movePosition(cursor.MoveOperation.StartOfBlock, cursor.MoveMode.KeepAnchor)
+        line_before = cursor.selectedText()
+        # Restore cursor position
+        cursor = self.textCursor()
+
+        # Find the partial word (letters, digits, underscores, dots)
+        match = re.search(r'[\w.]+$', line_before)
+        if not match:
+            self.insertPlainText("  ")  # no word to complete → just indent
+            return
+
+        prefix = match.group()
+        prefix_lower = prefix.lower()
+
+        # Find all matches
+        matches = [w for w in AUTOCOMPLETE_WORDS if w.lower().startswith(prefix_lower) and w.lower() != prefix_lower]
+
+        if not matches:
+            self.insertPlainText("  ")  # no matches → indent
+            return
+
+        if len(matches) == 1:
+            # Single match — complete it immediately
+            suffix = matches[0][len(prefix):]
+            cursor.insertText(suffix)
+            self.setTextCursor(cursor)
+            return
+
+        # Multiple matches — enter cycling mode
+        self._ac_matches = matches
+        self._ac_idx = 0
+        self._ac_prefix = prefix
+        suffix = matches[0][len(prefix):]
+        cursor.insertText(suffix)
+        self.setTextCursor(cursor)
 
     def _execute(self):
         code = self.toPlainText().strip()

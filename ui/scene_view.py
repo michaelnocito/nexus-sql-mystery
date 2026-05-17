@@ -33,16 +33,23 @@ class SceneView(QWidget):
     """
     Left panel — draws a different scene illustration per game location.
     Fully vector / QPainter so it scales cleanly at any window size.
+    After the first clue is found, the bottom portion shows a sticky-note
+    style clue list that grows as the player progresses.
     """
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self._scene_id = SCENE_YOUR_DESK
+        self._clues: list[str] = []
         self.setMinimumWidth(280)
         self.setAttribute(Qt.WidgetAttribute.WA_OpaquePaintEvent)
 
     def set_scene(self, scene_id: str) -> None:
         self._scene_id = scene_id
+        self.update()
+
+    def set_clues(self, clues: list[str]) -> None:
+        self._clues = list(clues)
         self.update()
 
     # ── Qt paint event ────────────────────────────────────────────────────────
@@ -54,6 +61,14 @@ class SceneView(QWidget):
         w = self.width()
         h = self.height()
 
+        # If clues exist, split the panel: top = scene art, bottom = clue sidebar
+        if self._clues:
+            clue_h = min(int(h * 0.40), max(120, len(self._clues) * 24 + 60))
+            scene_h = h - clue_h
+        else:
+            scene_h = h
+            clue_h = 0
+
         # Route to the correct scene drawer
         draw_fn = {
             SCENE_YOUR_DESK:     self._draw_desk,
@@ -64,7 +79,16 @@ class SceneView(QWidget):
             SCENE_CONFRONTATION: self._draw_coo_office,
         }.get(self._scene_id, self._draw_desk)
 
-        draw_fn(p, w, h)
+        # Clip scene drawing to top portion
+        p.save()
+        p.setClipRect(0, 0, w, scene_h)
+        draw_fn(p, w, scene_h)
+        p.restore()
+
+        # Draw clue sidebar in bottom portion
+        if self._clues:
+            self._draw_clue_sidebar(p, w, h, scene_h, clue_h)
+
         p.end()
 
     # ── Scene: Your Desk (morning) ────────────────────────────────────────────
@@ -578,6 +602,58 @@ class SceneView(QWidget):
         p.restore()
 
         self._draw_label(p, w, h, "COO's Office", "Rachel Kim — Close the door.")
+
+    # ── Clue sidebar ────────────────────────────────────────────────────────
+
+    def _draw_clue_sidebar(self, p: QPainter, w: int, h: int, top_y: int, clue_h: int):
+        """Draw a sticky-note style clue list in the bottom of the scene panel."""
+        # Background — warm parchment color
+        bg_color = QColor("#1e2d4a")
+        p.fillRect(0, top_y, w, clue_h, bg_color)
+
+        # Top border accent line
+        p.setPen(QPen(QColor("#79b8ff"), 2))
+        p.drawLine(0, top_y, w, top_y)
+
+        # Header
+        p.setFont(QFont("Segoe UI", 12, QFont.Weight.Bold))
+        p.setPen(QPen(QColor("#e3b97a")))
+        header_y = top_y + 24
+        p.drawText(14, header_y, f"📋  CLUE LOG  ({len(self._clues)})")
+
+        # Clue entries — styled like sticky notes
+        p.setFont(QFont("Segoe UI", 10))
+        entry_y = header_y + 20
+        max_visible = (clue_h - 50) // 22
+
+        # Show most recent clues first (reversed), up to max_visible
+        visible_clues = self._clues[-max_visible:] if len(self._clues) > max_visible else self._clues
+
+        for i, clue in enumerate(visible_clues):
+            if entry_y + 18 > h - 4:
+                break
+
+            # Strip the "[CLUE #N]" prefix for display
+            display = clue
+            if clue.startswith("[CLUE"):
+                parts = clue.split("]", 1)
+                if len(parts) == 2:
+                    num = parts[0].replace("[CLUE #", "").strip()
+                    display = f"#{num}  {parts[1].strip()}"
+
+            # Alternate subtle background for readability
+            if i % 2 == 0:
+                p.fillRect(8, entry_y - 12, w - 16, 20, QColor(255, 255, 255, 8))
+
+            p.setPen(QPen(QColor("#56d364") if i == len(visible_clues) - 1 else QColor("#cdd9e5")))
+            p.drawText(18, entry_y, display)
+            entry_y += 22
+
+        # If there are hidden clues, show a "..." indicator
+        if len(self._clues) > max_visible:
+            p.setPen(QPen(QColor("#768ea8")))
+            p.setFont(QFont("Segoe UI", 9, QFont.Weight.Normal, True))
+            p.drawText(18, entry_y, f"… and {len(self._clues) - max_visible} earlier clue(s)")
 
     # ── Utility ───────────────────────────────────────────────────────────────
 
