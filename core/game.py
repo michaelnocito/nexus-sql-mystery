@@ -281,6 +281,12 @@ class GameState:
             self._advance_to_scene(next_scene)
 
     def _advance_to_scene(self, scene_id: str) -> None:
+        # Show cliffhanger for the scene we're LEAVING
+        from core.scenes import CLIFFHANGERS
+        cliffhanger = CLIFFHANGERS.get(self.scene)
+        if cliffhanger:
+            self.on_output(f"\n{cliffhanger}\n", style="scene")
+
         self.scene = scene_id
         self.step  = 0
         self.on_scene_change(scene_id)

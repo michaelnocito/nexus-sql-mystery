@@ -165,6 +165,9 @@ STYLES = {
     # ── Code (monospace, tinted bg) ──────────────────────────────────────────
     "input":    _code_fmt(ACCENT,      bold=True,  size=14),   # >>> echo
     "output":   _code_bg_fmt(TEXT_MAIN, CODE_BG,  size=13),   # SQL result tables
+
+    # ── Spirit guide (subtle, italic) ────────────────────────────────────────
+    "spirit":   _prose_fmt("#768ea8",  italic=True, size=13),  # ghostly tips
 }
 
 

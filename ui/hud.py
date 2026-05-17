@@ -69,10 +69,8 @@ class HUDBar(QWidget):
         layout.addWidget(self._vsep())
         layout.addSpacing(16)
 
-        # Codex button
-        self.codex_btn = QPushButton("📖  Codex")
-        self.codex_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.codex_btn.setStyleSheet(f"""
+        # Button style (reusable)
+        btn_qss = f"""
             QPushButton {{
                 background: transparent;
                 color: {ACCENT};
@@ -86,7 +84,20 @@ class HUDBar(QWidget):
                 background: {ACCENT};
                 color: white;
             }}
-        """)
+        """
+
+        # Field Guide button
+        self.docs_btn = QPushButton("📄  Field Guide")
+        self.docs_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.docs_btn.setStyleSheet(btn_qss)
+        layout.addWidget(self.docs_btn)
+
+        layout.addSpacing(8)
+
+        # Codex button
+        self.codex_btn = QPushButton("📖  Codex")
+        self.codex_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.codex_btn.setStyleSheet(btn_qss)
         layout.addWidget(self.codex_btn)
 
     def set_scene(self, title):

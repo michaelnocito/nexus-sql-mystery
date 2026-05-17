@@ -14,12 +14,14 @@ from ui.scene_view import SceneView
 from ui.cmd_panel import CmdPanel
 from ui.concept_popup import ConceptPopup
 from ui.codex_panel import CodexPanel
+from ui.collectibles_panel import CollectiblesPanel
 from ui.celebrations import ToastBanner, ScreenFlash, play_chime, play_victory_chime
 
 from core.db import DatabaseInterface
 from core.game import GameState
 from core.scenes import SCENES, STEP_TEXT, OBJECTIVE_FOCUS
 from core.codex import get_concept, all_concepts
+from core.collectibles import FIELD_GUIDE_PAGES
 
 
 # ── Light theme palette ───────────────────────────────────────────────────────
@@ -181,6 +183,18 @@ class MainWindow(QMainWindow):
         )
         self._hud.codex_btn.clicked.connect(self._open_codex)
 
+        # ── Collectibles (Field Guide) ──────────────────────────────────────
+        self._collectibles = CollectiblesPanel(
+            self._game, FIELD_GUIDE_PAGES, parent=self,
+        )
+        self._hud.docs_btn.clicked.connect(self._open_field_guide)
+
+        # ── Spirit guide ambient tips ────────────────────────────────────────
+        self._spirit_timer = QTimer(self)
+        self._spirit_timer.timeout.connect(self._spirit_tip)
+        self._spirit_timer.start(90_000)  # check every 90 seconds
+        self._last_query_count = 0
+
         # ── Initial scene render ─────────────────────────────────────────────
         self._scene_view.set_clues(self._game.clues)
         self._render_current_scene()
@@ -202,6 +216,29 @@ class MainWindow(QMainWindow):
     def _open_codex(self) -> None:
         self._codex.refresh()
         self._codex.exec()
+
+    def _open_field_guide(self) -> None:
+        self._collectibles.refresh()
+        self._collectibles.exec()
+
+    def _spirit_tip(self) -> None:
+        """Sam the spirit guide drops occasional contextual tips."""
+        import random
+
+        # Only trigger if the player seems stuck (no new queries since last check)
+        current_qc = self._game._query_count
+        if current_qc == self._last_query_count and current_qc > 0:
+            tips = [
+                "👻  Sam whispers: 'Try typing  hint  if you're stuck. No shame in it.'",
+                "👻  Sam whispers: 'Remember — you can press Tab to autocomplete SQL keywords.'",
+                "👻  Sam whispers: 'Check your Clue Log on the left. Sometimes the answer is in what you already found.'",
+                "👻  Sam whispers: 'The  show solution  toggle won't judge you. Promise.'",
+                "👻  Sam whispers: 'Ctrl+Up brings back your last command. Saves typing.'",
+                "👻  Sam whispers: '...is it cold in here, or is that just the server room?'",
+            ]
+            tip = random.choice(tips)
+            self._cmd.append_output(f"\n{tip}\n", style="spirit")
+        self._last_query_count = current_qc
 
     def _on_scene_change(self, scene_id: str) -> None:
         self._scene_view.set_scene(scene_id)

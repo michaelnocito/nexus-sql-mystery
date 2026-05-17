@@ -80,6 +80,8 @@ SCENES = {
             "The temperature is exactly 68°F. It has been 68°F since 2019. Always.",
             "Your query results scroll past. Numbers don't lie. People do.",
             "You swear one of the server fans just coughed.",
+            "For a second, your terminal shows a query you didn't type. Then it's gone.",
+            "The lights flicker. Just once. Probably the HVAC.",
         ],
         "exits": {SCENE_HR_FILES: "hr_office"},
     },
@@ -165,6 +167,9 @@ SCENES = {
             "Outside: Austin at night. Office towers glowing. People going home to dinner.",
             "You've run 30+ queries today. Your keyboard has feelings about this.",
             "The office plant by the window is dead. Has been for months. Nobody noticed.",
+            "Your cursor jumps three lines on its own. You blink. It's back to normal.",
+            "A notification pops up: 'Someone else is viewing this file.' You are alone.",
+            "The monitor dims for exactly one second. When it comes back, your last query result has an extra row. ...no it doesn't. Does it?",
         ],
         "exits": {SCENE_CONFRONTATION: "coo_office"},
     },
@@ -347,4 +352,64 @@ OBJECTIVE_FOCUS = {
     "escalation_pattern":       ("See the pattern:",       'db.query("SELECT date, amount, description FROM transactions WHERE vendor_id = 4 ORDER BY date")'),
     "dual_vendor_fraud":        ("Both shell companies:",  'db.query("SELECT t.date, t.amount, v.name FROM transactions t JOIN vendors v ON t.vendor_id = v.id WHERE t.vendor_id IN (4, 7) ORDER BY date")'),
     "total_fraud_amount":       ("Grand total stolen:",    'db.query("SELECT SUM(amount) as total_fraud FROM transactions WHERE vendor_id IN (4, 7)")'),
+}
+
+
+# ── Cliffhanger teasers ─────────────────────────────────────────────────────
+# Shown between scenes as a dramatic "end of episode" beat.
+# Format: from_scene → teaser text shown before transitioning.
+
+CLIFFHANGERS = {
+    SCENE_YOUR_DESK: (
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        "  END OF EPISODE 1: \"First Day\"\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        "  You've seen the tables. You've counted the heads.\n"
+        "  But Diana's sticky note said \"get familiar.\"\n"
+        "  She didn't say what you'd find when you did.\n\n"
+        "  NEXT: The transaction log. Something doesn't add up.\n\n"
+        "  📄 Page 1 of The Analyst's Field Guide unlocked.\n"
+    ),
+    SCENE_DB_TERMINAL: (
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        "  END OF EPISODE 2: \"Follow the Money\"\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        "  Two vendors. No address. No verification.\n"
+        "  Hundreds of thousands of dollars.\n"
+        "  Someone approved every single payment.\n\n"
+        "  NEXT: The personnel files. Who signed off on this?\n\n"
+        "  📄 Page 2 of The Analyst's Field Guide unlocked.\n"
+    ),
+    SCENE_HR_FILES: (
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        "  END OF EPISODE 3: \"The Name\"\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        "  Marcus Webb. CFO. Employee #4.\n"
+        "  Special Projects: $4.8 million budget.\n"
+        "  You have a name. Now you need proof.\n\n"
+        "  NEXT: The CFO's office. He's in a board meeting.\n"
+        "  You have 20 minutes.\n\n"
+        "  📄 Page 3 of The Analyst's Field Guide unlocked.\n"
+    ),
+    SCENE_CFO_DEPT: (
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        "  END OF EPISODE 4: \"The Pattern\"\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        "  The amounts are escalating. $87K → $243K in 9 months.\n"
+        "  He's getting bolder. He thinks nobody's watching.\n"
+        "  He's wrong.\n\n"
+        "  NEXT: Build the case. Every dollar. Every date.\n"
+        "  The kind of evidence that doesn't blink.\n\n"
+        "  📄 Page 4 of The Analyst's Field Guide unlocked.\n"
+    ),
+    SCENE_AUDIT_TRAIL: (
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        "  END OF EPISODE 5: \"The Number\"\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        "  $1,869,500.\n"
+        "  Two shell companies. One approver. Thirteen months.\n"
+        "  Your phone buzzes.\n\n"
+        "  NEXT: Rachel Kim wants to see you. Now.\n\n"
+        "  📄 Page 5 of The Analyst's Field Guide unlocked.\n"
+    ),
 }
