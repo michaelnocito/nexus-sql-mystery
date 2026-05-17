@@ -57,18 +57,82 @@ No right/wrong binary. No fill-in-the-blank. You investigate.
 
 ---
 
-## Quick Start
+## New to GitHub? Start Here
+
+GitHub is where this project lives online. To play it, you download
+a copy onto your own computer — that's called **cloning a repository**.
+In plain terms: you grab the project files so you can run them locally.
+
+Set up these three things once, and you're ready:
+
+**Step 1 — Install Git**
+Git is the tool that lets your computer talk to GitHub and download files.
+-> [git-scm.com/downloads](https://git-scm.com/downloads) — download and run the installer. Default settings are fine.
+
+**Step 2 — Install Python 3**
+Python is the programming language NEXUS runs on.
+-> [python.org/downloads](https://python.org/downloads) — grab the latest version.
+> On Windows: check the box that says **"Add Python to PATH"** during install.
+> It's easy to miss, and things won't work without it.
+
+**Step 3 — Open a terminal**
+The terminal is the text window where you type commands to run the game.
+- **Windows:** search *PowerShell* in the Start menu
+- **Mac:** search *Terminal* in Spotlight
+- **VS Code:** press `` Ctrl + ` ``
+
+Once all three are ready, run the steps below.
+
+---
+
+## Windows Quickstart
+
+Copy each block into PowerShell, one after the other.
+
+**1. Clone the repo**
+
+```powershell
+git clone https://github.com/michaelnocito/nexus-sql-mystery.git C:\Projects\nexus-sql-mystery
+cd C:\Projects\nexus-sql-mystery
+```
+
+> **Why `C:\Projects\` instead of Desktop or Documents?**
+> Desktop and Documents usually sync to OneDrive automatically. OneDrive
+> can show a file as present before it's fully downloaded — and when
+> Python tries to open it, you get a confusing error even though the
+> file looks right there. `C:\Projects\` is local-only and always reachable.
+
+**2. Install requirements**
+
+```powershell
+pip install -r requirements.txt
+```
+
+**3. Play**
+
+```powershell
+python main.py
+```
+
+The game starts. You're Alex Chen. Day one. Good luck.
+
+> The game auto-saves your progress. Type `reset` in the game to start fresh.
+
+---
+
+## Mac / Linux Setup
 
 ```bash
-git clone https://github.com/michaelnocito/nexus-sql-mystery.git
-cd nexus-sql-mystery
+git clone https://github.com/michaelnocito/nexus-sql-mystery.git ~/Projects/nexus-sql-mystery
+cd ~/Projects/nexus-sql-mystery
 pip install -r requirements.txt
 python main.py
 ```
 
-**Requirements:** Python 3.10+ and PySide6. Windows recommended (uses `winsound` for audio cues).
-
-> The game auto-saves your progress. Type `reset` in the game to start fresh.
+> **Platform note:** NEXUS is built and tested on Windows. Audio cues use
+> `winsound` which is Windows-only — the game runs fine without them on
+> Mac/Linux, you just won't hear the beeps. If something trips you up,
+> an issue or PR is welcome.
 
 ---
 
