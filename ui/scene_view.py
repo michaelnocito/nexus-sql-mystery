@@ -13,6 +13,11 @@ from core.game import (
     SCENE_YOUR_DESK, SCENE_DB_TERMINAL, SCENE_HR_FILES,
     SCENE_CFO_DEPT, SCENE_AUDIT_TRAIL, SCENE_CONFRONTATION,
 )
+from core.season2_game import (
+    S2_SCENE_SERVER_LOGS, S2_SCENE_GHOST_RECORDS,
+    S2_SCENE_TIMESTAMP, S2_SCENE_ARCHIVE,
+    S2_SCENE_PATTERN_DECODER, S2_SCENE_THE_SIGNAL,
+)
 
 
 # ── Palette — dark navy (readable, still atmospheric) ─────────────────────────
@@ -71,12 +76,19 @@ class SceneView(QWidget):
 
         # Route to the correct scene drawer
         draw_fn = {
-            SCENE_YOUR_DESK:     self._draw_desk,
-            SCENE_DB_TERMINAL:   self._draw_server_room,
-            SCENE_HR_FILES:      self._draw_hr_office,
-            SCENE_CFO_DEPT:      self._draw_cfo_office,
-            SCENE_AUDIT_TRAIL:   self._draw_desk_night,
-            SCENE_CONFRONTATION: self._draw_coo_office,
+            SCENE_YOUR_DESK:        self._draw_desk,
+            SCENE_DB_TERMINAL:      self._draw_server_room,
+            SCENE_HR_FILES:         self._draw_hr_office,
+            SCENE_CFO_DEPT:         self._draw_cfo_office,
+            SCENE_AUDIT_TRAIL:      self._draw_desk_night,
+            SCENE_CONFRONTATION:    self._draw_coo_office,
+            # Season 2
+            S2_SCENE_SERVER_LOGS:   self._draw_server_room,
+            S2_SCENE_GHOST_RECORDS: self._draw_server_room,
+            S2_SCENE_TIMESTAMP:     self._draw_desk,
+            S2_SCENE_ARCHIVE:       self._draw_archive,
+            S2_SCENE_PATTERN_DECODER: self._draw_server_room_night,
+            S2_SCENE_THE_SIGNAL:    self._draw_coo_office,
         }.get(self._scene_id, self._draw_desk)
 
         # Clip scene drawing to top portion
@@ -602,6 +614,171 @@ class SceneView(QWidget):
         p.restore()
 
         self._draw_label(p, w, h, "COO's Office", "Rachel Kim — Close the door.")
+
+    # ── Scene: Archive Room (Season 2) ────────────────────────────────────────
+
+    def _draw_archive(self, p: QPainter, w: int, h: int):
+        # Dusty basement — warm fluorescent tinge over dark grey
+        grad = QLinearGradient(0, 0, 0, h)
+        grad.setColorAt(0, QColor("#1a1510"))
+        grad.setColorAt(1, QColor("#0f0d0a"))
+        p.fillRect(0, 0, w, h, grad)
+
+        floor_y = int(h * 0.75)
+
+        # Fluorescent light glow on ceiling
+        glow = QRadialGradient(w // 2, 0, int(w * 0.8))
+        glow.setColorAt(0, QColor(220, 210, 160, 35))
+        glow.setColorAt(1, QColor(0, 0, 0, 0))
+        p.fillRect(0, 0, w, h // 2, glow)
+
+        # Metal shelving units — two tall racks
+        shelf_configs = [(int(w * 0.04), int(h * 0.08)), (int(w * 0.55), int(h * 0.10))]
+        shelf_w = int(w * 0.36)
+        shelf_h = int(h * 0.72)
+
+        for sx, sy in shelf_configs:
+            # Frame
+            p.setBrush(QBrush(QColor("#2a2520")))
+            p.setPen(QPen(QColor("#3d3530"), 1))
+            p.drawRect(sx, sy, shelf_w, shelf_h)
+
+            # Shelves
+            n_shelves = 5
+            for i in range(n_shelves + 1):
+                shelf_y = sy + i * shelf_h // n_shelves
+                p.setPen(QPen(QColor("#4a4040"), 2))
+                p.drawLine(sx, shelf_y, sx + shelf_w, shelf_y)
+
+            # Tape drives on each shelf
+            for i in range(n_shelves):
+                tape_y = sy + i * shelf_h // n_shelves + 8
+                tape_h2 = shelf_h // n_shelves - 16
+                for j in range(4):
+                    tx = sx + 8 + j * (shelf_w - 16) // 4
+                    tw = (shelf_w - 16) // 4 - 4
+                    col = QColor("#3a3028") if (i + j) % 3 != 0 else QColor("#2a4020")
+                    p.setBrush(QBrush(col))
+                    p.setPen(Qt.PenStyle.NoPen)
+                    p.drawRect(tx, tape_y, tw, tape_h2)
+                    # Label strip
+                    p.setBrush(QBrush(QColor("#ede8d8")))
+                    p.drawRect(tx + 2, tape_y + 4, tw - 4, 6)
+
+        # Missing tape slot — one slot clearly empty
+        p.setBrush(QBrush(QColor("#0a0806")))
+        p.setPen(Qt.PenStyle.NoPen)
+        miss_x = int(w * 0.55) + 8 + 2 * (int(w * 0.36) - 16) // 4
+        miss_w = (int(w * 0.36) - 16) // 4 - 4
+        p.drawRect(miss_x, int(h * 0.10) + 8, miss_w, shelf_h // 5 - 16)
+
+        # Floor
+        p.setBrush(QBrush(QColor("#18140f")))
+        p.setPen(Qt.PenStyle.NoPen)
+        p.drawRect(0, floor_y, w, h - floor_y)
+        p.setPen(QPen(QColor("#2d2820"), 1))
+        p.drawLine(0, floor_y, w, floor_y)
+
+        # CRT terminal on floor — glowing amber screen
+        term_x = int(w * 0.30)
+        term_y = floor_y - int(h * 0.22)
+        term_w = int(w * 0.40)
+        term_h2 = int(h * 0.20)
+        p.setBrush(QBrush(QColor("#1c1a14")))
+        p.setPen(Qt.PenStyle.NoPen)
+        p.drawRoundedRect(term_x, term_y, term_w, term_h2, 6, 6)
+        # CRT screen — amber glow
+        scr = QRect(term_x + 6, term_y + 6, term_w - 12, term_h2 - 14)
+        scr_grad = QLinearGradient(0, scr.top(), 0, scr.bottom())
+        scr_grad.setColorAt(0, QColor("#1a1200"))
+        scr_grad.setColorAt(1, QColor("#0f0c00"))
+        p.fillRect(scr, scr_grad)
+        # Amber text lines on CRT
+        p.setPen(QPen(QColor("#c8a000")))
+        p.setFont(QFont("Consolas", 8))
+        crt_lines = ["BACKUP VERIFY v2.1", "Loading Q4-2023...", "CHECKSUM: 0x3F2A", "STATUS: MISMATCH"]
+        for i, line in enumerate(crt_lines):
+            p.drawText(scr.left() + 4, scr.top() + 14 + i * 14, line)
+
+        self._draw_label(p, w, h, "Archive Room — B2", "Backup tapes don't lie.")
+
+    # ── Scene: Server Room at Night (Season 2) ────────────────────────────────
+
+    def _draw_server_room_night(self, p: QPainter, w: int, h: int):
+        # Deep night — almost no ambient light, only server LEDs and a phone screen
+        p.fillRect(0, 0, w, h, QColor("#060e08"))
+
+        floor_y = int(h * 0.78)
+
+        # Only the center rack lit — others dark
+        rack_w = int(w * 0.22)
+        rack_h = int(h * 0.70)
+        rack_gap = int(w * 0.06)
+        rack_top = int(h * 0.08)
+        rack_xs = [
+            int(w * 0.05),
+            int(w * 0.05) + rack_w + rack_gap,
+            int(w * 0.05) + 2 * (rack_w + rack_gap),
+        ]
+
+        for i, rx in enumerate(rack_xs):
+            darkness = QColor("#0a1008") if i == 1 else QColor("#070c06")
+            p.setBrush(QBrush(darkness))
+            p.setPen(QPen(QColor("#0d1a0a"), 1))
+            p.drawRect(rx, rack_top, rack_w, rack_h)
+
+            slot_h = 10
+            sy = rack_top + 10
+            slot_i = 0
+            while sy + slot_h < rack_top + rack_h - 10:
+                p.setBrush(QBrush(QColor("#060d05")))
+                p.setPen(Qt.PenStyle.NoPen)
+                p.drawRect(rx + 4, sy, rack_w - 8, slot_h)
+                # LEDs very dim except center rack
+                if i == 1:
+                    led = QColor("#16a34a") if slot_i % 4 != 2 else QColor("#991b1b")
+                    p.setBrush(QBrush(led))
+                    p.drawEllipse(rx + rack_w - 12, sy + 3, 4, 4)
+                sy += slot_h + 2
+                slot_i += 1
+
+        # Strong green glow from center rack — only light source
+        glow = QRadialGradient(rack_xs[1] + rack_w // 2, rack_top + rack_h // 2, int(w * 0.55))
+        glow.setColorAt(0, QColor(34, 197, 94, 30))
+        glow.setColorAt(1, QColor(0, 0, 0, 0))
+        p.fillRect(0, 0, w, h, glow)
+
+        # Floor
+        p.setBrush(QBrush(QColor("#060c05")))
+        p.setPen(Qt.PenStyle.NoPen)
+        p.drawRect(0, floor_y, w, h - floor_y)
+
+        # Phone on floor — bright white glow, face-up
+        phone_x = int(w * 0.68)
+        phone_y = floor_y + int((h - floor_y) * 0.10)
+        phone_w, phone_h2 = 26, 48
+        p.setBrush(QBrush(QColor("#111827")))
+        p.setPen(Qt.PenStyle.NoPen)
+        p.drawRoundedRect(phone_x, phone_y, phone_w, phone_h2, 4, 4)
+        # Screen glow
+        scr = QRect(phone_x + 2, phone_y + 4, phone_w - 4, phone_h2 - 8)
+        p.fillRect(scr, QColor("#e8f4fd"))
+        p.setFont(QFont("Arial", 5))
+        p.setPen(QPen(QColor("#1f2937")))
+        p.drawText(scr.left() + 2, scr.top() + 10, "2:58 AM")
+        p.drawText(scr.left() + 2, scr.top() + 22, "No service")
+        # Phone light spills onto floor
+        phone_glow = QRadialGradient(phone_x + phone_w // 2, phone_y + phone_h2, 40)
+        phone_glow.setColorAt(0, QColor(232, 244, 253, 25))
+        phone_glow.setColorAt(1, QColor(0, 0, 0, 0))
+        p.fillRect(phone_x - 30, floor_y, 90, h - floor_y, phone_glow)
+
+        # Time overlay — dramatic countdown
+        p.setFont(QFont("Consolas", 18, QFont.Weight.Bold))
+        p.setPen(QPen(QColor("#22c55e")))
+        p.drawText(int(w * 0.05), int(h * 0.94), "3:03 AM")
+
+        self._draw_label(p, w, h, "Server Room B1", "2:47 AM  |  Nobody else here")
 
     # ── Clue sidebar ────────────────────────────────────────────────────────
 

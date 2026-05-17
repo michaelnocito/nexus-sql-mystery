@@ -51,6 +51,11 @@ class CollectiblesPanel(QDialog):
         self._all_pages = all_pages
 
         self.setWindowTitle("The Analyst's Field Guide")
+
+    def set_pages(self, pages: list) -> None:
+        """Swap to a different season's collectible pages."""
+        self._all_pages = pages
+        self.setWindowTitle("The Python Codex")
         self.setMinimumSize(QSize(560, 500))
         self.setMaximumSize(QSize(700, 800))
         self.setStyleSheet(PANEL_QSS)

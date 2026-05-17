@@ -198,7 +198,9 @@ class CodexPanel(QDialog):
 
     def _get_completed_objectives(self):
         from core.game import OBJECTIVES_BY_ID
-        return [OBJECTIVES_BY_ID[oid] for oid in self._game.completed
+        from core.season2_game import S2_OBJECTIVES_BY_ID
+        combined = {**OBJECTIVES_BY_ID, **S2_OBJECTIVES_BY_ID}
+        return [combined[oid] for oid in self._game.completed
                 if oid in OBJECTIVES_BY_ID]
 
     def _make_card(self, concept: dict, unlocked: bool) -> QFrame:

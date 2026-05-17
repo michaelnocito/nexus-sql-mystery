@@ -202,24 +202,35 @@ class GameState:
         # Pending concept popups queue (strings — codex concept ids)
         self.pending_popups: list[str] = []
 
+        # Current season (1 or 2) — persisted in save_state
+        self.current_season: int = 1
+
         # ── UI callbacks (set by MainWindow after construction) ───────────────
         self.on_output:       callable = lambda text, style="normal": None
         self.on_popup:        callable = lambda concept_id: None
         self.on_scene_change: callable = lambda scene_id: None
         self.on_status:       callable = lambda label, value: None  # HUD update
         self.on_progress:     callable = lambda objective_id: None  # focus box update
+        self.on_season_change: callable = lambda season: None       # season transition
 
         # Track query count for pacing
         self._query_count = 0
 
     # ── Objective tracking ────────────────────────────────────────────────────
 
+    def _active_objectives(self) -> list[dict]:
+        """Return the full objective list for the current season."""
+        if self.current_season == 2:
+            from core.season2_game import S2_OBJECTIVES
+            return S2_OBJECTIVES
+        return OBJECTIVES
+
     def on_query(self, sql: str, result) -> None:
         """Called by DatabaseInterface after every successful query."""
         self._query_count += 1
 
-        # Check every incomplete objective for the current (and previous) scenes
-        for obj in OBJECTIVES:
+        # Check every incomplete objective for the active season
+        for obj in self._active_objectives():
             if obj["id"] in self.completed:
                 continue
             try:
@@ -260,30 +271,68 @@ class GameState:
     # ── Scene progression ─────────────────────────────────────────────────────
 
     def objectives_for_scene(self, scene_id: str) -> list[dict]:
-        return [o for o in OBJECTIVES if o["scene"] == scene_id]
+        return [o for o in self._active_objectives() if o["scene"] == scene_id]
 
     def scene_complete(self, scene_id: str) -> bool:
         needed = {o["id"] for o in self.objectives_for_scene(scene_id)}
         return needed.issubset(set(self.completed))
 
     def _check_scene_unlock(self) -> None:
-        scene_order = [
-            SCENE_YOUR_DESK,
-            SCENE_DB_TERMINAL,
-            SCENE_HR_FILES,
-            SCENE_CFO_DEPT,
-            SCENE_AUDIT_TRAIL,
-            SCENE_CONFRONTATION,
-        ]
-        current_idx = scene_order.index(self.scene)
-        if self.scene_complete(self.scene) and current_idx < len(scene_order) - 1:
-            next_scene = scene_order[current_idx + 1]
-            self._advance_to_scene(next_scene)
+        if self.current_season == 1:
+            scene_order = [
+                SCENE_YOUR_DESK,
+                SCENE_DB_TERMINAL,
+                SCENE_HR_FILES,
+                SCENE_CFO_DEPT,
+                SCENE_AUDIT_TRAIL,
+                SCENE_CONFRONTATION,
+            ]
+            current_idx = scene_order.index(self.scene)
+            if self.scene_complete(self.scene) and current_idx < len(scene_order) - 1:
+                self._advance_to_scene(scene_order[current_idx + 1])
+            elif self.scene_complete(self.scene) and self.s1_complete():
+                self.transition_to_season2()
+        else:
+            from core.season2_game import (
+                S2_SCENE_SERVER_LOGS, S2_SCENE_GHOST_RECORDS,
+                S2_SCENE_TIMESTAMP, S2_SCENE_ARCHIVE,
+                S2_SCENE_PATTERN_DECODER, S2_SCENE_THE_SIGNAL,
+            )
+            s2_order = [
+                S2_SCENE_SERVER_LOGS,
+                S2_SCENE_GHOST_RECORDS,
+                S2_SCENE_TIMESTAMP,
+                S2_SCENE_ARCHIVE,
+                S2_SCENE_PATTERN_DECODER,
+                S2_SCENE_THE_SIGNAL,
+            ]
+            if self.scene in s2_order:
+                current_idx = s2_order.index(self.scene)
+                if self.scene_complete(self.scene) and current_idx < len(s2_order) - 1:
+                    self._advance_to_scene(s2_order[current_idx + 1])
+
+    def s1_complete(self) -> bool:
+        """True when every Season 1 objective has been completed."""
+        s1_ids = {o["id"] for o in OBJECTIVES}
+        return s1_ids.issubset(set(self.completed))
+
+    def transition_to_season2(self) -> None:
+        """Flip to Season 2, seed the DB, and load the first S2 scene."""
+        from core.season2_game import S2_SCENE_SERVER_LOGS
+        self.current_season = 2
+        self.scene = S2_SCENE_SERVER_LOGS
+        self.step  = 0
+        self._save()
+        self.on_season_change(2)
 
     def _advance_to_scene(self, scene_id: str) -> None:
         # Show cliffhanger for the scene we're LEAVING
-        from core.scenes import CLIFFHANGERS
-        cliffhanger = CLIFFHANGERS.get(self.scene)
+        if self.current_season == 1:
+            from core.scenes import CLIFFHANGERS
+            cliffhanger = CLIFFHANGERS.get(self.scene)
+        else:
+            from core.season2_game import S2_CLIFFHANGERS
+            cliffhanger = S2_CLIFFHANGERS.get(self.scene)
         if cliffhanger:
             self.on_output(f"\n{cliffhanger}\n", style="scene")
 
@@ -294,7 +343,11 @@ class GameState:
         # Save progress to DB
         self._save()
 
-        intro = SCENE_INTROS.get(scene_id, "")
+        if self.current_season == 1:
+            intro = SCENE_INTROS.get(scene_id, "")
+        else:
+            from core.season2_scenes import S2_SCENES
+            intro = S2_SCENES.get(scene_id, {}).get("intro", "")
         if intro:
             self.on_output(f"\n{'─'*60}\n{intro}\n{'─'*60}\n", style="scene")
 
@@ -302,19 +355,23 @@ class GameState:
 
     def get_hint(self) -> str:
         """Return the next hint for the first incomplete objective in this scene."""
+        if self.current_season == 2:
+            from core.season2_game import S2_HINTS
+            hint_bank = S2_HINTS
+        else:
+            hint_bank = HINTS
         for obj in self.objectives_for_scene(self.scene):
             if obj["id"] not in self.completed:
-                hints = HINTS.get(obj["id"], [])
-                # Track how many times hinted
+                hints = hint_bank.get(obj["id"], [])
                 attr = f"_hint_idx_{obj['id']}"
                 idx = getattr(self, attr, 0)
                 if idx < len(hints):
                     setattr(self, attr, idx + 1)
                     return hints[idx]
                 elif hints:
-                    return hints[-1]   # Repeat the last (most explicit) hint
+                    return hints[-1]
                 else:
-                    return f"Try running a SQL query related to: {obj['label']}"
+                    return f"Try writing code related to: {obj['label']}"
         return "You've completed all objectives in this area. Look around for what changed."
 
     # ── Recall Gate (spaced retrieval) ────────────────────────────────────────
@@ -326,13 +383,15 @@ class GameState:
         """
         if len(self.completed) < 2:
             return None
-        # Pick second-most-recent completed objective
         target_id = self.completed[-2]
-        obj = OBJECTIVES_BY_ID.get(target_id)
-        if not obj:
-            return None
-        challenge = RECALL_CHALLENGES.get(obj.get("concept"))
-        return challenge  # may be None if no challenge defined yet
+        if self.current_season == 2:
+            from core.season2_game import S2_OBJECTIVES_BY_ID, S2_RECALL_CHALLENGES
+            obj = S2_OBJECTIVES_BY_ID.get(target_id)
+            challenge = S2_RECALL_CHALLENGES.get(obj.get("concept")) if obj else None
+        else:
+            obj = OBJECTIVES_BY_ID.get(target_id)
+            challenge = RECALL_CHALLENGES.get(obj.get("concept")) if obj else None
+        return challenge
 
     # ── Persistence ───────────────────────────────────────────────────────────
 
@@ -340,12 +399,13 @@ class GameState:
         try:
             conn = self._db._connect()
             conn.execute(
-                "UPDATE save_state SET scene=?, clues=?, objectives=?, saved_at=? WHERE id=1",
+                "UPDATE save_state SET scene=?, clues=?, objectives=?, saved_at=?, season=? WHERE id=1",
                 (
                     self.scene,
                     json.dumps(self.clues),
                     json.dumps(self.completed),
                     datetime.now().isoformat(timespec="seconds"),
+                    self.current_season,
                 )
             )
             conn.commit()
@@ -353,28 +413,37 @@ class GameState:
             pass  # Save failure should never crash the game
 
     def load(self) -> None:
-        """Restore from save_state table."""
+        """Restore from save_state table. Migrates older saves that lack the season column."""
         try:
             conn = self._db._connect()
+            # Add season column if this is an older save without it
+            cols = [r[1] for r in conn.execute("PRAGMA table_info(save_state)").fetchall()]
+            if "season" not in cols:
+                conn.execute("ALTER TABLE save_state ADD COLUMN season INTEGER DEFAULT 1")
+                conn.commit()
             row = conn.execute("SELECT * FROM save_state WHERE id=1").fetchone()
             if row:
-                self.scene     = row["scene"]     or SCENE_YOUR_DESK
-                self.clues     = json.loads(row["clues"]      or "[]")
-                self.completed = json.loads(row["objectives"] or "[]")
+                self.scene          = row["scene"]      or SCENE_YOUR_DESK
+                self.clues          = json.loads(row["clues"]       or "[]")
+                self.completed      = json.loads(row["objectives"]  or "[]")
+                self.current_season = row["season"] if row["season"] is not None else 1
         except Exception:
             pass
 
     # ── Utility ───────────────────────────────────────────────────────────────
 
     def progress_pct(self) -> int:
-        total = len(OBJECTIVES)
-        done  = len(self.completed)
+        from core.season2_game import S2_OBJECTIVES
+        all_objs = OBJECTIVES if self.current_season == 1 else S2_OBJECTIVES
+        total = len(all_objs)
+        s1_done = sum(1 for c in self.completed if c in {o["id"] for o in OBJECTIVES})
+        s2_done = sum(1 for c in self.completed if c not in {o["id"] for o in OBJECTIVES})
+        done = s1_done if self.current_season == 1 else s2_done
         return int(100 * done / total) if total else 0
 
     def __repr__(self):
         return (
-            f"<GameState scene={self.scene!r} "
-            f"objectives={len(self.completed)}/{len(OBJECTIVES)} "
+            f"<GameState season={self.current_season} scene={self.scene!r} "
             f"clues={len(self.clues)}>"
         )
 

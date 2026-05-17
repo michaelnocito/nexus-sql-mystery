@@ -22,6 +22,10 @@ from core.game import GameState
 from core.scenes import SCENES, STEP_TEXT, OBJECTIVE_FOCUS
 from core.codex import get_concept, all_concepts
 from core.collectibles import FIELD_GUIDE_PAGES
+from core.season2_scenes import S2_SCENES
+from core.season2_game import S2_STEP_TEXT, S2_OBJECTIVE_FOCUS
+from core.season2_codex import S2_CONCEPTS
+from core.season2_collectibles import S2_FIELD_GUIDE_PAGES
 
 
 # ── Light theme palette ───────────────────────────────────────────────────────
@@ -120,11 +124,12 @@ class MainWindow(QMainWindow):
         self._game._db = self._db           # complete the circular reference
 
         # Wire game callbacks
-        self._game.on_output       = self._on_output
-        self._game.on_popup        = self._on_popup
-        self._game.on_scene_change = self._on_scene_change
-        self._game.on_status       = self._on_status
-        self._game.on_progress     = self._on_progress
+        self._game.on_output        = self._on_output
+        self._game.on_popup         = self._on_popup
+        self._game.on_scene_change  = self._on_scene_change
+        self._game.on_status        = self._on_status
+        self._game.on_progress      = self._on_progress
+        self._game.on_season_change = self._on_season_change
 
         # ── Try to load existing save ────────────────────────────────────────
         self._game.load()
@@ -178,7 +183,7 @@ class MainWindow(QMainWindow):
         # ── Codex browser ────────────────────────────────────────────────────
         self._codex = CodexPanel(
             self._game,
-            all_concepts(),
+            all_concepts() + list(S2_CONCEPTS.values()),
             self._show_concept_card,
             parent=self,
         )
@@ -206,7 +211,7 @@ class MainWindow(QMainWindow):
         self._cmd.append_output(text, style)
 
     def _on_popup(self, concept_id: str) -> None:
-        concept = get_concept(concept_id)
+        concept = get_concept(concept_id) or S2_CONCEPTS.get(concept_id)
         if concept:
             self._show_concept_card(concept)
 
@@ -307,6 +312,23 @@ class MainWindow(QMainWindow):
         self._scene_view.set_scene(scene_id)
         self._render_current_scene()
 
+    def _on_season_change(self, season: int) -> None:
+        """Called when the game transitions from Season 1 to Season 2."""
+        # Seed S2 tables in the database
+        self._db.setup_season2()
+        # Swap collectibles panel to S2
+        self._collectibles.set_pages(S2_FIELD_GUIDE_PAGES)
+        # Show the season transition card
+        self._cmd.append_output(
+            "\n" + "═" * 60 + "\n"
+            "  SEASON 2: THE GHOST IN THE MACHINE\n"
+            "  Something is wrong in the server room.\n"
+            "  You'll need more than SQL this time.\n"
+            + "═" * 60 + "\n",
+            style="scene",
+        )
+        self._render_current_scene()
+
     def _on_status(self, label: str, value) -> None:
         if label == "clues":
             self._hud.set_clues(value)
@@ -322,8 +344,12 @@ class MainWindow(QMainWindow):
         self._scene_view.set_clues(self._game.clues)
 
         # ── Celebration ──────────────────────────────────────────────────────
-        from core.game import OBJECTIVES_BY_ID
-        obj = OBJECTIVES_BY_ID.get(completed_objective_id, {})
+        if self._game.current_season == 2:
+            from core.season2_game import S2_OBJECTIVES_BY_ID
+            obj = S2_OBJECTIVES_BY_ID.get(completed_objective_id, {})
+        else:
+            from core.game import OBJECTIVES_BY_ID
+            obj = OBJECTIVES_BY_ID.get(completed_objective_id, {})
         label = obj.get("label", "Clue found!")
         done = len(self._game.completed)
 
@@ -367,8 +393,11 @@ class MainWindow(QMainWindow):
 
     # ── Scene rendering ───────────────────────────────────────────────────────
 
+    def _active_scenes(self) -> dict:
+        return S2_SCENES if self._game.current_season == 2 else SCENES
+
     def _render_current_scene(self) -> None:
-        scene = SCENES.get(self._game.scene)
+        scene = self._active_scenes().get(self._game.scene)
         if not scene:
             return
 
@@ -394,21 +423,22 @@ class MainWindow(QMainWindow):
 
     def _update_focus_box(self) -> None:
         """Set focus box to the first incomplete objective's command."""
+        focus_map = S2_OBJECTIVE_FOCUS if self._game.current_season == 2 else OBJECTIVE_FOCUS
         for obj in self._game.objectives_for_scene(self._game.scene):
             oid = obj["id"]
             if oid not in self._game.completed:
-                if oid in OBJECTIVE_FOCUS:
-                    label, cmd = OBJECTIVE_FOCUS[oid]
+                if oid in focus_map:
+                    label, cmd = focus_map[oid]
                     self._cmd.set_focus(label, cmd)
                 return
-        # All done in this scene — hide the box
         self._cmd.set_focus("", "")
 
     def _show_next_objective_guidance(self) -> None:
+        step_map = S2_STEP_TEXT if self._game.current_season == 2 else STEP_TEXT
         for obj in self._game.objectives_for_scene(self._game.scene):
             oid = obj["id"]
             if oid not in self._game.completed:
-                text = STEP_TEXT.get(oid)
+                text = step_map.get(oid)
                 if text:
                     self._cmd.append_output(f"\n{text}\n", style="guidance")
                 break

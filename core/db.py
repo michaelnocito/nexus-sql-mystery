@@ -116,6 +116,11 @@ class DatabaseInterface:
 
         self._seed(conn)
 
+    def setup_season2(self):
+        """Seed Season 2 tables — safe to call multiple times (guards internally)."""
+        from core.season2_data import seed_season2
+        seed_season2(self._connect())
+
     def _seed(self, conn):
         conn.executescript("""
         -- ── EMPLOYEES ──────────────────────────────────────────────────────
