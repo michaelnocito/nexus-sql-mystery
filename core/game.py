@@ -265,17 +265,13 @@ class GameState:
         self._check_scene_unlock()
 
     def on_exec(self, code: str, output: str) -> None:
-        """Called after Python code executes in Season 2."""
-        if self.current_season != 2:
-            return
-        for obj in self._active_objectives():
-            if obj["id"] in self.completed:
-                continue
-            try:
-                if obj["validator"](code, output):
-                    self._complete_objective(obj)
-            except Exception:
-                pass
+        """
+        Called after raw Python code executes. Season 2's main path is now
+        SQL — objectives validate through on_query(sql, result) like Season 1
+        (the player runs db.query(...), which routes there). This hook is a
+        no-op until the future Pro-Panel Python side-quest spec wires it up.
+        """
+        return
 
     def on_error(self, msg: str) -> None:
         """Called by DatabaseInterface on SQL errors."""

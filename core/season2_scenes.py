@@ -35,8 +35,8 @@ S2_SCENES = {
             "User field: blank. IP address: internal.\n\n"
             "Someone — or something — is querying the database\n"
             "while the building is empty.\n\n"
-            "You're going to need more than SQL this time.\n"
-            "Time to learn some Python."
+            "This isn't a Season 1 query. You'll need sharper SQL —\n"
+            "patterns, time functions, and questions inside questions."
         ),
         "focus_label": "Try this first:",
         "focus":       'logs = db.query("SELECT * FROM server_logs")',
@@ -101,8 +101,8 @@ S2_SCENES = {
             "The timestamps are strings. '2024-03-15 03:03:00'.\n"
             "You need to parse them — extract the hour, the minute.\n"
             "Prove that 3:03 isn't a coincidence.\n\n"
-            "Python has string methods for this. .split(), .find(),\n"
-            "slicing with [ ]. Your scalpel for dissecting text."
+            "SQL can prove this. GROUP BY buckets the rows, HAVING\n"
+            "keeps only the suspicious ones. Evidence, not vibes."
         ),
         "focus_label": "Parse the timestamps:",
         "focus":       "logs = db.query(\"SELECT * FROM server_logs WHERE timestamp LIKE '%03:03%'\")\nfor r in logs:\n    print(str(r[1]).split(' ')[1])",
