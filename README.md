@@ -171,6 +171,7 @@ You don't memorize syntax. You use it to catch a thief.
 - **Spirit guide** — Sam drops contextual tips when you're stuck
 - **Auto-save** — pick up where you left off
 - **Keyboard shortcuts** — Ctrl+Enter run, Ctrl+H hint, Ctrl+S solution, Ctrl+D copy
+- **[SQL Foundations Guide](docs/sql-foundations.md)** — standalone reference doc with exercises to reinforce what you learned
 
 ---
 
