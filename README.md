@@ -10,8 +10,8 @@ No slides. No lectures. You write real SQL queries against a live database to un
 
 ```bash
 # Clone and run
-git clone https://github.com/YOUR_USERNAME/nexus.git
-cd nexus
+git clone https://github.com/michaelnocito/nexus-sql-mystery.git
+cd nexus-sql-mystery
 pip install -r requirements.txt
 python main.py
 ```
