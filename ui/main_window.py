@@ -18,12 +18,12 @@ from ui.collectibles_panel import CollectiblesPanel
 from ui.celebrations import ToastBanner, ScreenFlash, ParticleOverlay, play_chime, play_victory_chime
 
 from core.db import DatabaseInterface
-from core.game import GameState
-from core.scenes import SCENES, STEP_TEXT, OBJECTIVE_FOCUS
+from core.game import GameState, S1_OBJECTIVE_FOCUS
+from core.scenes import SCENES
 from core.codex import get_concept, all_concepts
 from core.collectibles import FIELD_GUIDE_PAGES
 from core.season2_scenes import S2_SCENES
-from core.season2_game import S2_STEP_TEXT, S2_OBJECTIVE_FOCUS
+from core.season2_game import S2_OBJECTIVE_FOCUS
 from core.season2_codex import S2_CONCEPTS
 from core.season2_collectibles import S2_FIELD_GUIDE_PAGES
 
@@ -435,21 +435,14 @@ class MainWindow(QMainWindow):
             len(self._game.clues), len(self._game._active_objectives()))
         self._update_focus_box()
 
-        if self._game.current_season == 2:
-            # STORY panel + BRIEFING are driven by the engine; the console
-            # stays mechanical-only (no narration in the feed).
-            self._game.emit_scene_state()
-        else:
-            self._sync_side_panel()
-            visit_key = f"_visited_{self._game.scene}"
-            if not getattr(self, visit_key, False):
-                setattr(self, visit_key, True)
-                self._cmd.append_output(scene["intro"], style="scene")
-            self._show_next_objective_guidance()
+        # Both seasons: STORY panel + BRIEFING are driven by the engine;
+        # the console stays mechanical-only (no narration in the feed).
+        self._game.emit_scene_state()
 
     def _update_focus_box(self) -> None:
         """Set focus box to the first incomplete objective's command."""
-        focus_map = S2_OBJECTIVE_FOCUS if self._game.current_season == 2 else OBJECTIVE_FOCUS
+        focus_map = (S2_OBJECTIVE_FOCUS if self._game.current_season == 2
+                     else S1_OBJECTIVE_FOCUS)
         for obj in self._game.objectives_for_scene(self._game.scene):
             oid = obj["id"]
             if oid not in self._game.completed:
@@ -460,33 +453,13 @@ class MainWindow(QMainWindow):
         self._cmd.set_focus("", "")
 
     def _sync_side_panel(self) -> None:
-        """Feed the side info panel: progress always; S1 also sets objective."""
-        total = len(self._game._active_objectives())
-        self._scene_view.set_progress(len(self._game.clues), total)
-        if self._game.current_season == 2:
-            return  # S2 GOAL/YOUR MOVE come from the engine's on_briefing
-        objective = "Scene complete — advancing…"
-        for obj in self._game.objectives_for_scene(self._game.scene):
-            oid = obj["id"]
-            if oid not in self._game.completed:
-                if oid in OBJECTIVE_FOCUS:
-                    objective = OBJECTIVE_FOCUS[oid][0].rstrip(":")
-                else:
-                    objective = obj.get("label", "")
-                break
-        self._scene_view.set_objective(objective)
+        """Progress bar only — GOAL/YOUR MOVE come from the engine's on_briefing."""
+        self._scene_view.set_progress(
+            len(self._game.clues), len(self._game._active_objectives()))
 
     def _show_next_objective_guidance(self) -> None:
-        if self._game.current_season == 2:
-            return  # S2 guidance lives in the STORY panel / BRIEFING, not the feed
-        step_map = STEP_TEXT
-        for obj in self._game.objectives_for_scene(self._game.scene):
-            oid = obj["id"]
-            if oid not in self._game.completed:
-                text = step_map.get(oid)
-                if text:
-                    self._cmd.append_output(f"\n{text}\n", style="guidance")
-                break
+        # Guidance now lives in the STORY panel / BRIEFING, not the feed.
+        return
 
     # ── Window close ──────────────────────────────────────────────────────────
 

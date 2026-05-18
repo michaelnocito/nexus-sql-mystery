@@ -53,127 +53,590 @@ def _result_row_count(minimum):
     return validate
 
 
+def _no_star(sql, r):
+    low = sql.lower()
+    return ("select" in low and "from" in low and "employees" in low
+            and "*" not in sql and len(r) > 0)
+
+# Season 1 — VARIED PRACTICE: 8 core SQL skills, each practised TWICE
+# across 16 beats in a slightly different context + escalating difficulty.
+# Skill = concept id; card shows on rep 1 only (rep 2 is silent practice).
+#   s1_select · s1_where · s1_count · s1_sum · s1_groupby · s1_join
+#   · s1_orderby · s1_in
 OBJECTIVES = [
-    # ── Scene: your_desk ─────────────────────────────────────────────────────
+    # ── your_desk ────────────────────────────────────────────────────────────
     {
-        "id":        "list_tables",
-        "scene":     SCENE_YOUR_DESK,
-        "label":     "Discovered available tables",
-        "detail":    "Used db.tables() or queried sqlite_master to see what data exists.",
-        "concept":   "tables",
-        "validator": lambda sql, r: (
-            "sqlite_master" in sql.lower() or
-            ("name" in [c.lower() for c in r.columns] and len(r) >= 3)
-        ),
+        "id": "list_tables", "scene": SCENE_YOUR_DESK,
+        "concept": "s1_select", "rep": 1,
+        "label": "Listed the database tables",
+        "detail": "Queried sqlite_master to see what data the company keeps.",
+        "validator": lambda sql, r: "sqlite_master" in sql.lower() and len(r) > 0,
     },
     {
-        "id":        "examine_employees",
-        "scene":     SCENE_YOUR_DESK,
-        "label":     "Pulled the employee roster",
-        "detail":    "Ran SELECT on the employees table — confirmed your own record is in there.",
-        "concept":   "select_star",
-        "validator": _sql_contains("select", "from", "employees"),
+        "id": "view_employees", "scene": SCENE_YOUR_DESK,
+        "concept": "s1_select", "rep": 2,
+        "label": "Pulled specific employee columns",
+        "detail": "Selected named columns from employees (not SELECT *).",
+        "validator": _no_star,
     },
     {
-        "id":        "count_employees",
-        "scene":     SCENE_YOUR_DESK,
-        "label":     "Counted total headcount",
-        "detail":    "Used COUNT(*) to measure how many employees Nexus has.",
-        "concept":   "aggregate_count",
+        "id": "count_headcount", "scene": SCENE_YOUR_DESK,
+        "concept": "s1_count", "rep": 1,
+        "label": "Counted the headcount",
+        "detail": "Used COUNT(*) to measure how many people work at Nexus.",
         "validator": _sql_contains("count", "employees"),
     },
 
-    # ── Scene: db_terminal ───────────────────────────────────────────────────
+    # ── db_terminal ──────────────────────────────────────────────────────────
     {
-        "id":        "find_high_spend_vendors",
-        "scene":     SCENE_DB_TERMINAL,
-        "label":     "Found top vendors by spend",
-        "detail":    "Used GROUP BY + SUM to rank vendors by total transaction amount.",
-        "concept":   "group_by_sum",
-        "validator": lambda sql, r: _sql_contains("group by", "vendor_id")(sql, r) and _sql_contains("sum")(sql, r),
+        "id": "vendor_spend", "scene": SCENE_DB_TERMINAL,
+        "concept": "s1_groupby", "rep": 1,
+        "label": "Ranked vendors by total spend",
+        "detail": "GROUP BY vendor_id + SUM(amount) to rank where the money goes.",
+        "validator": lambda sql, r: _sql_contains("group by", "vendor_id")(sql, r) and "sum" in sql.lower(),
     },
     {
-        "id":        "spot_unverified_vendors",
-        "scene":     SCENE_DB_TERMINAL,
-        "label":     "Flagged unverified vendors",
-        "detail":    "Queried vendors WHERE verified = 0 — found two with no address.",
-        "concept":   "where_filter",
-        "validator": _sql_contains("vendor", "verified"),
+        "id": "unverified_vendors", "scene": SCENE_DB_TERMINAL,
+        "concept": "s1_where", "rep": 1,
+        "label": "Flagged the unverified vendors",
+        "detail": "WHERE verified = 0 — two vendors, no address on file.",
+        "validator": _sql_contains("vendors", "verified"),
     },
     {
-        "id":        "join_transactions_vendors",
-        "scene":     SCENE_DB_TERMINAL,
-        "label":     "Linked transactions to vendor names",
-        "detail":    "Wrote a JOIN to attach vendor names to transaction records.",
-        "concept":   "inner_join",
+        "id": "join_vendor_names", "scene": SCENE_DB_TERMINAL,
+        "concept": "s1_join", "rep": 1,
+        "label": "Joined transactions to vendor names",
+        "detail": "JOIN transactions to vendors to put names on the numbers.",
         "validator": _sql_contains("join", "vendor", "transaction"),
     },
 
-    # ── Scene: hr_files ──────────────────────────────────────────────────────
+    # ── hr_files ─────────────────────────────────────────────────────────────
     {
-        "id":        "find_approver",
-        "scene":     SCENE_HR_FILES,
-        "label":     "Identified the approver",
-        "detail":    "Discovered that approved_by = 4 on every suspicious transaction.",
-        "concept":   "where_equals",
-        "validator": _sql_contains("approved_by"),
-    },
-    {
-        "id":        "lookup_employee_4",
-        "scene":     SCENE_HR_FILES,
-        "label":     "Looked up employee #4",
-        "detail":    "Queried employees WHERE id = 4 — Marcus Webb, CFO.",
-        "concept":   "primary_key_lookup",
+        "id": "lookup_webb", "scene": SCENE_HR_FILES,
+        "concept": "s1_where", "rep": 2,
+        "label": "Looked up employee #4",
+        "detail": "WHERE id = 4 — a precise lookup. Marcus Webb, CFO.",
         "validator": _sql_contains("employees", "id", "4"),
     },
     {
-        "id":        "check_special_projects_budget",
-        "scene":     SCENE_HR_FILES,
-        "label":     "Checked Special Projects budget",
-        "detail":    "Found Special Projects has a $4.8M budget — far larger than any other dept.",
-        "concept":   "order_by",
-        "validator": _sql_contains("department", "budget"),
+        "id": "approver_counts", "scene": SCENE_HR_FILES,
+        "concept": "s1_groupby", "rep": 2,
+        "label": "Counted approvals per employee",
+        "detail": "GROUP BY approved_by + COUNT — same skill, new column.",
+        "validator": lambda sql, r: _sql_contains("group by", "approved_by")(sql, r) and "count" in sql.lower(),
+    },
+    {
+        "id": "dept_budgets", "scene": SCENE_HR_FILES,
+        "concept": "s1_orderby", "rep": 1,
+        "label": "Ranked the department budgets",
+        "detail": "ORDER BY budget DESC — Special Projects dwarfs the rest.",
+        "validator": _sql_contains("departments", "order by", "budget"),
     },
 
-    # ── Scene: cfo_dept ──────────────────────────────────────────────────────
+    # ── cfo_dept ─────────────────────────────────────────────────────────────
     {
-        "id":        "total_apex_spend",
-        "scene":     SCENE_CFO_DEPT,
-        "label":     "Totalled Apex Solutions payments",
-        "detail":    "SUM of all transactions to vendor_id 4 (Apex Solutions LLC) — over $1.2M.",
-        "concept":   "sum_where",
+        "id": "apex_total", "scene": SCENE_CFO_DEPT,
+        "concept": "s1_sum", "rep": 1,
+        "label": "Totalled Apex's payments",
+        "detail": "SUM(amount) WHERE vendor_id = 4 — over a million dollars.",
         "validator": _sql_contains("sum", "vendor_id"),
     },
     {
-        "id":        "escalation_pattern",
-        "scene":     SCENE_CFO_DEPT,
-        "label":     "Spotted the escalation pattern",
-        "detail":    "Ordered Apex transactions by date — amounts grew from $87K to $243K in 9 months.",
-        "concept":   "order_by_date",
+        "id": "apex_count", "scene": SCENE_CFO_DEPT,
+        "concept": "s1_count", "rep": 2,
+        "label": "Counted Apex's payments",
+        "detail": "COUNT(*) WHERE vendor_id = 4 — same skill, filtered set.",
+        "validator": _sql_contains("count", "vendor_id"),
+    },
+    {
+        "id": "escalation", "scene": SCENE_CFO_DEPT,
+        "concept": "s1_orderby", "rep": 2,
+        "label": "Traced the escalation by date",
+        "detail": "ORDER BY date on the Apex rows — amounts climb fast.",
         "validator": _sql_contains("vendor_id", "order by", "date"),
     },
 
-    # ── Scene: audit_trail ───────────────────────────────────────────────────
+    # ── audit_trail ──────────────────────────────────────────────────────────
     {
-        "id":        "dual_vendor_fraud",
-        "scene":     SCENE_AUDIT_TRAIL,
-        "label":     "Linked Apex + Pinnacle to same approver",
-        "detail":    "Both shell vendors were approved exclusively by Marcus Webb (id=4).",
-        "concept":   "in_clause",
+        "id": "dual_vendor", "scene": SCENE_AUDIT_TRAIL,
+        "concept": "s1_in", "rep": 1,
+        "label": "Pulled both shell vendors with IN",
+        "detail": "WHERE vendor_id IN (4, 7) — Apex and Pinnacle together.",
         "validator": _sql_contains("vendor_id", "in"),
     },
     {
-        "id":        "total_fraud_amount",
-        "scene":     SCENE_AUDIT_TRAIL,
-        "label":     "Calculated total fraudulent spend",
-        "detail":    "Combined SUM of Apex + Pinnacle payments — the full theft amount.",
-        "concept":   "subquery_or_having",
-        "validator": lambda sql, r: _sql_contains("sum")(sql, r) and _sql_contains("vendor_id")(sql, r),
+        "id": "special_total", "scene": SCENE_AUDIT_TRAIL,
+        "concept": "s1_sum", "rep": 2,
+        "label": "Totalled Special Projects spend",
+        "detail": "SUM(amount) WHERE department = 'Special Projects'.",
+        "validator": lambda sql, r: "sum" in sql.lower() and (
+            "special projects" in sql.lower() or "department" in sql.lower()) and len(r) > 0,
+    },
+    {
+        "id": "approver_join", "scene": SCENE_AUDIT_TRAIL,
+        "concept": "s1_join", "rep": 2,
+        "label": "Named the approver via JOIN",
+        "detail": "JOIN employees ON approved_by — same skill, new key.",
+        "validator": _sql_contains("join", "employees", "approved_by"),
+    },
+
+    # ── confrontation ────────────────────────────────────────────────────────
+    {
+        "id": "finance_exec", "scene": SCENE_CONFRONTATION,
+        "concept": "s1_in", "rep": 2,
+        "label": "Identified the Finance/Executive staff",
+        "detail": "WHERE department IN ('Finance','Executive') — the rooms it ran through.",
+        "validator": _sql_contains("employees", "department", "in"),
     },
 ]
 
 # Fast lookup by id
 OBJECTIVES_BY_ID = {o["id"]: o for o in OBJECTIVES}
+
+S1_SCENE_ORDER = [
+    SCENE_YOUR_DESK, SCENE_DB_TERMINAL, SCENE_HR_FILES,
+    SCENE_CFO_DEPT, SCENE_AUDIT_TRAIL, SCENE_CONFRONTATION,
+]
+
+S1_SCENE_OBJ_ORDER = {}
+for _o in OBJECTIVES:
+    S1_SCENE_OBJ_ORDER.setdefault(_o["scene"], []).append(_o["id"])
+
+
+# ── Season 1 narrative (STORY panel WHY/beat + BRIEFING + recall) ────────────
+
+S1_SCENE_WHY = {
+    SCENE_YOUR_DESK: (
+        "Day one at Nexus Analytics. You're the new data analyst. Diana's\n"
+        "note says: get familiar with the database before the 9am standup.\n"
+        "Nobody's watching. The data is. Start by learning what's here."
+    ),
+    SCENE_DB_TERMINAL: (
+        "Basement B1. The full transaction log — every dollar Nexus ever\n"
+        "paid out. Diana's hunch: some of these vendors don't smell right.\n"
+        "Follow the money."
+    ),
+    SCENE_HR_FILES: (
+        "HR records. Every payment was signed off by someone. If the same\n"
+        "name keeps appearing on the suspicious ones, that's not a\n"
+        "coincidence — that's a thread to pull."
+    ),
+    SCENE_CFO_DEPT: (
+        "The CFO's department. One vendor — Apex Solutions — has been bled\n"
+        "money like a faucet. How much, how often, and is it getting worse?"
+    ),
+    SCENE_AUDIT_TRAIL: (
+        "Build the case. Two shell vendors, one approver, one department.\n"
+        "Numbers that hold up in a room with lawyers in it."
+    ),
+    SCENE_CONFRONTATION: (
+        "Rachel Kim's office. You have the whole picture. One last query\n"
+        "to name the people in the rooms where this was signed."
+    ),
+}
+
+S1_SETUP = {
+    "list_tables": (
+        "A database you've never seen. Before you can investigate anything\n"
+        "you need the lay of the land — what tables even exist here?"
+    ),
+    "view_employees": (
+        "The employees table is the place to start — it's got you in it.\n"
+        "You don't need every column; just who people are and what they earn."
+    ),
+    "count_headcount": (
+        "Sam from accounting pings you: 'Quick — how many people work\n"
+        "here? Need it for a report.' Don't count by hand."
+    ),
+    "vendor_spend": (
+        "Twenty-eight payments. Reading them one by one is useless. You\n"
+        "want the total paid to each vendor, biggest first — so the\n"
+        "money trail jumps out on its own."
+    ),
+    "unverified_vendors": (
+        "A real vendor has an address and a verified flag. A fake one\n"
+        "doesn't. Find the vendors that were never verified."
+    ),
+    "join_vendor_names": (
+        "The transactions table only stores vendor_id — numbers, no names.\n"
+        "Useless for a report. Stitch the names back on."
+    ),
+    "lookup_webb": (
+        "The suspicious payments keep pointing at one approver id: 4.\n"
+        "Put a face to the number — pull that exact employee."
+    ),
+    "approver_counts": (
+        "One id approving a lot would be damning. Count how many payments\n"
+        "each approver signed — let the tally expose them."
+    ),
+    "dept_budgets": (
+        "Money this size has to be hiding in a big budget line. Rank the\n"
+        "departments by budget and see which one could swallow it."
+    ),
+    "apex_total": (
+        "Apex Solutions — unverified, no address, paid repeatedly. The\n"
+        "first damning number: how much has Nexus paid them in total?"
+    ),
+    "apex_count": (
+        "A big total could be one freak invoice. How many separate Apex\n"
+        "payments were there? Frequency is the tell."
+    ),
+    "escalation": (
+        "If this is theft, it gets bolder over time. Pull Apex's payments\n"
+        "in date order and watch the amounts move."
+    ),
+    "dual_vendor": (
+        "Apex isn't alone. Pinnacle Strategy fits the same profile. Pull\n"
+        "both vendors' payments in a single query."
+    ),
+    "special_total": (
+        "All of it runs through one department. What's the full amount\n"
+        "charged to Special Projects?"
+    ),
+    "approver_join": (
+        "The report needs a name, not 'approved_by = 4'. Join the\n"
+        "approver's real name onto the shell-vendor payments."
+    ),
+    "finance_exec": (
+        "Last query. The sign-offs lived in Finance and the Executive\n"
+        "suite. Name everyone in those two departments — the rooms this\n"
+        "passed through on its way to $1.87M."
+    ),
+}
+
+S1_YOUR_MOVE = {
+    "list_tables": (
+        "See what tables exist",
+        "Return every table name in the database. Query the built-in "
+        "catalog: SELECT name FROM sqlite_master WHERE type='table'.",
+    ),
+    "view_employees": (
+        "Pull name + salary for all staff",
+        "From the employees table, return just the name and salary columns "
+        "for every row. List the columns explicitly — do not use SELECT *.",
+    ),
+    "count_headcount": (
+        "Count all employees",
+        "Return a single number: how many rows are in the employees table. "
+        "Use SELECT COUNT(*) FROM employees.",
+    ),
+    "vendor_spend": (
+        "Total spend per vendor, biggest first",
+        "From transactions, return each vendor_id with the SUM of its "
+        "amount, grouped by vendor_id, ordered highest total first. "
+        "GROUP BY vendor_id; ORDER BY SUM(amount) DESC.",
+    ),
+    "unverified_vendors": (
+        "Find the unverified vendors",
+        "From the vendors table, return every row where verified = 0. "
+        "WHERE verified = 0.",
+    ),
+    "join_vendor_names": (
+        "Attach vendor names to transactions",
+        "Return transactions with the vendor's name alongside. JOIN "
+        "transactions to vendors ON transactions.vendor_id = vendors.id.",
+    ),
+    "lookup_webb": (
+        "Pull employee #4",
+        "From employees, return the single row where id = 4. "
+        "WHERE id = 4.",
+    ),
+    "approver_counts": (
+        "Count payments per approver",
+        "From transactions, return each approved_by value with how many "
+        "rows it has, most first. GROUP BY approved_by; COUNT(*); "
+        "ORDER BY COUNT(*) DESC.",
+    ),
+    "dept_budgets": (
+        "Rank departments by budget",
+        "From the departments table, return every row ordered by budget "
+        "highest first. ORDER BY budget DESC.",
+    ),
+    "apex_total": (
+        "Total everything paid to Apex",
+        "From transactions, return the SUM of amount for vendor_id = 4. "
+        "SELECT SUM(amount) ... WHERE vendor_id = 4.",
+    ),
+    "apex_count": (
+        "Count Apex's payments",
+        "From transactions, return how many rows have vendor_id = 4. "
+        "SELECT COUNT(*) ... WHERE vendor_id = 4.",
+    ),
+    "escalation": (
+        "List Apex's payments oldest to newest",
+        "From transactions where vendor_id = 4, return date and amount "
+        "ordered by date ascending. WHERE vendor_id = 4 ORDER BY date.",
+    ),
+    "dual_vendor": (
+        "Pull Apex AND Pinnacle together",
+        "From transactions, return every row whose vendor_id is 4 or 7. "
+        "WHERE vendor_id IN (4, 7).",
+    ),
+    "special_total": (
+        "Total the Special Projects spend",
+        "From transactions, return the SUM of amount where department = "
+        "'Special Projects'. SUM(amount) ... WHERE department='Special Projects'.",
+    ),
+    "approver_join": (
+        "Put the approver's name on the shell payments",
+        "Return the shell-vendor rows with the approver's name. JOIN "
+        "transactions to employees ON transactions.approved_by = "
+        "employees.id, filtered to vendor_id IN (4,7).",
+    ),
+    "finance_exec": (
+        "Name everyone in Finance or Executive",
+        "From employees, return every row whose department is 'Finance' "
+        "or 'Executive'. WHERE department IN ('Finance','Executive').",
+    ),
+}
+
+S1_RESULT_REACTION = {
+    "list_tables": (
+        "Four tables: employees, departments, vendors, transactions.\n"
+        "That's the whole company on a screen. Everything Nexus is —\n"
+        "who works here, who gets paid, and how much. Start digging."
+    ),
+    "view_employees": (
+        "Ten people. There you are — Alex Chen, Junior Analyst, $68k.\n"
+        "And there's the CFO at $310k. Small company. Everyone's one\n"
+        "query away from everyone else."
+    ),
+    "count_headcount": (
+        "Ten. Exactly ten employees run this entire operation. A company\n"
+        "this small, $1.87M doesn't just vanish unnoticed — unless\n"
+        "someone made sure no one was counting."
+    ),
+    "vendor_spend": (
+        "The ranking is lopsided. Two vendor IDs — 4 and 7 — tower over\n"
+        "everything else, hundreds of thousands each. The rest are office\n"
+        "supplies and software. Those two don't belong."
+    ),
+    "unverified_vendors": (
+        "Two rows. Apex Solutions LLC and Pinnacle Strategy. Both\n"
+        "verified = 0. Both '(no address on file)'. The two biggest\n"
+        "vendors in the company are ghosts."
+    ),
+    "join_vendor_names": (
+        "Now the log reads in plain English — and the big Consulting\n"
+        "payments all carry the same two names: Apex and Pinnacle.\n"
+        "Same story, now with faces."
+    ),
+    "lookup_webb": (
+        "Employee #4: Marcus Webb. CFO. Salary $310,000. The man whose\n"
+        "id is stamped on every suspicious approval — and he signs his\n"
+        "own paychecks too."
+    ),
+    "approver_counts": (
+        "One number drowns the rest: approver 4, signing far more than\n"
+        "anyone else. Webb approved the shell-vendor payments himself,\n"
+        "over and over. Not delegated. Personal."
+    ),
+    "dept_budgets": (
+        "Special Projects: $4.8 million. Triple the next line. A budget\n"
+        "that big with that vague a name isn't a department — it's a\n"
+        "place to hide things."
+    ),
+    "apex_total": (
+        "Over $1.2 million to a company with no address. One vendor.\n"
+        "Money that left Nexus and went somewhere nobody can point to\n"
+        "on a map."
+    ),
+    "apex_count": (
+        "Not one big invoice — many. A steady drip of large payments,\n"
+        "spaced out, routine. Designed to look boring. Designed not to\n"
+        "be counted."
+    ),
+    "escalation": (
+        "Watch the column climb: $87K, then $112K, $143K, $198K,\n"
+        "$243K. It didn't stay careful. It got greedy. Greed leaves\n"
+        "a slope you can measure."
+    ),
+    "dual_vendor": (
+        "Apex and Pinnacle, side by side: same Consulting category,\n"
+        "same Special Projects department, same approver. Two shells,\n"
+        "one hand running both."
+    ),
+    "special_total": (
+        "The Special Projects total is almost entirely these two\n"
+        "vendors. The 'department' was a funnel, and nearly every\n"
+        "dollar in it went to ghosts."
+    ),
+    "approver_join": (
+        "Every shell payment, now with a name attached to the\n"
+        "signature: Marcus Webb. Not a system. Not a glitch. A person,\n"
+        "signing, again and again."
+    ),
+    "finance_exec": (
+        "Finance and Executive — Webb, the controller, the CEO, the\n"
+        "people with the authority to see this and the access to move\n"
+        "it. You have the vendors, the amounts, the escalation, and the\n"
+        "name. $1,869,500. Two shells. One CFO.\n\n"
+        "Rachel reads your query results in silence. Then: 'Get your\n"
+        "coat. We're taking this upstairs.' Case closed — in SQL."
+    ),
+}
+
+S1_OBJECTIVE_FOCUS = {
+    "list_tables":        ("List the tables:",        "db.query(\"SELECT name FROM sqlite_master WHERE type='table'\")"),
+    "view_employees":     ("Pick specific columns:",  "db.query(\"SELECT name, salary FROM employees\")"),
+    "count_headcount":    ("Count the rows:",         "db.query(\"SELECT COUNT(*) FROM employees\")"),
+    "vendor_spend":       ("Group + sum + sort:",     "db.query(\"SELECT vendor_id, SUM(amount) FROM transactions GROUP BY vendor_id ORDER BY SUM(amount) DESC\")"),
+    "unverified_vendors": ("Filter with WHERE:",      "db.query(\"SELECT * FROM vendors WHERE verified = 0\")"),
+    "join_vendor_names":  ("Join two tables:",        "db.query(\"SELECT t.*, v.name FROM transactions t JOIN vendors v ON t.vendor_id = v.id\")"),
+    "lookup_webb":        ("Exact lookup:",           "db.query(\"SELECT * FROM employees WHERE id = 4\")"),
+    "approver_counts":    ("Group by approver:",      "db.query(\"SELECT approved_by, COUNT(*) FROM transactions GROUP BY approved_by ORDER BY COUNT(*) DESC\")"),
+    "dept_budgets":       ("Order by budget:",        "db.query(\"SELECT * FROM departments ORDER BY budget DESC\")"),
+    "apex_total":         ("Sum with a filter:",      "db.query(\"SELECT SUM(amount) FROM transactions WHERE vendor_id = 4\")"),
+    "apex_count":         ("Count with a filter:",    "db.query(\"SELECT COUNT(*) FROM transactions WHERE vendor_id = 4\")"),
+    "escalation":         ("Order by date:",          "db.query(\"SELECT date, amount FROM transactions WHERE vendor_id = 4 ORDER BY date\")"),
+    "dual_vendor":        ("Match a list with IN:",   "db.query(\"SELECT * FROM transactions WHERE vendor_id IN (4, 7)\")"),
+    "special_total":      ("Sum by department:",      "db.query(\"SELECT SUM(amount) FROM transactions WHERE department = 'Special Projects'\")"),
+    "approver_join":      ("Join on approved_by:",    "db.query(\"SELECT t.id, e.name FROM transactions t JOIN employees e ON t.approved_by = e.id WHERE t.vendor_id IN (4,7)\")"),
+    "finance_exec":       ("IN on a text list:",      "db.query(\"SELECT * FROM employees WHERE department IN ('Finance','Executive')\")"),
+}
+
+S1_HINTS = {
+    "list_tables": [
+        "You can't investigate what you can't see. Ask the database what tables it has.",
+        "SQLite keeps a catalog called sqlite_master. Filter it to type='table'.",
+        "db.query(\"SELECT name FROM sqlite_master WHERE type='table'\")",
+    ],
+    "view_employees": [
+        "You don't need every column — just name and salary. Name the columns instead of using *.",
+        "SELECT name, salary FROM employees.",
+        "db.query(\"SELECT name, salary FROM employees\")",
+    ],
+    "count_headcount": [
+        "Don't count rows by eye. SQL has a function for it.",
+        "SELECT COUNT(*) FROM employees.",
+        "db.query(\"SELECT COUNT(*) FROM employees\")",
+    ],
+    "vendor_spend": [
+        "You want one total per vendor, biggest first. Bucket the rows, sum each bucket, sort.",
+        "GROUP BY vendor_id, SUM(amount), ORDER BY SUM(amount) DESC.",
+        "db.query(\"SELECT vendor_id, SUM(amount) FROM transactions GROUP BY vendor_id ORDER BY SUM(amount) DESC\")",
+    ],
+    "unverified_vendors": [
+        "A fake vendor was never verified. Filter the vendors table on that flag.",
+        "WHERE verified = 0.",
+        "db.query(\"SELECT * FROM vendors WHERE verified = 0\")",
+    ],
+    "join_vendor_names": [
+        "transactions has vendor_id; vendors has the name. Connect them on that key.",
+        "JOIN vendors ON transactions.vendor_id = vendors.id.",
+        "db.query(\"SELECT t.*, v.name FROM transactions t JOIN vendors v ON t.vendor_id = v.id\")",
+    ],
+    "lookup_webb": [
+        "One exact employee. Filter the employees table to that id.",
+        "WHERE id = 4.",
+        "db.query(\"SELECT * FROM employees WHERE id = 4\")",
+    ],
+    "approver_counts": [
+        "Count rows per approver — same bucketing skill, different column.",
+        "GROUP BY approved_by, COUNT(*), ORDER BY COUNT(*) DESC.",
+        "db.query(\"SELECT approved_by, COUNT(*) FROM transactions GROUP BY approved_by ORDER BY COUNT(*) DESC\")",
+    ],
+    "dept_budgets": [
+        "Which department could hide seven figures? Sort them by budget.",
+        "ORDER BY budget DESC on the departments table.",
+        "db.query(\"SELECT * FROM departments ORDER BY budget DESC\")",
+    ],
+    "apex_total": [
+        "Add up every payment to Apex (vendor_id 4). One number.",
+        "SUM(amount) with WHERE vendor_id = 4.",
+        "db.query(\"SELECT SUM(amount) FROM transactions WHERE vendor_id = 4\")",
+    ],
+    "apex_count": [
+        "Same filter, different question: how MANY payments, not how much.",
+        "COUNT(*) with WHERE vendor_id = 4.",
+        "db.query(\"SELECT COUNT(*) FROM transactions WHERE vendor_id = 4\")",
+    ],
+    "escalation": [
+        "Pull Apex's payments and sort them in time order to see the trend.",
+        "WHERE vendor_id = 4 ORDER BY date.",
+        "db.query(\"SELECT date, amount FROM transactions WHERE vendor_id = 4 ORDER BY date\")",
+    ],
+    "dual_vendor": [
+        "Two vendor ids at once — don't write two queries. There's a keyword for a list.",
+        "WHERE vendor_id IN (4, 7).",
+        "db.query(\"SELECT * FROM transactions WHERE vendor_id IN (4, 7)\")",
+    ],
+    "special_total": [
+        "Total the money charged to one department.",
+        "SUM(amount) WHERE department = 'Special Projects'.",
+        "db.query(\"SELECT SUM(amount) FROM transactions WHERE department = 'Special Projects'\")",
+    ],
+    "approver_join": [
+        "The report needs a name, not id 4. Join employees on the approved_by key.",
+        "JOIN employees ON transactions.approved_by = employees.id, filter vendor_id IN (4,7).",
+        "db.query(\"SELECT t.id, e.name FROM transactions t JOIN employees e ON t.approved_by = e.id WHERE t.vendor_id IN (4,7)\")",
+    ],
+    "finance_exec": [
+        "Same IN skill as the vendors — now on a text column with two values.",
+        "WHERE department IN ('Finance','Executive').",
+        "db.query(\"SELECT * FROM employees WHERE department IN ('Finance','Executive')\")",
+    ],
+}
+
+S1_RECALL_CHALLENGES = {
+    "s1_select": {
+        "concept": "s1_select",
+        "question": ("Before you move on — quick gut check. From a table\n"
+                     "called 'orders', return just the customer and total\n"
+                     "columns for every row."),
+        "answer": "SELECT customer, total FROM orders",
+        "keywords": ["select", "customer", "total", "orders"],
+    },
+    "s1_where": {
+        "concept": "s1_where",
+        "question": ("Recall: from a 'users' table, return only the rows\n"
+                     "where the status column equals 'active'."),
+        "answer": "SELECT * FROM users WHERE status = 'active'",
+        "keywords": ["where", "status", "active"],
+    },
+    "s1_count": {
+        "concept": "s1_count",
+        "question": ("Recall: return a single number — how many rows are\n"
+                     "in a table called 'orders'."),
+        "answer": "SELECT COUNT(*) FROM orders",
+        "keywords": ["count", "orders"],
+    },
+    "s1_sum": {
+        "concept": "s1_sum",
+        "question": ("Recall: from 'sales', return the total of the amount\n"
+                     "column for rows where region = 'West'."),
+        "answer": "SELECT SUM(amount) FROM sales WHERE region = 'West'",
+        "keywords": ["sum", "amount", "where", "west"],
+    },
+    "s1_groupby": {
+        "concept": "s1_groupby",
+        "question": ("Recall: from 'sales', return each region with the\n"
+                     "total amount for that region."),
+        "answer": "SELECT region, SUM(amount) FROM sales GROUP BY region",
+        "keywords": ["group by", "region", "sum"],
+    },
+    "s1_join": {
+        "concept": "s1_join",
+        "question": ("Recall: join 'orders' to 'customers' on\n"
+                     "orders.customer_id = customers.id."),
+        "answer": "SELECT * FROM orders JOIN customers ON orders.customer_id = customers.id",
+        "keywords": ["join", "on", "customer"],
+    },
+    "s1_orderby": {
+        "concept": "s1_orderby",
+        "question": ("Recall: return every row of 'products' sorted by\n"
+                     "price, highest first."),
+        "answer": "SELECT * FROM products ORDER BY price DESC",
+        "keywords": ["order by", "price", "desc"],
+    },
+    "s1_in": {
+        "concept": "s1_in",
+        "question": ("Recall: from 'orders', return rows whose status is\n"
+                     "either 'shipped' or 'delivered' — use one keyword."),
+        "answer": "SELECT * FROM orders WHERE status IN ('shipped','delivered')",
+        "keywords": ["in", "shipped", "delivered"],
+    },
+}
 
 
 # ── GameState ─────────────────────────────────────────────────────────────────
@@ -229,12 +692,49 @@ class GameState:
 
     # ── Objective tracking ────────────────────────────────────────────────────
 
+    def _content(self) -> dict:
+        """Active season's narrative + objective maps. Season-agnostic flow."""
+        if self.current_season == 2:
+            from core import season2_game as M
+            from core.season2_game import (
+                S2_SCENE_SERVER_LOGS, S2_SCENE_GHOST_RECORDS,
+                S2_SCENE_TIMESTAMP, S2_SCENE_ARCHIVE,
+                S2_SCENE_PATTERN_DECODER, S2_SCENE_THE_SIGNAL,
+            )
+            return {
+                "objectives": M.S2_OBJECTIVES,
+                "by_id": M.S2_OBJECTIVES_BY_ID,
+                "scene_why": M.S2_SCENE_WHY,
+                "setup": M.S2_SETUP,
+                "your_move": M.S2_YOUR_MOVE,
+                "reaction": M.S2_RESULT_REACTION,
+                "focus": M.S2_OBJECTIVE_FOCUS,
+                "hints": M.S2_HINTS,
+                "recall": M.S2_RECALL_CHALLENGES,
+                "obj_order": M.S2_SCENE_OBJ_ORDER,
+                "scene_order": [
+                    S2_SCENE_SERVER_LOGS, S2_SCENE_GHOST_RECORDS,
+                    S2_SCENE_TIMESTAMP, S2_SCENE_ARCHIVE,
+                    S2_SCENE_PATTERN_DECODER, S2_SCENE_THE_SIGNAL,
+                ],
+            }
+        return {
+            "objectives": OBJECTIVES,
+            "by_id": OBJECTIVES_BY_ID,
+            "scene_why": S1_SCENE_WHY,
+            "setup": S1_SETUP,
+            "your_move": S1_YOUR_MOVE,
+            "reaction": S1_RESULT_REACTION,
+            "focus": S1_OBJECTIVE_FOCUS,
+            "hints": S1_HINTS,
+            "recall": S1_RECALL_CHALLENGES,
+            "obj_order": S1_SCENE_OBJ_ORDER,
+            "scene_order": S1_SCENE_ORDER,
+        }
+
     def _active_objectives(self) -> list[dict]:
         """Return the full objective list for the current season."""
-        if self.current_season == 2:
-            from core.season2_game import S2_OBJECTIVES
-            return S2_OBJECTIVES
-        return OBJECTIVES
+        return self._content()["objectives"]
 
     def on_query(self, sql: str, result) -> None:
         """Called by DatabaseInterface after every successful query."""
@@ -280,8 +780,7 @@ class GameState:
         try:
             self.on_output(f"\n✔  {obj['label']}\n", style="success")
             self.on_status("clues", len(self.completed))
-            if self.current_season == 2:
-                self._emit_completion_story(obj)
+            self._emit_completion_story(obj)
             self.on_progress(obj["id"])
         except Exception:
             import traceback, sys
@@ -292,12 +791,10 @@ class GameState:
 
     def _emit_completion_story(self, obj: dict) -> None:
         """STORY panel: the result-reaction, then chain the next setup beat."""
-        from core.season2_game import (
-            S2_RESULT_REACTION, S2_SETUP, S2_YOUR_MOVE, S2_SCENE_OBJ_ORDER,
-        )
+        c = self._content()
         oid = obj["id"]
-        reaction = S2_RESULT_REACTION.get(oid, "")
-        order = S2_SCENE_OBJ_ORDER.get(obj["scene"], [])
+        reaction = c["reaction"].get(oid, "")
+        order = c["obj_order"].get(obj["scene"], [])
         nxt, seen = None, False
         for x in order:
             if x == oid:
@@ -307,23 +804,21 @@ class GameState:
                 nxt = x
                 break
         if nxt:
-            beat = reaction + "\n\n— — — — — — —\n\n" + S2_SETUP.get(nxt, "")
+            beat = reaction + "\n\n— — — — — — —\n\n" + c["setup"].get(nxt, "")
             self.on_story("beat", beat)
-            g, m = S2_YOUR_MOVE.get(nxt, ("", ""))
+            g, m = c["your_move"].get(nxt, ("", ""))
             self.on_briefing(g, m)
         else:
             self.on_story("beat", reaction)
 
     def _emit_scene_state(self) -> None:
         """STORY panel WHY + current setup beat + BRIEFING for the active objective."""
-        if self.current_season != 2:
-            return
-        from core.season2_game import S2_SCENE_WHY, S2_SETUP, S2_YOUR_MOVE
-        self.on_story("why", S2_SCENE_WHY.get(self.scene, ""))
+        c = self._content()
+        self.on_story("why", c["scene_why"].get(self.scene, ""))
         for obj in self.objectives_for_scene(self.scene):
             if obj["id"] not in self.completed:
-                self.on_story("beat", S2_SETUP.get(obj["id"], ""))
-                g, m = S2_YOUR_MOVE.get(obj["id"], ("", ""))
+                self.on_story("beat", c["setup"].get(obj["id"], ""))
+                g, m = c["your_move"].get(obj["id"], ("", ""))
                 self.on_briefing(g, m)
                 return
 
@@ -376,52 +871,31 @@ class GameState:
         return needed.issubset(set(self.completed))
 
     def _check_scene_unlock(self) -> None:
-        if self.current_season == 1:
-            order = [
-                SCENE_YOUR_DESK, SCENE_DB_TERMINAL, SCENE_HR_FILES,
-                SCENE_CFO_DEPT, SCENE_AUDIT_TRAIL, SCENE_CONFRONTATION,
-            ]
-            # Keep advancing while the current scene is fully complete —
-            # never strand the player on a finished scene.
-            while self.scene in order and self.scene_complete(self.scene):
-                idx = order.index(self.scene)
-                if idx < len(order) - 1:
-                    self._advance_to_scene(order[idx + 1])
-                elif self.s1_complete():
+        # One season-agnostic path. Keep advancing while the current scene
+        # is fully complete; a between-scene RECALL GATE practises a prior
+        # skill before each transition (non-punishing, never hard-blocks).
+        order = self._content()["scene_order"]
+        while self.scene in order and self.scene_complete(self.scene):
+            idx = order.index(self.scene)
+            if idx < len(order) - 1:
+                if self.scene not in self._recall_done:
+                    ch = self.get_recall_challenge()
+                    if ch:
+                        self._recall_pending = ch
+                        self._recall_tries = 0
+                        self.on_story("recall",
+                            "Before the next room — prove you've still got "
+                            "this. Answer in the editor:\n\n" + ch["question"])
+                        return
+                    self._recall_done.add(self.scene)  # nothing to recall yet
+                self._advance_to_scene(order[idx + 1])
+            elif self.current_season == 1:
+                if self.s1_complete():
                     self.transition_to_season2()
-                    return
-                else:
-                    break
-        else:
-            from core.season2_game import (
-                S2_SCENE_SERVER_LOGS, S2_SCENE_GHOST_RECORDS,
-                S2_SCENE_TIMESTAMP, S2_SCENE_ARCHIVE,
-                S2_SCENE_PATTERN_DECODER, S2_SCENE_THE_SIGNAL,
-            )
-            order = [
-                S2_SCENE_SERVER_LOGS, S2_SCENE_GHOST_RECORDS,
-                S2_SCENE_TIMESTAMP, S2_SCENE_ARCHIVE,
-                S2_SCENE_PATTERN_DECODER, S2_SCENE_THE_SIGNAL,
-            ]
-            while self.scene in order and self.scene_complete(self.scene):
-                idx = order.index(self.scene)
-                if idx < len(order) - 1:
-                    # Between-scene RECALL GATE: practise a skill again before
-                    # moving on. Non-punishing; never hard-blocks.
-                    if self.scene not in self._recall_done:
-                        ch = self.get_recall_challenge()
-                        if ch:
-                            self._recall_pending = ch
-                            self._recall_tries = 0
-                            self.on_story("recall",
-                                "Before the next room — prove you've still got "
-                                "this. Answer in the editor:\n\n" + ch["question"])
-                            return
-                        self._recall_done.add(self.scene)  # nothing to recall
-                    self._advance_to_scene(order[idx + 1])
-                else:
-                    self._finish_season2()
-                    break
+                return
+            else:
+                self._finish_season2()
+                break
 
     def s1_complete(self) -> bool:
         """True when every Season 1 objective has been completed."""
@@ -453,36 +927,18 @@ class GameState:
         self.on_output("\n✔  Season 2 complete.\n", style="success")
 
     def _advance_to_scene(self, scene_id: str) -> None:
-        if self.current_season == 1:
-            # Season 1 unchanged: cliffhanger + intro in the feed.
-            from core.scenes import CLIFFHANGERS
-            cliffhanger = CLIFFHANGERS.get(self.scene)
-            if cliffhanger:
-                self.on_output(f"\n{cliffhanger}\n", style="scene")
-            self.scene = scene_id
-            self.step  = 0
-            self.on_scene_change(scene_id)
-            self._save()
-            intro = SCENE_INTROS.get(scene_id, "")
-            if intro:
-                self.on_output(f"\n{'─'*60}\n{intro}\n{'─'*60}\n", style="scene")
-        else:
-            # Season 2: story lives in the STORY panel, never the feed.
-            self.scene = scene_id
-            self.step  = 0
-            self.on_scene_change(scene_id)
-            self._save()
-            self._emit_scene_state()
+        # Both seasons: story lives in the STORY panel, never the feed.
+        self.scene = scene_id
+        self.step  = 0
+        self.on_scene_change(scene_id)
+        self._save()
+        self._emit_scene_state()
 
     # ── Hint system ──────────────────────────────────────────────────────────
 
     def get_hint(self) -> str:
         """Return the next hint for the first incomplete objective in this scene."""
-        if self.current_season == 2:
-            from core.season2_game import S2_HINTS
-            hint_bank = S2_HINTS
-        else:
-            hint_bank = HINTS
+        hint_bank = self._content()["hints"]
         for obj in self.objectives_for_scene(self.scene):
             if obj["id"] not in self.completed:
                 hints = hint_bank.get(obj["id"], [])
@@ -506,15 +962,10 @@ class GameState:
         """
         if len(self.completed) < 2:
             return None
+        c = self._content()
         target_id = self.completed[-2]
-        if self.current_season == 2:
-            from core.season2_game import S2_OBJECTIVES_BY_ID, S2_RECALL_CHALLENGES
-            obj = S2_OBJECTIVES_BY_ID.get(target_id)
-            challenge = S2_RECALL_CHALLENGES.get(obj.get("concept")) if obj else None
-        else:
-            obj = OBJECTIVES_BY_ID.get(target_id)
-            challenge = RECALL_CHALLENGES.get(obj.get("concept")) if obj else None
-        return challenge
+        obj = c["by_id"].get(target_id)
+        return c["recall"].get(obj.get("concept")) if obj else None
 
     # ── Persistence ───────────────────────────────────────────────────────────
 
@@ -570,150 +1021,3 @@ class GameState:
             f"clues={len(self.clues)}>"
         )
 
-
-# ── Scene intro text ─────────────────────────────────────────────────────────
-
-SCENE_INTROS = {
-    SCENE_DB_TERMINAL: (
-        "You plug into the secure terminal. The server room hums like a living thing.\n"
-        "Nobody comes down to B1 unless they have to.\n"
-        "The full transaction log is open. Every payment. Every vendor. Every dollar.\n\n"
-        "Something in this data doesn't add up. Start digging."
-    ),
-    SCENE_HR_FILES: (
-        "Vanessa's still at lunch. The filing cabinet is unlocked.\n"
-        "You pull the personnel records. Every transaction has an approved_by field.\n"
-        "Someone signed off on those suspicious payments.\n\n"
-        "Time to find out who."
-    ),
-    SCENE_CFO_DEPT: (
-        "Marcus Webb — board meeting until 4pm.\n"
-        "His assistant waves you in to 'drop off a budget report.'\n"
-        "You have maybe 20 minutes. His desktop is still logged in.\n\n"
-        "Don't waste them."
-    ),
-    SCENE_AUDIT_TRAIL: (
-        "Back at your desk. The office is dark. Everyone's gone home.\n"
-        "You've got the pieces — now build the case.\n"
-        "Numbers that hold up. Evidence that doesn't blink.\n\n"
-        "Gut feelings don't go in an audit report. SQL does."
-    ),
-    SCENE_CONFRONTATION: (
-        "You have everything. Apex Solutions. Pinnacle Strategy. $1.87M.\n"
-        "All approved by the CFO. All billed to 'Special Projects.'\n\n"
-        "Your phone buzzes: Rachel Kim (COO) — 'Got a minute? My office.'\n"
-        "Four words that change everything."
-    ),
-}
-
-
-# ── Progressive hints ─────────────────────────────────────────────────────────
-# Each list goes from vague → specific → gives away the answer.
-
-HINTS = {
-    "list_tables": [
-        "Diana's note said to get familiar with the database. You can't investigate what you can't see — what's even in this thing?",
-        "Use db.tables() to see what's available. Or if you're feeling fancy: db.query(\"SELECT name FROM sqlite_master WHERE type='table'\")",
-    ],
-    "examine_employees": [
-        "You know the tables now. Pick one and peek inside — the employees table seems like a good place to start.",
-        "db.query(\"SELECT * FROM employees\")  — SELECT * means 'show me everything.'",
-    ],
-    "count_employees": [
-        "Sam from accounting just pinged you: 'Hey new person — quick question. How many of us are there?' SQL can count.",
-        "db.query(\"SELECT COUNT(*) FROM employees\")  — COUNT(*) counts every row in the table.",
-    ],
-    "find_high_spend_vendors": [
-        "28 transactions. You could read them all, or you could be smart about it. Which vendors are getting the biggest checks?",
-        "GROUP BY bundles rows together. SUM(amount) adds them up. Put the biggest first with ORDER BY ... DESC.",
-        "db.query(\"SELECT vendor_id, SUM(amount) FROM transactions GROUP BY vendor_id ORDER BY SUM(amount) DESC\")",
-    ],
-    "spot_unverified_vendors": [
-        "Some of these vendor numbers look suspicious. But are they legit companies? The vendors table should tell you who's been verified.",
-        "The verified column is 1 for yes, 0 for no. Use WHERE to filter.",
-        "db.query(\"SELECT * FROM vendors WHERE verified = 0\")",
-    ],
-    "join_transactions_vendors": [
-        "Vendor IDs are just numbers. You need names. The trick? Connect the transactions table to the vendors table.",
-        "JOIN links two tables on a shared column — transactions.vendor_id matches vendors.id.",
-        "db.query(\"SELECT t.*, v.name FROM transactions t JOIN vendors v ON t.vendor_id = v.id\")",
-    ],
-    "find_approver": [
-        "Every one of these transactions was approved by somebody. The approved_by column has their employee ID. Is it always the same person?",
-        "db.query(\"SELECT approved_by, COUNT(*) FROM transactions GROUP BY approved_by ORDER BY COUNT(*) DESC\")",
-    ],
-    "lookup_employee_4": [
-        "That employee ID keeps showing up. It's time to put a face to the number.",
-        "db.query(\"SELECT * FROM employees WHERE id = 4\")  — one row, one person, one answer.",
-    ],
-    "check_special_projects_budget": [
-        "All the suspicious money flows through 'Special Projects.' How does that department's budget compare to the others?",
-        "db.query(\"SELECT * FROM departments ORDER BY budget DESC\")  — biggest budgets first.",
-    ],
-    "total_apex_spend": [
-        "Apex Solutions LLC. Unverified. No address. No phone number. How much has Nexus paid this ghost company?",
-        "db.query(\"SELECT SUM(amount) FROM transactions WHERE vendor_id = 4\")  — brace yourself.",
-    ],
-    "escalation_pattern": [
-        "Pull the Apex transactions in order by date. Watch the amounts. Month by month. See if you notice anything.",
-        "db.query(\"SELECT date, amount, description FROM transactions WHERE vendor_id = 4 ORDER BY date\")",
-    ],
-    "dual_vendor_fraud": [
-        "Two shell companies. Same pattern. SQL's IN clause lets you query for both in a single shot.",
-        "db.query(\"SELECT * FROM transactions WHERE vendor_id IN (4, 7) ORDER BY date\")",
-    ],
-    "total_fraud_amount": [
-        "Last query. The number that goes in the report. Total payments to both shell companies combined.",
-        "db.query(\"SELECT SUM(amount) FROM transactions WHERE vendor_id IN (4, 7)\")  — this is the figure Rachel needs.",
-    ],
-}
-
-
-# ── Recall challenges ─────────────────────────────────────────────────────────
-# Shown between scene transitions as a quick retrieval practice card.
-# Format: question + expected_keywords (any match counts as correct)
-
-RECALL_CHALLENGES = {
-    "select_star": {
-        "question": "What SQL command retrieves every column from a table called 'sales'?",
-        "answer":   "SELECT * FROM sales",
-        "keywords": ["select", "from", "sales"],
-        "concept":  "select_star",
-    },
-    "aggregate_count": {
-        "question": "Write SQL to count the total number of rows in the 'orders' table.",
-        "answer":   "SELECT COUNT(*) FROM orders",
-        "keywords": ["count", "orders"],
-        "concept":  "aggregate_count",
-    },
-    "where_filter": {
-        "question": "How would you get only the rows where the 'status' column equals 'active'?",
-        "answer":   "WHERE status = 'active'",
-        "keywords": ["where", "status", "active"],
-        "concept":  "where_filter",
-    },
-    "group_by_sum": {
-        "question": "What two keywords do you need to total up sales amounts per region?",
-        "answer":   "GROUP BY and SUM()",
-        "keywords": ["group by", "sum"],
-        "concept":  "group_by_sum",
-    },
-    "inner_join": {
-        "question": "What SQL keyword connects rows from two tables based on a shared column?",
-        "answer":   "JOIN (or INNER JOIN)",
-        "keywords": ["join"],
-        "concept":  "inner_join",
-    },
-    "order_by": {
-        "question": "What clause sorts your query results from highest to lowest?",
-        "answer":   "ORDER BY ... DESC",
-        "keywords": ["order by", "desc"],
-        "concept":  "order_by",
-    },
-    "in_clause": {
-        "question": "What SQL keyword lets you match a column against a list of values (e.g., ids 4 and 7)?",
-        "answer":   "IN (4, 7)",
-        "keywords": ["in"],
-        "concept":  "in_clause",
-    },
-}
