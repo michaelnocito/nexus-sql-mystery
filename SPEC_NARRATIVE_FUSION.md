@@ -129,6 +129,29 @@ MOVE prominently), keep one mental location for "the compass."
 
 ---
 
+## 7b. Repetition / spaced retrieval (ADDED 2026-05-17 — user requirement)
+
+Current flaw: each concept is used once then abandoned. No retention.
+Activate + extend EXISTING infra (don't invent a separate mini-game now):
+
+- **Interleaving (authoring only):** later objectives' reference queries
+  must reuse an earlier concept while introducing the new one (e.g. a
+  later scene query uses LIKE + strftime while teaching HAVING). Frame
+  as the case escalating, not drilling. Bake into the §4 content rewrite.
+- **Recall gates (wire existing system):** `get_recall_challenge()` +
+  `S2_RECALL_CHALLENGES` already exist but are not surfaced in the new
+  flow. Add a short, in-world, ONE-question retrieval prompt between
+  scenes (delivered via STORY panel + answered in the editor) before the
+  next scene unlocks. Keep it fast; story-framed, not quiz-framed.
+- Mini-game: explicitly DEFERRED — fits the future opt-in Pro-Panel
+  side-quest spec, not this one. Interleaving + recall gates first.
+
+New acceptance criteria:
+- [ ] AC9: At least the back-half S2 objectives require combining a new
+  concept with a previously-learned one (verified interleaving)
+- [ ] AC10: A one-question recall gate fires between scenes using the
+  existing recall-challenge data, story-framed, and gates progression
+
 ## 8. Implementation order
 
 1. Layout: extract STORY panel from the feed; feed = mechanical only (AC1–AC3)
