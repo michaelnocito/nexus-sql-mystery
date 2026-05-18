@@ -261,8 +261,8 @@ A Python learning project where you build a real data-cleaning tool in three lay
 Pairs well with NEXUS if you're learning both SQL and Python. Start with NEXUS for
 SQL, then move to Spreadsheet Cleaner for Python — or the other way around.
 
-**[Test Data & Document Generator](https://github.com/michaelnocito/test-data-doc-generator)** —
-Generate fictional PDFs, Word docs, and Excel datasets for testing and demos.
+**[RecordForge](https://github.com/michaelnocito/recordforge)** —
+Generate fictional PDFs, Word docs, HTML files, and Excel datasets for testing, QA, and demos.
 Free Windows app, no Python required.
 
 ---
