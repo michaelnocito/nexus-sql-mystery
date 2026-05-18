@@ -136,12 +136,9 @@ class MainWindow(QMainWindow):
 
         # ── Try to load existing save ────────────────────────────────────────
         self._game.load()
-
-        # TEMP TEST — skip straight into Season 2 SQL-core. REMOVE before shipping.
-        from core.season2_game import S2_SCENE_SERVER_LOGS
-        self._game.current_season = 2
-        self._game.scene = S2_SCENE_SERVER_LOGS
-        self._db.setup_season2()
+        # If a save resumes mid-Season-2, make sure its tables are seeded.
+        if self._game.current_season == 2:
+            self._db.setup_season2()
 
         # ── Build UI ─────────────────────────────────────────────────────────
         central = QWidget()
