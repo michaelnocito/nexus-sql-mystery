@@ -211,11 +211,21 @@ class GameState:
         self.on_popup:        callable = lambda concept_id: None
         self.on_scene_change: callable = lambda scene_id: None
         self.on_status:       callable = lambda label, value: None  # HUD update
-        self.on_progress:     callable = lambda objective_id: None  # focus box update
+        self.on_progress:     callable = lambda objective_id: None  # console celebration
         self.on_season_change: callable = lambda season: None       # season transition
+        # STORY panel (WHY + beat + reaction + recall) — never in the feed
+        self.on_story:        callable = lambda kind, text: None     # kind: why|beat|recall
+        # BRIEFING (left panel): in-story GOAL + the plain-language path
+        self.on_briefing:     callable = lambda goal, move: None
 
         # Track query count for pacing
         self._query_count = 0
+
+        # Varied-practice / narrative state
+        self._concepts_shown: set = set()   # skill cards shown once only
+        self._recall_pending = None         # active between-scene recall gate
+        self._recall_tries = 0
+        self._recall_done: set = set()      # scenes whose exit-gate cleared
 
     # ── Objective tracking ────────────────────────────────────────────────────
 
@@ -229,6 +239,11 @@ class GameState:
     def on_query(self, sql: str, result) -> None:
         """Called by DatabaseInterface after every successful query."""
         self._query_count += 1
+
+        # A between-scene recall gate intercepts everything until cleared.
+        if self._recall_pending is not None:
+            self._handle_recall(sql)
+            return
 
         # Only validate the CURRENT scene's objectives. This keeps
         # progression strictly linear — a broad query can't pre-complete
@@ -253,20 +268,20 @@ class GameState:
         clue = f"[CLUE #{len(self.completed)}] {obj['label']}"
         self.clues.append(clue)
 
-        # Queue the teaching concept for a popup
-        if "concept" in obj:
-            self.pending_popups.append(obj["concept"])
+        # Concept card shows ONCE per skill (first encounter). The second,
+        # varied-practice rep deliberately does not re-teach.
+        concept = obj.get("concept")
+        if concept and concept not in self._concepts_shown:
+            self._concepts_shown.add(concept)
+            self.pending_popups.append(concept)
 
-        # Emit narrative feedback. The UI layer must never be able to
-        # strand the player — if a celebration/render callback throws,
-        # progression still has to run. Surface the error, don't swallow.
+        # The UI layer must never strand the player — if a render/celebration
+        # callback throws, progression still has to run. Surface, don't swallow.
         try:
-            self.on_output(
-                f"\n✔  {obj['label']}\n"
-                f"   {obj['detail']}\n",
-                style="success"
-            )
+            self.on_output(f"\n✔  {obj['label']}\n", style="success")
             self.on_status("clues", len(self.completed))
+            if self.current_season == 2:
+                self._emit_completion_story(obj)
             self.on_progress(obj["id"])
         except Exception:
             import traceback, sys
@@ -274,6 +289,69 @@ class GameState:
         finally:
             # Always check scene unlock, even if the UI callbacks failed.
             self._check_scene_unlock()
+
+    def _emit_completion_story(self, obj: dict) -> None:
+        """STORY panel: the result-reaction, then chain the next setup beat."""
+        from core.season2_game import (
+            S2_RESULT_REACTION, S2_SETUP, S2_YOUR_MOVE, S2_SCENE_OBJ_ORDER,
+        )
+        oid = obj["id"]
+        reaction = S2_RESULT_REACTION.get(oid, "")
+        order = S2_SCENE_OBJ_ORDER.get(obj["scene"], [])
+        nxt, seen = None, False
+        for x in order:
+            if x == oid:
+                seen = True
+                continue
+            if seen and x not in self.completed:
+                nxt = x
+                break
+        if nxt:
+            beat = reaction + "\n\n— — — — — — —\n\n" + S2_SETUP.get(nxt, "")
+            self.on_story("beat", beat)
+            g, m = S2_YOUR_MOVE.get(nxt, ("", ""))
+            self.on_briefing(g, m)
+        else:
+            self.on_story("beat", reaction)
+
+    def _emit_scene_state(self) -> None:
+        """STORY panel WHY + current setup beat + BRIEFING for the active objective."""
+        if self.current_season != 2:
+            return
+        from core.season2_game import S2_SCENE_WHY, S2_SETUP, S2_YOUR_MOVE
+        self.on_story("why", S2_SCENE_WHY.get(self.scene, ""))
+        for obj in self.objectives_for_scene(self.scene):
+            if obj["id"] not in self.completed:
+                self.on_story("beat", S2_SETUP.get(obj["id"], ""))
+                g, m = S2_YOUR_MOVE.get(obj["id"], ("", ""))
+                self.on_briefing(g, m)
+                return
+
+    def emit_scene_state(self) -> None:
+        """Public: let the UI (re)paint the STORY/BRIEFING for the current scene."""
+        self._emit_scene_state()
+
+    def _handle_recall(self, sql: str) -> None:
+        """Non-punishing between-scene retrieval gate. 2 misses -> reveal+pass."""
+        ch = self._recall_pending
+        s = sql.lower()
+        if all(k.lower() in s for k in ch["keywords"]):
+            self.on_story("recall", "✔  Correct. That one's yours. Moving on.")
+            self._recall_done.add(self.scene)
+            self._recall_pending = None
+            self._check_scene_unlock()
+            return
+        self._recall_tries += 1
+        if self._recall_tries >= 2:
+            self.on_story("recall",
+                "No worries — here's the shape of it:\n\n    "
+                + ch["answer"] + "\n\nKeep it in your pocket. Moving on.")
+            self._recall_done.add(self.scene)
+            self._recall_pending = None
+            self._check_scene_unlock()
+        else:
+            self.on_story("recall",
+                "Not quite — give it one more shot.\n\n" + ch["question"])
 
     def on_exec(self, code: str, output: str) -> None:
         """
@@ -328,6 +406,18 @@ class GameState:
             while self.scene in order and self.scene_complete(self.scene):
                 idx = order.index(self.scene)
                 if idx < len(order) - 1:
+                    # Between-scene RECALL GATE: practise a skill again before
+                    # moving on. Non-punishing; never hard-blocks.
+                    if self.scene not in self._recall_done:
+                        ch = self.get_recall_challenge()
+                        if ch:
+                            self._recall_pending = ch
+                            self._recall_tries = 0
+                            self.on_story("recall",
+                                "Before the next room — prove you've still got "
+                                "this. Answer in the editor:\n\n" + ch["question"])
+                            return
+                        self._recall_done.add(self.scene)  # nothing to recall
                     self._advance_to_scene(order[idx + 1])
                 else:
                     self._finish_season2()
@@ -348,47 +438,41 @@ class GameState:
         self.on_season_change(2)
 
     def _finish_season2(self) -> None:
-        """Season 2 fully solved — show a real ending, not a dead-end hint."""
+        """Season 2 fully solved — real ending via the STORY panel."""
         if getattr(self, "_s2_finished", False):
             return
         self._s2_finished = True
         self._save()
-        self.on_output(
-            "\n" + "═" * 60 + "\n"
-            "  SEASON 2 COMPLETE — THE GHOST IN THE MACHINE\n\n"
-            "  You proved it with SQL alone. The phantom was Elena's\n"
-            "  dead man's switch — a whistleblower's last safeguard.\n"
-            "  Every query you wrote was evidence. The case holds.\n\n"
-            "  Season 3 is coming. For now: well done, analyst.\n"
-            + "═" * 60 + "\n",
-            style="scene",
-        )
+        self.on_story("why",
+            "SEASON 2 COMPLETE — THE GHOST IN THE MACHINE\n\n"
+            "You proved it with SQL alone. The phantom was Elena's dead\n"
+            "man's switch — a whistleblower's last safeguard. Every query\n"
+            "you wrote was evidence. The case holds.\n\n"
+            "Season 3 is coming. For now: well done, analyst.")
+        self.on_briefing("Case closed", "Season 2 complete — Season 3 is coming.")
+        self.on_output("\n✔  Season 2 complete.\n", style="success")
 
     def _advance_to_scene(self, scene_id: str) -> None:
-        # Show cliffhanger for the scene we're LEAVING
         if self.current_season == 1:
+            # Season 1 unchanged: cliffhanger + intro in the feed.
             from core.scenes import CLIFFHANGERS
             cliffhanger = CLIFFHANGERS.get(self.scene)
-        else:
-            from core.season2_game import S2_CLIFFHANGERS
-            cliffhanger = S2_CLIFFHANGERS.get(self.scene)
-        if cliffhanger:
-            self.on_output(f"\n{cliffhanger}\n", style="scene")
-
-        self.scene = scene_id
-        self.step  = 0
-        self.on_scene_change(scene_id)
-
-        # Save progress to DB
-        self._save()
-
-        if self.current_season == 1:
+            if cliffhanger:
+                self.on_output(f"\n{cliffhanger}\n", style="scene")
+            self.scene = scene_id
+            self.step  = 0
+            self.on_scene_change(scene_id)
+            self._save()
             intro = SCENE_INTROS.get(scene_id, "")
+            if intro:
+                self.on_output(f"\n{'─'*60}\n{intro}\n{'─'*60}\n", style="scene")
         else:
-            from core.season2_scenes import S2_SCENES
-            intro = S2_SCENES.get(scene_id, {}).get("intro", "")
-        if intro:
-            self.on_output(f"\n{'─'*60}\n{intro}\n{'─'*60}\n", style="scene")
+            # Season 2: story lives in the STORY panel, never the feed.
+            self.scene = scene_id
+            self.step  = 0
+            self.on_scene_change(scene_id)
+            self._save()
+            self._emit_scene_state()
 
     # ── Hint system ──────────────────────────────────────────────────────────
 

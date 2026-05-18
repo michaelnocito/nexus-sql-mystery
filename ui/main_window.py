@@ -131,6 +131,8 @@ class MainWindow(QMainWindow):
         self._game.on_status        = self._on_status
         self._game.on_progress      = self._on_progress
         self._game.on_season_change = self._on_season_change
+        self._game.on_story         = self._on_story
+        self._game.on_briefing      = self._on_briefing
 
         # ── Try to load existing save ────────────────────────────────────────
         self._game.load()
@@ -219,6 +221,13 @@ class MainWindow(QMainWindow):
 
     def _on_dialogue(self, speaker: str, text: str) -> None:
         self._cmd.append_dialogue(speaker, text)
+
+    def _on_story(self, kind: str, text: str) -> None:
+        self._cmd.set_story(kind, text)
+
+    def _on_briefing(self, goal: str, move: str) -> None:
+        self._scene_view.set_goal(goal)
+        self._scene_view.set_your_move(move)
 
     def _on_popup(self, concept_id: str) -> None:
         # Auto trigger after an objective — render INLINE in the message
@@ -372,10 +381,10 @@ class MainWindow(QMainWindow):
         # Toast banner + particles
         if pct == 100:
             # Final objective — massive celebration
-            self._toast.show_toast(
-                "🏆  CASE CLOSED  🏆\nYou uncovered $1,869,500 in fraud.",
-                style="final", duration=15000,
-            )
+            final_msg = ("🏆  CASE CLOSED  🏆\nThe ghost was a warning — and you read it."
+                         if self._game.current_season == 2
+                         else "🏆  CASE CLOSED  🏆\nYou uncovered $1,869,500 in fraud.")
+            self._toast.show_toast(final_msg, style="final", duration=15000)
             self._particles.burst("final")
             play_victory_chime()
         elif done % 3 == 0:
@@ -422,19 +431,21 @@ class MainWindow(QMainWindow):
         # Update scene art + side info panel
         self._scene_view.set_scene(self._game.scene)
         self._scene_view.set_scene_title(scene["title"])
-        self._sync_side_panel()
-
-        # Update focus command in cmd panel
+        self._scene_view.set_progress(
+            len(self._game.clues), len(self._game._active_objectives()))
         self._update_focus_box()
 
-        # Show intro text (if first visit)
-        visit_key = f"_visited_{self._game.scene}"
-        if not getattr(self, visit_key, False):
-            setattr(self, visit_key, True)
-            self._cmd.append_output(scene["intro"], style="scene")
-
-        # Show guidance for first incomplete objective
-        self._show_next_objective_guidance()
+        if self._game.current_season == 2:
+            # STORY panel + BRIEFING are driven by the engine; the console
+            # stays mechanical-only (no narration in the feed).
+            self._game.emit_scene_state()
+        else:
+            self._sync_side_panel()
+            visit_key = f"_visited_{self._game.scene}"
+            if not getattr(self, visit_key, False):
+                setattr(self, visit_key, True)
+                self._cmd.append_output(scene["intro"], style="scene")
+            self._show_next_objective_guidance()
 
     def _update_focus_box(self) -> None:
         """Set focus box to the first incomplete objective's command."""
@@ -449,23 +460,26 @@ class MainWindow(QMainWindow):
         self._cmd.set_focus("", "")
 
     def _sync_side_panel(self) -> None:
-        """Feed the side info panel: current objective + season progress."""
-        focus_map = S2_OBJECTIVE_FOCUS if self._game.current_season == 2 else OBJECTIVE_FOCUS
+        """Feed the side info panel: progress always; S1 also sets objective."""
+        total = len(self._game._active_objectives())
+        self._scene_view.set_progress(len(self._game.clues), total)
+        if self._game.current_season == 2:
+            return  # S2 GOAL/YOUR MOVE come from the engine's on_briefing
         objective = "Scene complete — advancing…"
         for obj in self._game.objectives_for_scene(self._game.scene):
             oid = obj["id"]
             if oid not in self._game.completed:
-                if oid in focus_map:
-                    objective = focus_map[oid][0].rstrip(":")
+                if oid in OBJECTIVE_FOCUS:
+                    objective = OBJECTIVE_FOCUS[oid][0].rstrip(":")
                 else:
                     objective = obj.get("label", "")
                 break
         self._scene_view.set_objective(objective)
-        total = len(self._game._active_objectives())
-        self._scene_view.set_progress(len(self._game.clues), total)
 
     def _show_next_objective_guidance(self) -> None:
-        step_map = S2_STEP_TEXT if self._game.current_season == 2 else STEP_TEXT
+        if self._game.current_season == 2:
+            return  # S2 guidance lives in the STORY panel / BRIEFING, not the feed
+        step_map = STEP_TEXT
         for obj in self._game.objectives_for_scene(self._game.scene):
             oid = obj["id"]
             if oid not in self._game.completed:

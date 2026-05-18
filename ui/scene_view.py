@@ -47,6 +47,8 @@ class SceneView(QWidget):
         self._scene_id = SCENE_YOUR_DESK
         self._clues: list[str] = []
         self._objective: str = ""
+        self._goal: str = ""
+        self._your_move: str = ""
         self._scene_title: str = ""
         self._prog_done: int = 0
         self._prog_total: int = 0
@@ -63,6 +65,14 @@ class SceneView(QWidget):
 
     def set_objective(self, text: str) -> None:
         self._objective = text or ""
+        self.update()
+
+    def set_goal(self, text: str) -> None:
+        self._goal = text or ""
+        self.update()
+
+    def set_your_move(self, text: str) -> None:
+        self._your_move = text or ""
         self.update()
 
     def set_scene_title(self, title: str) -> None:
@@ -820,16 +830,28 @@ class SceneView(QWidget):
                        Qt.TextElideMode.ElideRight, w - 2 * pad))
             y += 22
 
-        # ── Current objective ────────────────────────────────────────────────
-        if self._objective:
+        # ── GOAL (what you're accomplishing, in-story) ───────────────────────
+        if self._goal:
             p.setFont(QFont("Segoe UI", 9, QFont.Weight.Bold))
             p.setPen(QPen(QColor("#79b8ff")))
-            p.drawText(pad, y, "CURRENT OBJECTIVE")
+            p.drawText(pad, y, "GOAL")
             y += 6
-            y = self._wrapped(p, self._objective, pad, y + 14, w - 2 * pad,
-                              QFont("Segoe UI", 11), QColor("#e6edf3"),
-                              max_lines=3, leading=17)
-            y += 14
+            y = self._wrapped(p, self._goal, pad, y + 16, w - 2 * pad,
+                              QFont("Segoe UI", 12, QFont.Weight.Bold),
+                              QColor("#ffffff"), max_lines=2, leading=18)
+            y += 16
+
+        # ── YOUR MOVE (the clear path / HOW) ─────────────────────────────────
+        move = self._your_move or self._objective
+        if move:
+            p.setFont(QFont("Segoe UI", 9, QFont.Weight.Bold))
+            p.setPen(QPen(QColor("#56d364")))
+            p.drawText(pad, y, "YOUR MOVE")
+            y += 6
+            y = self._wrapped(p, move, pad, y + 14, w - 2 * pad,
+                              QFont("Segoe UI", 11), QColor("#cdd9e5"),
+                              max_lines=5, leading=17)
+            y += 16
 
         # ── Progress bar ─────────────────────────────────────────────────────
         total = self._prog_total or 13

@@ -150,6 +150,74 @@ class CmdPanel(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
+        # ── STORY panel — WHY + current beat. NEVER scrolled away by the ─────
+        #    console. This is the emotional centre; the SQL lands here.
+        story = QFrame()
+        story.setObjectName("story_panel")
+        story.setStyleSheet(
+            "QFrame#story_panel {"
+            "  background: #fbf7ee;"               # warm parchment, distinct
+            "  border: none;"
+            "  border-bottom: 2px solid #d8c9a6; }"
+        )
+        story.setMinimumHeight(210)
+        story.setMaximumHeight(340)
+        sv = QVBoxLayout(story)
+        sv.setContentsMargins(24, 16, 24, 14)
+        sv.setSpacing(8)
+
+        self._story_why = QLabel("")
+        self._story_why.setWordWrap(True)
+        self._story_why.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        self._story_why.setStyleSheet(
+            "color:#6b5d3e; font-family:'Segoe UI',sans-serif; font-size:13px; "
+            "font-weight:600; background:transparent;")
+        sv.addWidget(self._story_why)
+
+        _sep = QFrame()
+        _sep.setFixedHeight(1)
+        _sep.setStyleSheet("background:#e3d7bb;")
+        sv.addWidget(_sep)
+
+        # Beat scrolls WITHIN the panel — long beats never push the console.
+        beat_scroll = QScrollArea()
+        beat_scroll.setObjectName("beat_scroll")
+        beat_scroll.setWidgetResizable(True)
+        beat_scroll.setFrameShape(QFrame.Shape.NoFrame)
+        beat_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        beat_scroll.setStyleSheet(
+            "QScrollArea#beat_scroll{background:transparent;border:none;}"
+            "QScrollBar:vertical{width:6px;background:transparent;}"
+            "QScrollBar::handle:vertical{background:#d8c9a6;border-radius:3px;}"
+            "QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical{height:0;}")
+        self._beat_holder = QWidget()
+        self._beat_holder.setStyleSheet("background:transparent;")
+        _bh = QVBoxLayout(self._beat_holder)
+        _bh.setContentsMargins(0, 0, 0, 0)
+        _bh.setSpacing(8)
+        self._story_beat = QLabel("")
+        self._story_beat.setWordWrap(True)
+        self._story_beat.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        self._story_beat.setStyleSheet(
+            "color:#2b2515; font-family:'Segoe UI',sans-serif; font-size:15px; "
+            "background:transparent;")
+        _bh.addWidget(self._story_beat)
+        self._story_recall = QLabel("")
+        self._story_recall.setWordWrap(True)
+        self._story_recall.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        self._story_recall.setStyleSheet(
+            "color:#7a4f00; font-family:'Segoe UI',sans-serif; font-size:14px; "
+            "font-weight:600; background:#fff3d4; border:1px solid #e8c878; "
+            "border-radius:6px; padding:10px 12px;")
+        self._story_recall.hide()
+        _bh.addWidget(self._story_recall)
+        _bh.addStretch(1)
+        beat_scroll.setWidget(self._beat_holder)
+        self._beat_scroll = beat_scroll
+        sv.addWidget(beat_scroll, 1)
+
+        layout.addWidget(story, 0)
+
         # ── Narrative output — scrollable typed-message list ─────────────────
         self._scroll = QScrollArea()
         self._scroll.setObjectName("msg_scroll")
@@ -348,6 +416,23 @@ class CmdPanel(QWidget):
             return
         self._add_widget(self._make_dialogue(speaker, text.strip()))
         self._autoscroll()
+
+    # ── STORY panel API (separate from the mechanical console feed) ─────────
+
+    def set_story(self, kind: str, text: str) -> None:
+        """kind: 'why' (persistent premise) | 'beat' (setup/reaction) | 'recall'."""
+        if kind == "why":
+            self._story_why.setText(text)
+            self._story_recall.hide()
+        elif kind == "beat":
+            self._story_beat.setText(text)
+            self._story_recall.hide()
+            QTimer.singleShot(0, lambda: self._beat_scroll.verticalScrollBar().setValue(0))
+        elif kind == "recall":
+            self._story_recall.setText("🔁  " + text)
+            self._story_recall.show()
+            QTimer.singleShot(0, lambda: self._beat_scroll.verticalScrollBar().setValue(
+                self._beat_scroll.verticalScrollBar().maximum()))
 
     def append_concept(self, concept: dict, story: str = "") -> None:
         """
