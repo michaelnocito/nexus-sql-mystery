@@ -68,9 +68,12 @@ OBJECTIVES = [
     {
         "id": "list_tables", "scene": SCENE_YOUR_DESK,
         "concept": "s1_select", "rep": 1,
-        "label": "Listed the database tables",
-        "detail": "Queried sqlite_master to see what data the company keeps.",
-        "validator": lambda sql, r: "sqlite_master" in sql.lower() and len(r) > 0,
+        "label": "Ran your first query",
+        "detail": "SELECT * FROM employees — the universal first SQL query.",
+        "validator": lambda sql, r: (
+            "select" in sql.lower() and "from" in sql.lower()
+            and "employees" in sql.lower() and "*" in sql
+            and "count" not in sql.lower() and len(r) > 0),
     },
     {
         "id": "view_employees", "scene": SCENE_YOUR_DESK,
@@ -208,8 +211,9 @@ for _o in OBJECTIVES:
 S1_SCENE_WHY = {
     SCENE_YOUR_DESK: (
         "Day one at Nexus Analytics. You're the new data analyst. Diana's\n"
-        "note says: get familiar with the database before the 9am standup.\n"
-        "Nobody's watching. The data is. Start by learning what's here."
+        "note says: get familiar with the database before the 9am standup.\n\n"
+        "There are four tables: employees, vendors, transactions, and\n"
+        "departments. Start with the one you're in — employees."
     ),
     SCENE_DB_TERMINAL: (
         "Basement B1. The full transaction log — every dollar Nexus ever\n"
@@ -237,8 +241,9 @@ S1_SCENE_WHY = {
 
 S1_SETUP = {
     "list_tables": (
-        "A database you've never seen. Before you can investigate anything\n"
-        "you need the lay of the land — what tables even exist here?"
+        "Before you can investigate anything, you need to see the data.\n"
+        "The employees table is the obvious place to start — it's got\n"
+        "you in it. Pull the whole thing and look around."
     ),
     "view_employees": (
         "The employees table is the place to start — it's got you in it.\n"
@@ -306,9 +311,10 @@ S1_SETUP = {
 
 S1_YOUR_MOVE = {
     "list_tables": (
-        "See what tables exist",
-        "Return every table name in the database. Query the built-in "
-        "catalog: SELECT name FROM sqlite_master WHERE type='table'.",
+        "See everything in the employees table",
+        "Return every row and every column from the employees table. The "
+        "simplest query there is: SELECT * FROM employees — the * means "
+        "'all columns'.",
     ),
     "view_employees": (
         "Pull name + salary for all staff",
@@ -392,14 +398,16 @@ S1_YOUR_MOVE = {
 
 S1_RESULT_REACTION = {
     "list_tables": (
-        "Four tables: employees, departments, vendors, transactions.\n"
-        "That's the whole company on a screen. Everything Nexus is —\n"
-        "who works here, who gets paid, and how much. Start digging."
+        "Ten people. The whole company fits on one screen. There you\n"
+        "are — Alex Chen, Junior Analyst. And at the top, the CFO at\n"
+        "$310k. Small shop. Everyone's one query away from everyone\n"
+        "else. That's your first SQL query. It won't be your last."
     ),
     "view_employees": (
-        "Ten people. There you are — Alex Chen, Junior Analyst, $68k.\n"
-        "And there's the CFO at $310k. Small company. Everyone's one\n"
-        "query away from everyone else."
+        "Two columns, and the story's already loud: salaries run $68k\n"
+        "for a junior up to $310k for the CFO and $450k for the CEO.\n"
+        "Picking the columns you want — instead of dumping the table —\n"
+        "is how you make data say something. Remember the CFO number."
     ),
     "count_headcount": (
         "Ten. Exactly ten employees run this entire operation. A company\n"
@@ -477,7 +485,7 @@ S1_RESULT_REACTION = {
 }
 
 S1_OBJECTIVE_FOCUS = {
-    "list_tables":        ("List the tables:",        "db.query(\"SELECT name FROM sqlite_master WHERE type='table'\")"),
+    "list_tables":        ("See everything in employees:", "db.query(\"SELECT * FROM employees\")"),
     "view_employees":     ("Pick specific columns:",  "db.query(\"SELECT name, salary FROM employees\")"),
     "count_headcount":    ("Count the rows:",         "db.query(\"SELECT COUNT(*) FROM employees\")"),
     "vendor_spend":       ("Group + sum + sort:",     "db.query(\"SELECT vendor_id, SUM(amount) FROM transactions GROUP BY vendor_id ORDER BY SUM(amount) DESC\")"),
@@ -497,9 +505,9 @@ S1_OBJECTIVE_FOCUS = {
 
 S1_HINTS = {
     "list_tables": [
-        "You can't investigate what you can't see. Ask the database what tables it has.",
-        "SQLite keeps a catalog called sqlite_master. Filter it to type='table'.",
-        "db.query(\"SELECT name FROM sqlite_master WHERE type='table'\")",
+        "You can't investigate what you can't see. Pull the employees table and look.",
+        "SELECT * FROM employees — the * means 'every column'.",
+        "db.query(\"SELECT * FROM employees\")",
     ],
     "view_employees": [
         "You don't need every column — just name and salary. Name the columns instead of using *.",
