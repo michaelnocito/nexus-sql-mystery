@@ -129,10 +129,24 @@ MOVE prominently), keep one mental location for "the compass."
 
 ---
 
-## 7b. Repetition / spaced retrieval (ADDED 2026-05-17 — user requirement)
+## 7b. Repetition via VARIED PRACTICE (ADDED 2026-05-17 — user requirement)
 
-Current flaw: each concept is used once then abandoned. No retention.
-Activate + extend EXISTING infra (don't invent a separate mini-game now):
+PRIMARY mechanism (user's exact ask): "repetition of using the same skill
+to solve slightly different things." Each core SQL skill is reused across
+2–3 slightly varied problems before it's considered learned — not used
+once and abandoned.
+
+**Content-model change — supersedes the one-shot ladder:**
+The SQL-core ladder is currently 12 objectives = 12 brand-new concepts,
+each used once. CHANGE IT: introduce ~6–7 core skills only; each recurs
+2–3 times across the 12 objectives in a *slightly different* investigative
+context (different column, pattern, combination, or question) and
+escalating difficulty. Fewer concepts, deeper grooves. This also satisfies
+the earlier "day-one, smaller chunks" instinct. Resolve the exact
+skill→objective mapping at build time (keep the 12 story beats; remap
+which skill each one practices). Same SQL engine, validators adjust.
+
+Supporting mechanisms (secondary):
 
 - **Interleaving (authoring only):** later objectives' reference queries
   must reuse an earlier concept while introducing the new one (e.g. a
