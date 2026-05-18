@@ -212,9 +212,9 @@ S2_SETUP = {
     ),
     "loop_records": (
         "Fourteen rows. But a skeptic — Diana — will say '03:03 appears in\n"
-        "the date too, you got lucky.' You need to isolate the actual\n"
-        "TIME-of-day and show it's 03:03 on the nose, not a coincidence\n"
-        "of digits somewhere in the string."
+        "the date too, you got lucky.' Kill that argument.\n\n"
+        "Return only the server_logs rows where the time-of-day itself is\n"
+        "exactly 03:03 — not just digits sitting somewhere in the string."
     ),
     "list_comp_filter": (
         "deleted_records logs every removed row, with a restored_count.\n"
@@ -224,9 +224,10 @@ S2_SETUP = {
     ),
     "find_ghost_employee": (
         "One record, restored 47 times. The record_data is a blob of text.\n"
-        "You need to know what KIND of record keeps clawing its way back —\n"
-        "is it a vendor? a transaction? a person?\n\n"
-        "Same move as the logs: match a pattern inside text. Different column."
+        "What KIND of record keeps clawing its way back — vendor?\n"
+        "transaction? a person?\n\n"
+        "Return the deleted_records row whose record_data text contains\n"
+        "the word 'terminated'. Same tool as the logs — now on record_data."
     ),
     "parse_timestamps": (
         "Diana: 'Fourteen rows isn't proof. Maybe 3:03 is just a busy minute.'\n"
@@ -280,63 +281,79 @@ S2_SETUP = {
 S2_YOUR_MOVE = {
     "store_result": (
         "Find every log entry from 3:03 a.m.",
-        "Match a PATTERN, not an exact value. LIKE with % wildcards means "
-        "'anything here'. Search the timestamp column for 03:03.",
+        "From the server_logs table, return every row whose timestamp "
+        "column contains '03:03' anywhere in it. Use LIKE with % wildcards: "
+        "timestamp LIKE '%03:03%'.",
     ),
     "loop_records": (
         "Prove the time is exactly 03:03",
-        "Pull just the time out of the timestamp. strftime('%H:%M', timestamp) "
-        "returns 'HH:MM' — compare that to '03:03'.",
+        "From server_logs, return only the rows where the time-of-day is "
+        "exactly 03:03. Pull the time with strftime('%H:%M', timestamp) "
+        "and check it equals '03:03'.",
     ),
     "list_comp_filter": (
         "Find the record restored far above average",
-        "Use a SUBQUERY: WHERE restored_count > (SELECT AVG(restored_count) "
-        "FROM deleted_records). The inner query finds the average for you.",
+        "From deleted_records, return the row whose restored_count is "
+        "greater than the table's average restored_count. Put the average "
+        "in a subquery: WHERE restored_count > (SELECT AVG(restored_count) "
+        "FROM deleted_records).",
     ),
     "find_ghost_employee": (
         "Find what kind of record keeps returning",
-        "LIKE again — different column. Search record_data for a word that "
-        "reveals it's a person (e.g. a status like 'terminated').",
+        "From deleted_records, return the row whose record_data text "
+        "contains the word 'terminated'. Same tool as before — LIKE — "
+        "this time on record_data: record_data LIKE '%terminated%'.",
     ),
     "parse_timestamps": (
         "Prove 3:03 is no coincidence",
-        "GROUP BY the time, COUNT each group, then HAVING COUNT(*) > 5 to "
-        "keep only the suspiciously busy slot.",
+        "From server_logs, return each time-of-day and how many rows have "
+        "it — but only times that occur more than 5 times. GROUP BY "
+        "strftime('%H:%M', timestamp); filter the groups with "
+        "HAVING COUNT(*) > 5.",
     ),
     "count_anomalies": (
         "Find every date the phantom struck",
-        "strftime again — pull the DATE this time: strftime('%Y-%m-%d', "
-        "timestamp). DISTINCT it over the anomaly rows.",
+        "From server_logs where status = 'ANOMALY', return every distinct "
+        "DATE. Pull the date with strftime('%Y-%m-%d', timestamp) and wrap "
+        "it in SELECT DISTINCT.",
     ),
     "compare_backups": (
         "Catch the table that shrank after tampering",
-        "A correlated SUBQUERY: for each Jan row, compare its row_count to "
-        "the SAME table's March row_count (subquery matched on table_name).",
+        "From backup_snapshots, return each 2024-01-01 row whose row_count "
+        "is higher than the SAME table's 2024-03-01 row_count. Compare "
+        "using a subquery matched on table_name.",
     ),
     "build_summary": (
         "List every table whose count changed",
-        "GROUP BY table_name across all snapshots; HAVING "
-        "COUNT(DISTINCT row_count) > 1 keeps tables that didn't stay stable.",
+        "From backup_snapshots, return every table_name whose row_count is "
+        "NOT the same across all snapshots. GROUP BY table_name; keep "
+        "groups with HAVING COUNT(DISTINCT row_count) > 1.",
     ),
     "decode_pattern": (
         "Extract the first letter of each phantom action",
-        "SUBSTR(action, 1, 1) cuts one character. Filter to status='ANOMALY', "
-        "ORDER BY timestamp, read the column.",
+        "From server_logs where status = 'ANOMALY', ordered by timestamp, "
+        "return the first character of each action. Cut it with "
+        "SUBSTR(action, 1, 1).",
     ),
     "correlate_times": (
         "Assemble the hidden message into one string",
-        "GROUP_CONCAT(SUBSTR(action,1,1), '') over the ordered anomaly rows "
-        "stitches every first-letter into a single value.",
+        "Return ONE value: every first-letter joined into a single string. "
+        "Use GROUP_CONCAT(SUBSTR(action,1,1), '') over the status='ANOMALY' "
+        "rows, ordered by timestamp (order them in a subquery).",
     ),
     "write_report_function": (
         "Tag every row PHANTOM or normal",
-        "CASE WHEN status='ANOMALY' THEN 'PHANTOM' ELSE 'normal' END — a new "
-        "verdict column, data untouched.",
+        "From server_logs, return every row plus a new column that reads "
+        "'PHANTOM' when status = 'ANOMALY' and 'normal' otherwise. Build it "
+        "with CASE WHEN status='ANOMALY' THEN 'PHANTOM' ELSE 'normal' END.",
     ),
     "identify_source": (
         "Flag the phantom's source in one query",
-        "CASE again — its condition fed by a SUBQUERY that finds the phantom "
-        "IP. Wrap it in a 3 a.m. time filter. Everything together.",
+        "From server_logs, return the 3 a.m. rows with a new column that "
+        "reads 'PHANTOM SOURCE' when ip_address equals the phantom's "
+        "address. Find that address with a subquery "
+        "(SELECT DISTINCT ip_address ... WHERE status='ANOMALY') inside a "
+        "CASE; filter with strftime('%H', timestamp) = '03'.",
     ),
 }
 
