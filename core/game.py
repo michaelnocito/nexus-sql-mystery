@@ -207,6 +207,7 @@ class GameState:
 
         # ── UI callbacks (set by MainWindow after construction) ───────────────
         self.on_output:       callable = lambda text, style="normal": None
+        self.on_dialogue:     callable = lambda speaker, text: None  # NPC speech bubble
         self.on_popup:        callable = lambda concept_id: None
         self.on_scene_change: callable = lambda scene_id: None
         self.on_status:       callable = lambda label, value: None  # HUD update
@@ -229,8 +230,12 @@ class GameState:
         """Called by DatabaseInterface after every successful query."""
         self._query_count += 1
 
-        # Check every incomplete objective for the active season
-        for obj in self._active_objectives():
+        # Only validate the CURRENT scene's objectives. This keeps
+        # progression strictly linear — a broad query can't pre-complete
+        # a later scene (S2's SQL validators are loose and all touch
+        # server_logs, which previously let players skip ahead and land
+        # on an already-finished scene with nothing to do).
+        for obj in list(self.objectives_for_scene(self.scene)):
             if obj["id"] in self.completed:
                 continue
             try:
@@ -252,17 +257,23 @@ class GameState:
         if "concept" in obj:
             self.pending_popups.append(obj["concept"])
 
-        # Emit narrative feedback
-        self.on_output(
-            f"\n✔  {obj['label']}\n"
-            f"   {obj['detail']}\n",
-            style="success"
-        )
-        self.on_status("clues", len(self.completed))
-        self.on_progress(obj["id"])
-
-        # Check if this unlocks the next scene
-        self._check_scene_unlock()
+        # Emit narrative feedback. The UI layer must never be able to
+        # strand the player — if a celebration/render callback throws,
+        # progression still has to run. Surface the error, don't swallow.
+        try:
+            self.on_output(
+                f"\n✔  {obj['label']}\n"
+                f"   {obj['detail']}\n",
+                style="success"
+            )
+            self.on_status("clues", len(self.completed))
+            self.on_progress(obj["id"])
+        except Exception:
+            import traceback, sys
+            traceback.print_exc(file=sys.stderr)
+        finally:
+            # Always check scene unlock, even if the UI callbacks failed.
+            self._check_scene_unlock()
 
     def on_exec(self, code: str, output: str) -> None:
         """
@@ -288,37 +299,39 @@ class GameState:
 
     def _check_scene_unlock(self) -> None:
         if self.current_season == 1:
-            scene_order = [
-                SCENE_YOUR_DESK,
-                SCENE_DB_TERMINAL,
-                SCENE_HR_FILES,
-                SCENE_CFO_DEPT,
-                SCENE_AUDIT_TRAIL,
-                SCENE_CONFRONTATION,
+            order = [
+                SCENE_YOUR_DESK, SCENE_DB_TERMINAL, SCENE_HR_FILES,
+                SCENE_CFO_DEPT, SCENE_AUDIT_TRAIL, SCENE_CONFRONTATION,
             ]
-            current_idx = scene_order.index(self.scene)
-            if self.scene_complete(self.scene) and current_idx < len(scene_order) - 1:
-                self._advance_to_scene(scene_order[current_idx + 1])
-            elif self.scene_complete(self.scene) and self.s1_complete():
-                self.transition_to_season2()
+            # Keep advancing while the current scene is fully complete —
+            # never strand the player on a finished scene.
+            while self.scene in order and self.scene_complete(self.scene):
+                idx = order.index(self.scene)
+                if idx < len(order) - 1:
+                    self._advance_to_scene(order[idx + 1])
+                elif self.s1_complete():
+                    self.transition_to_season2()
+                    return
+                else:
+                    break
         else:
             from core.season2_game import (
                 S2_SCENE_SERVER_LOGS, S2_SCENE_GHOST_RECORDS,
                 S2_SCENE_TIMESTAMP, S2_SCENE_ARCHIVE,
                 S2_SCENE_PATTERN_DECODER, S2_SCENE_THE_SIGNAL,
             )
-            s2_order = [
-                S2_SCENE_SERVER_LOGS,
-                S2_SCENE_GHOST_RECORDS,
-                S2_SCENE_TIMESTAMP,
-                S2_SCENE_ARCHIVE,
-                S2_SCENE_PATTERN_DECODER,
-                S2_SCENE_THE_SIGNAL,
+            order = [
+                S2_SCENE_SERVER_LOGS, S2_SCENE_GHOST_RECORDS,
+                S2_SCENE_TIMESTAMP, S2_SCENE_ARCHIVE,
+                S2_SCENE_PATTERN_DECODER, S2_SCENE_THE_SIGNAL,
             ]
-            if self.scene in s2_order:
-                current_idx = s2_order.index(self.scene)
-                if self.scene_complete(self.scene) and current_idx < len(s2_order) - 1:
-                    self._advance_to_scene(s2_order[current_idx + 1])
+            while self.scene in order and self.scene_complete(self.scene):
+                idx = order.index(self.scene)
+                if idx < len(order) - 1:
+                    self._advance_to_scene(order[idx + 1])
+                else:
+                    self._finish_season2()
+                    break
 
     def s1_complete(self) -> bool:
         """True when every Season 1 objective has been completed."""
@@ -333,6 +346,23 @@ class GameState:
         self.step  = 0
         self._save()
         self.on_season_change(2)
+
+    def _finish_season2(self) -> None:
+        """Season 2 fully solved — show a real ending, not a dead-end hint."""
+        if getattr(self, "_s2_finished", False):
+            return
+        self._s2_finished = True
+        self._save()
+        self.on_output(
+            "\n" + "═" * 60 + "\n"
+            "  SEASON 2 COMPLETE — THE GHOST IN THE MACHINE\n\n"
+            "  You proved it with SQL alone. The phantom was Elena's\n"
+            "  dead man's switch — a whistleblower's last safeguard.\n"
+            "  Every query you wrote was evidence. The case holds.\n\n"
+            "  Season 3 is coming. For now: well done, analyst.\n"
+            + "═" * 60 + "\n",
+            style="scene",
+        )
 
     def _advance_to_scene(self, scene_id: str) -> None:
         # Show cliffhanger for the scene we're LEAVING
@@ -380,8 +410,8 @@ class GameState:
                 elif hints:
                     return hints[-1]
                 else:
-                    return f"Try writing code related to: {obj['label']}"
-        return "You've completed all objectives in this area. Look around for what changed."
+                    return f"Focus on this goal: {obj['label']}"
+        return "You've cleared every objective in this area — nothing more to query here. Read the latest entry above."
 
     # ── Recall Gate (spaced retrieval) ────────────────────────────────────────
 

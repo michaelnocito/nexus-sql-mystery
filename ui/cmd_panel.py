@@ -11,14 +11,15 @@ import traceback
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QTextEdit,
-    QLabel, QFrame, QPushButton,
+    QLabel, QFrame, QPushButton, QScrollArea, QSizePolicy,
 )
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import (
     QFont, QTextCursor, QColor, QTextCharFormat,
-    QTextBlockFormat,
+    QTextBlockFormat, QPixmap,
 )
 from ui.sql_editor import SQLEditor
+from ui.portraits import npc_portrait, npc_color, canonical
 
 # ── Palette (light) ───────────────────────────────────────────────────────────
 
@@ -127,48 +128,8 @@ QPushButton#hint_btn:hover {{
 """
 
 
-# ── Text format helpers ───────────────────────────────────────────────────────
-
-def _prose_fmt(hex_color, bold=False, italic=False, size=15):
-    fmt = QTextCharFormat()
-    fmt.setForeground(QColor(hex_color))
-    fmt.setFont(QFont("Segoe UI", size, QFont.Weight.Bold if bold else QFont.Weight.Normal, italic))
-    return fmt
-
-def _code_fmt(hex_color, bold=False, size=13):
-    fmt = QTextCharFormat()
-    fmt.setForeground(QColor(hex_color))
-    fmt.setFont(QFont("Consolas", size, QFont.Weight.Bold if bold else QFont.Weight.Normal))
-    return fmt
-
-def _code_bg_fmt(hex_color, bg_color, size=13):
-    fmt = QTextCharFormat()
-    fmt.setForeground(QColor(hex_color))
-    fmt.setBackground(QColor(bg_color))
-    fmt.setFont(QFont("Consolas", size))
-    return fmt
-
-
-# Style map — each style has a QTextCharFormat
-STYLES = {
-    # ── Prose (sans-serif, readable) ─────────────────────────────────────────
-    "scene":    _prose_fmt(SCENE_COL,  bold=True,  size=16),   # scene intros
-    "guidance": _prose_fmt(GUIDANCE,   bold=False, size=15),   # step instructions
-    "normal":   _prose_fmt(TEXT_MAIN,  bold=False, size=15),   # general prose
-    "dim":      _prose_fmt(TEXT_DIM,   italic=True, size=14),  # ambient / meta
-    "warning":  _prose_fmt(WARNING,    bold=False, size=15),   # hints
-
-    # ── Emphasis (sans-serif, stands out) ────────────────────────────────────
-    "success":  _prose_fmt(SUCCESS,    bold=True,  size=15),   # ✔ objective done
-    "error":    _prose_fmt(ERROR_COL,  bold=True,  size=15),   # SQL errors
-
-    # ── Code (monospace, tinted bg) ──────────────────────────────────────────
-    "input":    _code_fmt(ACCENT,      bold=True,  size=14),   # >>> echo
-    "output":   _code_bg_fmt(TEXT_MAIN, CODE_BG,  size=13),   # SQL result tables
-
-    # ── Spirit guide (subtle, italic) ────────────────────────────────────────
-    "spirit":   _prose_fmt("#768ea8",  italic=True, size=13),  # ghostly tips
-}
+# Message rendering is now widget-based (see _make_text / _make_dialogue).
+# The old QTextCharFormat STYLES map was removed with the QTextEdit flow.
 
 
 class CmdPanel(QWidget):
@@ -189,14 +150,29 @@ class CmdPanel(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        # ── Narrative output ─────────────────────────────────────────────────
-        self._narrative = QTextEdit()
-        self._narrative.setObjectName("narrative")
-        self._narrative.setReadOnly(True)
-        self._narrative.setLineWrapMode(QTextEdit.LineWrapMode.WidgetWidth)
-        self._narrative.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self._narrative.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
-        layout.addWidget(self._narrative, stretch=1)
+        # ── Narrative output — scrollable typed-message list ─────────────────
+        self._scroll = QScrollArea()
+        self._scroll.setObjectName("msg_scroll")
+        self._scroll.setWidgetResizable(True)
+        self._scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self._scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+        self._scroll.setStyleSheet(
+            f"QScrollArea#msg_scroll {{ background: {PANEL_BG}; border: none; }}"
+            f"QWidget#msg_container {{ background: {PANEL_BG}; }}"
+        )
+
+        self._msg_container = QWidget()
+        self._msg_container.setObjectName("msg_container")
+        self._msg_layout = QVBoxLayout(self._msg_container)
+        self._msg_layout.setContentsMargins(22, 18, 22, 18)
+        self._msg_layout.setSpacing(12)          # inter-chunk gap (research: real gap, not blank lines)
+        self._msg_layout.addStretch(1)           # keeps messages top-aligned
+
+        self._scroll.setWidget(self._msg_container)
+        layout.addWidget(self._scroll, stretch=1)
+
+        # Max readable column width — ~60 chars for novices (research-backed)
+        self._msg_max_w = 560
 
         # ── Focus command box ─────────────────────────────────────────────────
         self._focus_frame = QFrame()
@@ -329,38 +305,256 @@ class CmdPanel(QWidget):
 
     # ── Output ────────────────────────────────────────────────────────────────
 
+    # Map legacy on_output styles → message channel
+    _STYLE_KIND = {
+        "scene":    "narration",
+        "normal":   "narration",
+        "dim":      "muted",
+        "guidance": "tutorial",
+        "warning":  "hint",
+        "success":  "success",
+        "error":    "failure",
+        "spirit":   "dialogue",   # Sam — auto-routes to a dialogue bubble
+        "input":    "echo",
+        "output":   "query_output",
+    }
+
     def append_output(self, text: str, style: str = "normal") -> None:
-        fmt = STYLES.get(style, STYLES["normal"])
-        cursor = self._narrative.textCursor()
-        cursor.movePosition(QTextCursor.MoveOperation.End)
+        """Back-compat entry point. Routes every legacy style to a typed widget."""
+        kind = self._STYLE_KIND.get(style, "narration")
 
-        # ── Spacing: insert a thin separator between different content groups ─
-        block_fmt = QTextBlockFormat()
-        if style == "scene":
-            block_fmt.setTopMargin(16)
-            block_fmt.setBottomMargin(4)
-        elif style == "guidance":
-            block_fmt.setTopMargin(8)
-            block_fmt.setBottomMargin(4)
-        elif style == "input":
-            block_fmt.setTopMargin(12)
-            block_fmt.setBottomMargin(0)
-        elif style == "output":
-            block_fmt.setBottomMargin(8)
-        elif style == "success":
-            block_fmt.setTopMargin(6)
-            block_fmt.setBottomMargin(6)
+        if kind == "dialogue":
+            # Sam speaking via the old spirit channel — strip any "Sam whispers:" prefix
+            body = text.strip()
+            for pre in ("👻  Sam whispers:", "Sam whispers:", "Sam pings you:", "👻"):
+                if body.startswith(pre):
+                    body = body[len(pre):].strip()
+            body = body.strip().strip("'\"").strip()
+            self.append_dialogue("Sam", body)
+            return
 
-        cursor.setBlockFormat(block_fmt)
-        cursor.insertText(text, fmt)
+        if kind in ("narration", "muted"):
+            for chunk in self._chunk(text):
+                self._add_widget(self._make_text(chunk, kind))
+            self._autoscroll()
+            return
 
-        # Reset block format
-        cursor.setBlockFormat(QTextBlockFormat())
-        self._narrative.setTextCursor(cursor)
-        self._narrative.ensureCursorVisible()
+        self._add_widget(self._make_text(text.strip(), kind))
+        self._autoscroll()
+
+    def append_dialogue(self, speaker: str, text: str) -> None:
+        """Render an NPC line as a portrait + name-tag + tinted speech box."""
+        if not text:
+            return
+        self._add_widget(self._make_dialogue(speaker, text.strip()))
+        self._autoscroll()
+
+    def append_concept(self, concept: dict, story: str = "") -> None:
+        """
+        Render the concept card INLINE in the message stream (no modal).
+        Scrolls so the TOP of the card sits at the top of the viewport —
+        the player reads it in place and keeps going, no flow break.
+        """
+        card = self._make_concept(concept, story)
+        self._add_widget(card)
+
+        def _show_top():
+            self._scroll.verticalScrollBar().setValue(max(0, card.y() - 8))
+        QTimer.singleShot(0, _show_top)
+        QTimer.singleShot(40, _show_top)   # after layout settles
+
+    # ── Chunking (research-backed: ≤3 sentences, collapse manual line breaks) ─
+
+    @staticmethod
+    def _chunk(text: str) -> list[str]:
+        import re as _re
+        out: list[str] = []
+        # Respect explicit paragraph breaks; collapse single \n to spaces so
+        # lines wrap naturally at the column cap instead of awkward short lines.
+        for para in text.split("\n\n"):
+            para = " ".join(para.split())
+            if not para:
+                continue
+            sentences = _re.findall(r'[^.!?]+[.!?]+|\S+$|[^.!?]+$', para)
+            buf: list[str] = []
+            for s in sentences:
+                buf.append(s.strip())
+                if len(buf) >= 3:                      # ≤3-sentence blocks
+                    out.append(" ".join(buf)); buf = []
+            if buf:
+                out.append(" ".join(buf))
+        return out or [text.strip()]
+
+    # ── Message-widget factory ───────────────────────────────────────────────
+
+    def _add_widget(self, w: QWidget) -> None:
+        # insert before the trailing stretch
+        self._msg_layout.insertWidget(self._msg_layout.count() - 1, w)
+
+    def _autoscroll(self) -> None:
+        def _go():
+            bar = self._scroll.verticalScrollBar()
+            bar.setValue(bar.maximum())
+        QTimer.singleShot(0, _go)
+
+    def _label(self, text: str, css: str) -> QLabel:
+        lbl = QLabel(text)
+        lbl.setWordWrap(True)
+        lbl.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        lbl.setMaximumWidth(self._msg_max_w)
+        lbl.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum)
+        lbl.setStyleSheet(css)
+        return lbl
+
+    def _make_text(self, text: str, kind: str) -> QWidget:
+        if kind == "narration":
+            return self._label(text,
+                f"color:{TEXT_MAIN}; font-family:'Segoe UI',sans-serif; "
+                f"font-size:15px; padding:2px 0;")
+        if kind == "muted":
+            return self._label(text,
+                f"color:{TEXT_DIM}; font-style:italic; font-size:13px; padding:1px 0;")
+        if kind == "success":
+            return self._label("✔   " + text,
+                f"color:{SUCCESS}; font-weight:700; font-size:15px; "
+                f"background:#eaf6ec; border-left:3px solid {SUCCESS}; "
+                f"border-radius:5px; padding:8px 12px;")
+        if kind == "failure":
+            return self._label("✖   " + text,
+                f"color:{ERROR_COL}; font-weight:700; font-size:14px; "
+                f"background:#fdeceb; border-left:3px solid {ERROR_COL}; "
+                f"border-radius:5px; padding:8px 12px;")
+        if kind == "hint":
+            return self._label("💡  " + text,
+                f"color:{WARNING}; font-size:14px; background:#fff8e6; "
+                f"border-left:3px solid {WARNING}; border-radius:5px; padding:8px 12px;")
+        if kind == "tutorial":
+            return self._label(text,
+                f"color:{GUIDANCE}; font-size:15px; background:#eef4fd; "
+                f"border-left:3px solid {ACCENT}; border-radius:5px; padding:10px 14px;")
+        if kind == "echo":
+            return self._label(text.strip(),
+                f"color:{ACCENT}; font-family:'Consolas',monospace; "
+                f"font-size:13px; font-weight:700; padding:6px 0 2px 0;")
+        if kind == "query_output":
+            lbl = self._label(text.rstrip("\n"),
+                f"color:{TEXT_MAIN}; font-family:'Consolas',monospace; "
+                f"font-size:13px; background:{CODE_BG}; border:1px solid {BORDER}; "
+                f"border-radius:6px; padding:10px 12px;")
+            lbl.setMaximumWidth(self._msg_max_w + 80)   # tables need a bit more room
+            return lbl
+        return self._label(text, f"color:{TEXT_MAIN}; font-size:15px;")
+
+    def _make_dialogue(self, speaker: str, text: str) -> QWidget:
+        accent = npc_color(speaker)
+        key = canonical(speaker)
+        display = speaker if key != "_" else (speaker or "Unknown")
+
+        frame = QFrame()
+        frame.setMaximumWidth(self._msg_max_w + 40)
+        frame.setStyleSheet(
+            f"QFrame {{ background:{self._tint(accent, 0.10)}; "
+            f"border:1px solid {self._tint(accent, 0.45)}; "
+            f"border-left:4px solid {accent}; border-radius:8px; }}"
+        )
+        row = QHBoxLayout(frame)
+        row.setContentsMargins(10, 10, 12, 10)
+        row.setSpacing(10)
+
+        pic = QLabel()
+        pic.setPixmap(npc_portrait(speaker, 52))
+        pic.setFixedSize(52, 52)
+        pic.setAlignment(Qt.AlignmentFlag.AlignTop)
+        row.addWidget(pic, 0, Qt.AlignmentFlag.AlignTop)
+
+        col = QVBoxLayout()
+        col.setSpacing(3)
+        name = QLabel(display.upper())
+        name.setStyleSheet(
+            f"color:{accent}; font-family:'Segoe UI',sans-serif; "
+            f"font-size:11px; font-weight:800; letter-spacing:1.5px; border:none;")
+        body = QLabel(text)
+        body.setWordWrap(True)
+        body.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        body.setMaximumWidth(self._msg_max_w - 70)
+        body.setStyleSheet(
+            f"color:{TEXT_MAIN}; font-family:'Segoe UI',sans-serif; "
+            f"font-size:15px; border:none; background:transparent;")
+        col.addWidget(name)
+        col.addWidget(body)
+        row.addLayout(col, 1)
+        return frame
+
+    def _make_concept(self, concept: dict, story: str = "") -> QWidget:
+        """Inline concept card — same content as the old modal, in the stream."""
+        frame = QFrame()
+        frame.setMaximumWidth(self._msg_max_w + 60)
+        frame.setStyleSheet(
+            f"QFrame#cc {{ background:#ffffff; border:1px solid {BORDER}; "
+            f"border-left:4px solid {ACCENT}; border-radius:8px; }}"
+        )
+        frame.setObjectName("cc")
+        v = QVBoxLayout(frame)
+        v.setContentsMargins(18, 16, 18, 16)
+        v.setSpacing(10)
+
+        def lab(text, css):
+            l = QLabel(text)
+            l.setWordWrap(True)
+            l.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            l.setStyleSheet(css + "border:none; background:transparent;")
+            return l
+
+        def section(label, body, body_css):
+            v.addWidget(lab(label, f"color:{TEXT_DIM}; font-size:10px; "
+                                   f"font-weight:700; letter-spacing:1px;"))
+            v.addWidget(lab(body, body_css))
+
+        v.addWidget(lab("◆  CONCEPT UNLOCKED",
+            f"color:{ACCENT}; font-size:11px; font-weight:800; letter-spacing:2px;"))
+
+        if story:
+            box = QFrame()
+            box.setStyleSheet("QFrame{background:#eff6ff; border:1px solid #bcd5f5; "
+                              "border-radius:6px;}")
+            bl = QVBoxLayout(box); bl.setContentsMargins(12, 9, 12, 9); bl.setSpacing(4)
+            bl.addWidget(lab("📖  STORY SO FAR",
+                "color:#1d4ed8; font-size:11px; font-weight:700; letter-spacing:1px;"))
+            bl.addWidget(lab(story, f"color:{TEXT_MAIN}; font-size:13px;"))
+            v.addWidget(box)
+
+        v.addWidget(lab(concept.get("title", ""),
+            f"color:{TEXT_MAIN}; font-size:17px; font-weight:800;"))
+
+        if concept.get("what"):
+            section("WHAT IS IT?", concept["what"], f"color:{TEXT_MAIN}; font-size:14px;")
+        if concept.get("why"):
+            section("WHY IT MATTERS", concept["why"], f"color:{TEXT_MAIN}; font-size:14px;")
+        if concept.get("syntax"):
+            section("SYNTAX", concept["syntax"],
+                f"color:{ACCENT}; font-family:'Consolas',monospace; font-size:13px; "
+                f"background:{CODE_BG}; border:1px solid {BORDER}; border-radius:6px; "
+                f"padding:10px 12px;")
+        if concept.get("analogy"):
+            section("💡  REAL-WORLD ANALOGY", concept["analogy"],
+                "color:#7a4f00; font-size:13px; font-style:italic; "
+                "background:#fff8e6; border:1px solid #f0c060; border-radius:6px; "
+                "padding:8px 12px;")
+        if concept.get("gotcha"):
+            section("⚠  COMMON MISTAKE", concept["gotcha"],
+                f"color:{ERROR_COL}; font-size:13px;")
+
+        for w in frame.findChildren(QLabel):
+            w.setMaximumWidth(self._msg_max_w + 20)
+        return frame
+
+    @staticmethod
+    def _tint(hex_color: str, alpha: float) -> str:
+        c = QColor(hex_color)
+        return f"rgba({c.red()},{c.green()},{c.blue()},{alpha:.2f})"
 
     def _echo_input(self, text):
-        self.append_output(f"\n>>> {text}\n", style="input")
+        self.append_output(f">>> {text}", style="input")
 
     # ── Command execution ─────────────────────────────────────────────────────
 

@@ -125,6 +125,7 @@ class MainWindow(QMainWindow):
 
         # Wire game callbacks
         self._game.on_output        = self._on_output
+        self._game.on_dialogue      = self._on_dialogue
         self._game.on_popup         = self._on_popup
         self._game.on_scene_change  = self._on_scene_change
         self._game.on_status        = self._on_status
@@ -133,6 +134,12 @@ class MainWindow(QMainWindow):
 
         # ── Try to load existing save ────────────────────────────────────────
         self._game.load()
+
+        # TEMP TEST — skip straight into Season 2 SQL-core. REMOVE before shipping.
+        from core.season2_game import S2_SCENE_SERVER_LOGS
+        self._game.current_season = 2
+        self._game.scene = S2_SCENE_SERVER_LOGS
+        self._db.setup_season2()
 
         # ── Build UI ─────────────────────────────────────────────────────────
         central = QWidget()
@@ -210,13 +217,18 @@ class MainWindow(QMainWindow):
     def _on_output(self, text: str, style: str = "normal") -> None:
         self._cmd.append_output(text, style)
 
+    def _on_dialogue(self, speaker: str, text: str) -> None:
+        self._cmd.append_dialogue(speaker, text)
+
     def _on_popup(self, concept_id: str) -> None:
+        # Auto trigger after an objective — render INLINE in the message
+        # stream (no modal, no flow break).
         concept = get_concept(concept_id) or S2_CONCEPTS.get(concept_id)
         if concept:
-            self._show_concept_card(concept)
+            self._cmd.append_concept(concept, self._build_story_recap())
 
     def _show_concept_card(self, concept: dict) -> None:
-        # Build "Story So Far" — narrative recap of what the player did
+        # Used by the Codex browser (explicit lookup) — modal is fine here.
         story = self._build_story_recap()
         self._popup.load_concept(concept, story_so_far=story)
         self._popup.show_centered(self)
@@ -340,8 +352,9 @@ class MainWindow(QMainWindow):
         self._update_focus_box()
         self._show_next_objective_guidance()
 
-        # ── Update clue sidebar ──────────────────────────────────────────────
+        # ── Update side info panel ───────────────────────────────────────────
         self._scene_view.set_clues(self._game.clues)
+        self._sync_side_panel()
 
         # ── Celebration ──────────────────────────────────────────────────────
         if self._game.current_season == 2:
@@ -406,8 +419,10 @@ class MainWindow(QMainWindow):
         self._hud.set_progress(self._game.progress_pct())
         self._hud.set_clues(len(self._game.clues))
 
-        # Update scene art
+        # Update scene art + side info panel
         self._scene_view.set_scene(self._game.scene)
+        self._scene_view.set_scene_title(scene["title"])
+        self._sync_side_panel()
 
         # Update focus command in cmd panel
         self._update_focus_box()
@@ -432,6 +447,22 @@ class MainWindow(QMainWindow):
                     self._cmd.set_focus(label, cmd)
                 return
         self._cmd.set_focus("", "")
+
+    def _sync_side_panel(self) -> None:
+        """Feed the side info panel: current objective + season progress."""
+        focus_map = S2_OBJECTIVE_FOCUS if self._game.current_season == 2 else OBJECTIVE_FOCUS
+        objective = "Scene complete — advancing…"
+        for obj in self._game.objectives_for_scene(self._game.scene):
+            oid = obj["id"]
+            if oid not in self._game.completed:
+                if oid in focus_map:
+                    objective = focus_map[oid][0].rstrip(":")
+                else:
+                    objective = obj.get("label", "")
+                break
+        self._scene_view.set_objective(objective)
+        total = len(self._game._active_objectives())
+        self._scene_view.set_progress(len(self._game.clues), total)
 
     def _show_next_objective_guidance(self) -> None:
         step_map = S2_STEP_TEXT if self._game.current_season == 2 else STEP_TEXT

@@ -46,6 +46,10 @@ class SceneView(QWidget):
         super().__init__(parent)
         self._scene_id = SCENE_YOUR_DESK
         self._clues: list[str] = []
+        self._objective: str = ""
+        self._scene_title: str = ""
+        self._prog_done: int = 0
+        self._prog_total: int = 0
         self.setMinimumWidth(280)
         self.setAttribute(Qt.WidgetAttribute.WA_OpaquePaintEvent)
 
@@ -57,6 +61,19 @@ class SceneView(QWidget):
         self._clues = list(clues)
         self.update()
 
+    def set_objective(self, text: str) -> None:
+        self._objective = text or ""
+        self.update()
+
+    def set_scene_title(self, title: str) -> None:
+        self._scene_title = title or ""
+        self.update()
+
+    def set_progress(self, done: int, total: int) -> None:
+        self._prog_done = done
+        self._prog_total = total
+        self.update()
+
     # ── Qt paint event ────────────────────────────────────────────────────────
 
     def paintEvent(self, event):
@@ -66,13 +83,13 @@ class SceneView(QWidget):
         w = self.width()
         h = self.height()
 
-        # If clues exist, split the panel: top = scene art, bottom = clue sidebar
-        if self._clues:
-            clue_h = min(int(h * 0.40), max(120, len(self._clues) * 24 + 60))
-            scene_h = h - clue_h
-        else:
-            scene_h = h
-            clue_h = 0
+        # Layout flip: info/log is PRIMARY (top ~78%), scene art is a small
+        # thumbnail strip at the bottom (≤ 1/4 of the panel height).
+        art_h  = min(int(h * 0.24), 220)
+        info_h = h - art_h
+
+        # Info / Investigation panel — the important stuff, up top
+        self._draw_info_panel(p, w, info_h)
 
         # Route to the correct scene drawer
         draw_fn = {
@@ -91,15 +108,16 @@ class SceneView(QWidget):
             S2_SCENE_THE_SIGNAL:    self._draw_coo_office,
         }.get(self._scene_id, self._draw_desk)
 
-        # Clip scene drawing to top portion
+        # Scene art — small thumbnail at the bottom
         p.save()
-        p.setClipRect(0, 0, w, scene_h)
-        draw_fn(p, w, scene_h)
+        p.setClipRect(0, info_h, w, art_h)
+        p.translate(0, info_h)
+        draw_fn(p, w, art_h)
         p.restore()
 
-        # Draw clue sidebar in bottom portion
-        if self._clues:
-            self._draw_clue_sidebar(p, w, h, scene_h, clue_h)
+        # Thin divider between info and art
+        p.setPen(QPen(QColor("#2d4268"), 1))
+        p.drawLine(0, info_h, w, info_h)
 
         p.end()
 
@@ -780,101 +798,133 @@ class SceneView(QWidget):
 
         self._draw_label(p, w, h, "Server Room B1", "2:47 AM  |  Nobody else here")
 
-    # ── Clue sidebar ────────────────────────────────────────────────────────
+    # ── Info / Investigation panel (PRIMARY — top of the side panel) ─────────
 
-    def _draw_clue_sidebar(self, p: QPainter, w: int, h: int, top_y: int, clue_h: int):
-        """Draw a prominent checklist-style clue tracker in the bottom of the scene panel."""
-        # Background — slightly lighter panel, distinct from scene art
-        bg_grad = QLinearGradient(0, top_y, 0, h)
-        bg_grad.setColorAt(0, QColor("#1e2d4a"))
-        bg_grad.setColorAt(1, QColor("#162236"))
-        p.fillRect(0, top_y, w, clue_h, bg_grad)
+    def _draw_info_panel(self, p: QPainter, w: int, H: int):
+        """The important stuff up top: scene, progress, current objective, clues."""
+        # Panel background
+        bg = QLinearGradient(0, 0, 0, H)
+        bg.setColorAt(0, QColor("#1e2d4a"))
+        bg.setColorAt(1, QColor("#162236"))
+        p.fillRect(0, 0, w, H, bg)
 
-        # Top accent line — bright, eye-catching
-        p.setPen(QPen(QColor("#56d364"), 3))
-        p.drawLine(0, top_y, w, top_y)
+        pad = 16
+        y = 30
 
-        # Header — large and prominent
-        p.setFont(QFont("Segoe UI", 14, QFont.Weight.Bold))
-        p.setPen(QPen(QColor("#e3b97a")))
-        header_y = top_y + 28
-        p.drawText(14, header_y, f"INVESTIGATION LOG")
+        # ── Scene title ──────────────────────────────────────────────────────
+        if self._scene_title:
+            p.setFont(QFont("Segoe UI", 13, QFont.Weight.Bold))
+            p.setPen(QPen(QColor("#e3b97a")))
+            fm = p.fontMetrics()
+            p.drawText(pad, y, fm.elidedText(self._scene_title,
+                       Qt.TextElideMode.ElideRight, w - 2 * pad))
+            y += 22
 
-        # Progress bar
-        total_objectives = 13
-        done = len(self._clues)
-        bar_x = 14
-        bar_y = header_y + 10
-        bar_w = w - 28
-        bar_h = 6
+        # ── Current objective ────────────────────────────────────────────────
+        if self._objective:
+            p.setFont(QFont("Segoe UI", 9, QFont.Weight.Bold))
+            p.setPen(QPen(QColor("#79b8ff")))
+            p.drawText(pad, y, "CURRENT OBJECTIVE")
+            y += 6
+            y = self._wrapped(p, self._objective, pad, y + 14, w - 2 * pad,
+                              QFont("Segoe UI", 11), QColor("#e6edf3"),
+                              max_lines=3, leading=17)
+            y += 14
 
-        # Bar background
+        # ── Progress bar ─────────────────────────────────────────────────────
+        total = self._prog_total or 13
+        done  = self._prog_done if self._prog_total else len(self._clues)
+        p.setFont(QFont("Segoe UI", 9, QFont.Weight.Bold))
+        p.setPen(QPen(QColor("#768ea8")))
+        p.drawText(pad, y, "PROGRESS")
+        y += 12
+        bar_w = w - 2 * pad
         p.setBrush(QBrush(QColor("#2d4268")))
         p.setPen(Qt.PenStyle.NoPen)
-        p.drawRoundedRect(bar_x, bar_y, bar_w, bar_h, 3, 3)
-
-        # Bar fill
-        fill_w = int(bar_w * min(done / total_objectives, 1.0))
-        if fill_w > 0:
-            fill_grad = QLinearGradient(bar_x, 0, bar_x + fill_w, 0)
-            fill_grad.setColorAt(0, QColor("#22c55e"))
-            fill_grad.setColorAt(1, QColor("#16a34a"))
-            p.setBrush(QBrush(fill_grad))
-            p.drawRoundedRect(bar_x, bar_y, fill_w, bar_h, 3, 3)
-
-        # Progress text
+        p.drawRoundedRect(pad, y, bar_w, 7, 3, 3)
+        if total:
+            fw = int(bar_w * min(done / total, 1.0))
+            if fw > 0:
+                fg = QLinearGradient(pad, 0, pad + fw, 0)
+                fg.setColorAt(0, QColor("#22c55e"))
+                fg.setColorAt(1, QColor("#16a34a"))
+                p.setBrush(QBrush(fg))
+                p.drawRoundedRect(pad, y, fw, 7, 3, 3)
         p.setFont(QFont("Segoe UI", 10))
-        p.setPen(QPen(QColor("#768ea8")))
-        p.drawText(bar_x, bar_y + 20, f"{done} of {total_objectives} clues found")
+        p.setPen(QPen(QColor("#9fb3c8")))
+        p.drawText(pad, y + 24, f"{done} of {total} clues found")
+        y += 40
 
-        # Clue entries — checklist style with checkmarks
-        entry_y = bar_y + 38
+        # ── Divider ──────────────────────────────────────────────────────────
+        p.setPen(QPen(QColor("#2d4268"), 1))
+        p.drawLine(pad, y, w - pad, y)
+        y += 20
+
+        # ── Investigation log (checklist) ────────────────────────────────────
+        p.setFont(QFont("Segoe UI", 11, QFont.Weight.Bold))
+        p.setPen(QPen(QColor("#e3b97a")))
+        p.drawText(pad, y, "INVESTIGATION LOG")
+        y += 18
+
+        if not self._clues:
+            p.setFont(QFont("Segoe UI", 10, QFont.Weight.Normal, True))
+            p.setPen(QPen(QColor("#768ea8")))
+            p.drawText(pad, y + 6, "No clues yet — run a query to begin.")
+            return
+
         row_h = 26
-        max_visible = (h - entry_y - 8) // row_h
+        max_visible = max(1, (H - y - 12) // row_h)
+        visible = (self._clues[-max_visible:]
+                   if len(self._clues) > max_visible else self._clues)
 
-        # Show all clues, most recent first
-        visible_clues = self._clues[-max_visible:] if len(self._clues) > max_visible else self._clues
-
-        for i, clue in enumerate(visible_clues):
-            if entry_y + row_h > h - 4:
+        for i, clue in enumerate(visible):
+            if y + row_h > H - 6:
                 break
-
-            # Strip the "[CLUE #N]" prefix for clean display
             display = clue
             if clue.startswith("[CLUE"):
                 parts = clue.split("]", 1)
                 if len(parts) == 2:
                     display = parts[1].strip()
-
-            # Alternate row backgrounds
             if i % 2 == 0:
-                p.fillRect(6, entry_y - 4, w - 12, row_h - 2, QColor(255, 255, 255, 6))
-
-            # Checkmark icon
-            is_latest = (i == len(visible_clues) - 1)
-            check_color = QColor("#56d364") if is_latest else QColor("#4ade80")
+                p.fillRect(6, y - 4, w - 12, row_h - 2, QColor(255, 255, 255, 6))
+            is_latest = (i == len(visible) - 1)
             p.setFont(QFont("Segoe UI", 12))
-            p.setPen(QPen(check_color))
-            p.drawText(12, entry_y + 14, "✓")
+            p.setPen(QPen(QColor("#56d364") if is_latest else QColor("#4ade80")))
+            p.drawText(14, y + 14, "✓")
+            p.setFont(QFont("Segoe UI", 11,
+                       QFont.Weight.Bold if is_latest else QFont.Weight.Normal))
+            p.setPen(QPen(QColor("#e6edf3") if is_latest else QColor("#cdd9e5")))
+            fm = p.fontMetrics()
+            p.drawText(32, y + 14, fm.elidedText(
+                display, Qt.TextElideMode.ElideRight, w - 44))
+            y += row_h
 
-            # Clue text
-            text_color = QColor("#e6edf3") if is_latest else QColor("#cdd9e5")
-            p.setFont(QFont("Segoe UI", 11, QFont.Weight.Bold if is_latest else QFont.Weight.Normal))
-            p.setPen(QPen(text_color))
-
-            # Truncate if too wide
-            metrics = p.fontMetrics()
-            available_w = w - 44
-            display_text = metrics.elidedText(display, Qt.TextElideMode.ElideRight, available_w)
-            p.drawText(32, entry_y + 14, display_text)
-
-            entry_y += row_h
-
-        # If there are hidden clues, show count
         if len(self._clues) > max_visible:
             p.setPen(QPen(QColor("#768ea8")))
             p.setFont(QFont("Segoe UI", 9, QFont.Weight.Normal, True))
-            p.drawText(32, entry_y + 12, f"+ {len(self._clues) - max_visible} earlier")
+            p.drawText(32, y + 12, f"+ {len(self._clues) - max_visible} earlier")
+
+    def _wrapped(self, p, text, x, y, max_w, font, color, max_lines=3, leading=16):
+        """Word-wrap text within max_w, draw up to max_lines, return new y."""
+        p.setFont(font)
+        p.setPen(QPen(color))
+        fm = p.fontMetrics()
+        words = text.split()
+        lines, cur = [], ""
+        for word in words:
+            test = (cur + " " + word).strip()
+            if fm.horizontalAdvance(test) <= max_w:
+                cur = test
+            else:
+                lines.append(cur)
+                cur = word
+        if cur:
+            lines.append(cur)
+        for i, line in enumerate(lines[:max_lines]):
+            if i == max_lines - 1 and len(lines) > max_lines:
+                line = fm.elidedText(line + "…", Qt.TextElideMode.ElideRight, max_w)
+            p.drawText(x, y + i * leading, line)
+        return y + min(len(lines), max_lines) * leading
 
     # ── Utility ───────────────────────────────────────────────────────────────
 
