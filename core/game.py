@@ -688,6 +688,8 @@ class GameState:
         self.on_story:        callable = lambda kind, text: None     # kind: why|beat|recall
         # BRIEFING (left panel): in-story GOAL + the plain-language path
         self.on_briefing:     callable = lambda goal, move: None
+        # Cliffhanger card — fires when leaving a scene, before advancing
+        self.on_cliffhanger:  callable = lambda card: None
 
         # Track query count for pacing
         self._query_count = 0
@@ -941,6 +943,17 @@ class GameState:
         self.on_output("\n✔  Season 2 complete.\n", style="success")
 
     def _advance_to_scene(self, scene_id: str) -> None:
+        # Fire cliffhanger card for the scene being LEFT (before advancing)
+        leaving = self.scene
+        if self.current_season == 1:
+            from core.scenes import S1_CLIFFHANGERS
+            card = S1_CLIFFHANGERS.get(leaving)
+        else:
+            from core.season2_game import S2_CLIFFHANGERS
+            card = S2_CLIFFHANGERS.get(leaving)
+        if card:
+            self.on_cliffhanger(card)
+
         # Both seasons: story lives in the STORY panel, never the feed.
         self.scene = scene_id
         self.step  = 0

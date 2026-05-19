@@ -561,9 +561,66 @@ S2_RECALL_CHALLENGES = {
 }
 
 
-# -- Cliffhangers kept for compatibility (no longer pushed to console) -------
-# Scene transitions now flow through the STORY panel (WHY + recall gate).
-S2_CLIFFHANGERS = {}
+# -- Cliffhangers — dramatic "end of episode" cards between scenes ───────────
+
+S2_CLIFFHANGERS = {
+    S2_SCENE_SERVER_LOGS: {
+        "eyebrow":  "EPISODE 2",
+        "headline": "Ghost Records",
+        "teaser":   (
+            "The logs don't lie.\n"
+            "But they also don't explain the rows that shouldn't exist.\n\n"
+            "Deleted records. Coming back.\n"
+            "Something in the database has memory."
+        ),
+        "cta": "Into the Ghost Records →",
+    },
+    S2_SCENE_GHOST_RECORDS: {
+        "eyebrow":  "EPISODE 3",
+        "headline": "Timestamp Anomalies",
+        "teaser":   (
+            "The records aren't corrupted. They're signed.\n"
+            "Whoever — whatever — is putting them back\n"
+            "is leaving timestamps.\n\n"
+            "3:03am. Every time."
+        ),
+        "cta": "Follow the Timestamps →",
+    },
+    S2_SCENE_TIMESTAMP: {
+        "eyebrow":  "EPISODE 4",
+        "headline": "Into the Archive",
+        "teaser":   (
+            "The pattern is too precise to be noise.\n"
+            "There's a schema in the backup archive\n"
+            "that was never meant to be found.\n\n"
+            "Someone hid something before they left."
+        ),
+        "cta": "Open the Archive →",
+    },
+    S2_SCENE_ARCHIVE: {
+        "eyebrow":  "EPISODE 5",
+        "headline": "Decode the Pattern",
+        "teaser":   (
+            "There's a message in the data.\n"
+            "Not metaphorically. Literally.\n\n"
+            "The values form a sequence.\n"
+            "You need to read it."
+        ),
+        "cta": "Decode the Signal →",
+    },
+    S2_SCENE_PATTERN_DECODER: {
+        "eyebrow":  "EPISODE 6",
+        "headline": "The Signal",
+        "teaser":   (
+            "The message decoded.\n"
+            "It's a name. A date. A location.\n\n"
+            "Elena Vasquez knew this would happen.\n"
+            "She left you a key.\n"
+            "Use it."
+        ),
+        "cta": "Final Transmission →",
+    },
+}
 
 
 # -- Step text kept as an alias so any legacy import still resolves ----------

@@ -587,6 +587,70 @@ class CmdPanel(QWidget):
         if title:
             self._terminal.play_unlock_animation(title)
 
+    def append_cliffhanger(self, card: dict) -> None:
+        """
+        Show a dramatic end-of-scene card in the conversation thread.
+        card keys: eyebrow, headline, teaser, cta
+        """
+        w = QFrame()
+        w.setObjectName("cliff_card")
+        w.setStyleSheet(f"""
+            QFrame#cliff_card {{
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #1e1b4b, stop:1 #0f172a);
+                border: 1px solid #4f46e5;
+                border-radius: 10px;
+            }}
+        """)
+        lay = QVBoxLayout(w)
+        lay.setContentsMargins(24, 20, 24, 20)
+        lay.setSpacing(8)
+
+        # Eyebrow
+        eyebrow = QLabel(card.get("eyebrow", "NEXT").upper())
+        eyebrow.setStyleSheet(
+            "color: #818cf8; font-size: 11px; font-weight: 800; "
+            "letter-spacing: 3px; background: transparent; border: none;"
+        )
+        lay.addWidget(eyebrow)
+
+        # Headline
+        headline = QLabel(card.get("headline", ""))
+        headline.setStyleSheet(
+            "color: #e2e8f0; font-size: 20px; font-weight: 800; "
+            "background: transparent; border: none;"
+        )
+        lay.addWidget(headline)
+
+        # Divider
+        div = QFrame()
+        div.setFixedHeight(1)
+        div.setStyleSheet("background: #4f46e5; border: none;")
+        lay.addWidget(div)
+
+        # Teaser body
+        teaser_text = card.get("teaser", "")
+        teaser = QLabel(teaser_text)
+        teaser.setWordWrap(True)
+        teaser.setStyleSheet(
+            "color: #94a3b8; font-size: 14px; line-height: 1.6; "
+            "background: transparent; border: none; margin-top: 4px;"
+        )
+        lay.addWidget(teaser)
+
+        # CTA line
+        cta_text = card.get("cta", "")
+        if cta_text:
+            cta = QLabel(cta_text)
+            cta.setStyleSheet(
+                "color: #818cf8; font-size: 13px; font-weight: 700; "
+                "background: transparent; border: none; margin-top: 4px;"
+            )
+            lay.addWidget(cta)
+
+        self._add_widget(w)
+        self._autoscroll()
+
     def _concept_to_html(self, concept: dict, story: str = "") -> str:
         """Convert a concept dict to formatted HTML for display in right panel."""
         parts = []

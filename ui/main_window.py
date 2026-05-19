@@ -133,6 +133,7 @@ class MainWindow(QMainWindow):
         self._game.on_season_change = self._on_season_change
         self._game.on_story         = self._on_story
         self._game.on_briefing      = self._on_briefing
+        self._game.on_cliffhanger   = self._on_cliffhanger
 
         # ── Try to load existing save ────────────────────────────────────────
         self._game.load()
@@ -212,6 +213,9 @@ class MainWindow(QMainWindow):
 
     def _on_dialogue(self, speaker: str, text: str) -> None:
         self._cmd.append_dialogue(speaker, text)
+
+    def _on_cliffhanger(self, card: dict) -> None:
+        self._cmd.append_cliffhanger(card)
 
     def _on_story(self, kind: str, text: str) -> None:
         self._cmd.set_story(kind, text)

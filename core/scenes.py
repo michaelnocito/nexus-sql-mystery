@@ -215,6 +215,70 @@ SCENES = {
 }
 
 
+# ── Cliffhanger teasers ───────────────────────────────────────────────────────
+# Shown as a dramatic "end of scene" card when the player completes a scene
+# and advances. Keyed by the scene being LEFT.
+
+S1_CLIFFHANGERS = {
+    SCENE_YOUR_DESK: {
+        "eyebrow":  "CHAPTER 2",
+        "headline": "Follow the Money",
+        "teaser":   (
+            "Two vendors. No address. No phone number.\n"
+            "Half a million dollars between them.\n\n"
+            "Someone at Nexus signed off on every payment.\n"
+            "The transaction log is in Basement B1.\n"
+            "So is the truth."
+        ),
+        "cta": "Head to the Server Room →",
+    },
+    SCENE_DB_TERMINAL: {
+        "eyebrow":  "CHAPTER 3",
+        "headline": "Follow the People",
+        "teaser":   (
+            "The vendors are fake. That much is clear.\n"
+            "But someone with an employee ID kept approving them.\n\n"
+            "One number. One name.\n"
+            "The HR files are on the second floor."
+        ),
+        "cta": "Up to HR →",
+    },
+    SCENE_HR_FILES: {
+        "eyebrow":  "CHAPTER 4",
+        "headline": "The CFO's Office",
+        "teaser":   (
+            "Marcus Webb. Chief Financial Officer.\n"
+            "Every single suspicious payment: his signature.\n\n"
+            "Now find out how much.\n"
+            "All of it. Every dollar."
+        ),
+        "cta": "Into the CFO's Department →",
+    },
+    SCENE_CFO_DEPT: {
+        "eyebrow":  "CHAPTER 5",
+        "headline": "Build the Case",
+        "teaser":   (
+            "$1.2 million to one fake company.\n"
+            "And that's just Apex.\n\n"
+            "There's a second vendor.\n"
+            "The audit trail will tell you everything."
+        ),
+        "cta": "Pull the Audit Trail →",
+    },
+    SCENE_AUDIT_TRAIL: {
+        "eyebrow":  "CHAPTER 6",
+        "headline": "The Confrontation",
+        "teaser":   (
+            "You have the numbers.\n"
+            "$1,869,500. Two shell companies. Thirteen months.\n\n"
+            "Rachel Kim is waiting.\n"
+            "Close the door."
+        ),
+        "cta": "Rachel Kim's Office →",
+    },
+}
+
+
 # ── Step guidance ─────────────────────────────────────────────────────────────
 # Text shown in the narrative panel when an objective becomes the active goal.
 # Keyed by objective id. One message per objective, escalating the story beat.

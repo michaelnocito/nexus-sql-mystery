@@ -17,8 +17,9 @@ core/
   game.py               GameState class — the single source of truth for all runtime state
   db.py                 DatabaseInterface — SQLite connection, query execution, seed data
   scenes.py             Season 1: OBJECTIVES list, S1_YOUR_MOVE, S1_HINTS, S1_RECALL_CHALLENGES,
-                        S1_SCENE_WHY, S1_RESULT_REACTION, S1_OBJECTIVE_FOCUS, scene constants
-  season2_game.py       Season 2: same structure as scenes.py for S2 content
+                        S1_SCENE_WHY, S1_RESULT_REACTION, S1_OBJECTIVE_FOCUS, S1_CLIFFHANGERS,
+                        scene constants
+  season2_game.py       Season 2: same structure as scenes.py for S2 content + S2_CLIFFHANGERS
   season2_scenes.py     Season 2: S2_SCENES dict (scene metadata, intros, ambient lines)
   season2_data.py       Season 2: DB seed rows (server_logs, deleted_records, backup_snapshots)
   codex.py              Season 1 SQL concept definitions (shown in ◆ Concepts panel)
@@ -72,6 +73,7 @@ Central state object. Constructed once in `MainWindow`, never replaced.
 | `on_progress(objective_id)` | Objective completed |
 | `on_status(label, value)` | HUD stat update |
 | `on_season_change(season)` | Season 1 → Season 2 transition |
+| `on_cliffhanger(card)` | End-of-scene dramatic card (fires in `_advance_to_scene`) |
 
 **Key methods:**
 
@@ -164,6 +166,48 @@ when `transition_to_season2()` is called.
 
 Season 2 recall challenges also use hypothetical tables (`logs`, `sales`, etc.) — already
 covered by the same `cmd_panel.py` intercept as Season 1.
+
+---
+
+## Phase 2 Systems
+
+### Cliffhanger Cards
+
+Between every scene transition, a dramatic dark-themed card is shown in the conversation thread. It fires from `game._advance_to_scene()` via `on_cliffhanger(card)` → `MainWindow._on_cliffhanger()` → `CmdPanel.append_cliffhanger()`.
+
+**Adding/editing cliffhanger text:**
+- Season 1: `S1_CLIFFHANGERS` dict in `core/scenes.py` — keyed by the scene being *left*
+- Season 2: `S2_CLIFFHANGERS` dict in `core/season2_game.py` — same pattern
+
+Each card is a dict with keys: `eyebrow`, `headline`, `teaser`, `cta`.
+
+### Field Guide (Collectibles)
+
+One document page unlocks per completed scene. Players open it via the **📄 Field Guide** button in the HUD.
+
+- **Data**: `core/collectibles.py` (S1), `core/season2_collectibles.py` (S2)
+- **UI**: `ui/collectibles_panel.py` — parchment-styled dialog with locked/unlocked states
+- **Unlock logic**: `game.scene_complete(scene_id)` — true when all objectives in a scene are done
+- **Wiring**: `MainWindow._open_field_guide()` → `CollectiblesPanel.refresh()` → calls `game.scene_complete()` per page
+- On Season 2 transition: `collectibles.set_pages(S2_FIELD_GUIDE_PAGES)` swaps the content
+
+### Spirit Guide (Sam)
+
+Sam drops ambient tips when the player is stuck (no new queries in 90 seconds).
+
+- **Timer**: `MainWindow._spirit_timer` — 90-second interval, checks `game._query_count`
+- **Trigger**: only fires if `_query_count` hasn't changed since last check
+- **Rendering**: `cmd_panel.append_output(text, style="spirit")` → routes to a Sam dialogue bubble
+
+To add new tips, edit the `tips` list in `MainWindow._spirit_tip()`.
+
+### Supernatural Ambient Seeds (Season 1)
+
+Subtle atmospheric lines in `SCENE_DB_TERMINAL` ambient list (`core/scenes.py`) hint at Season 2's ghost story. Examples:
+- "For a second, your terminal shows a query you didn't type. Then it's gone."
+- "You swear one of the server fans just coughed."
+
+These are shown periodically and on the `look` command (handled by `CmdPanel`).
 
 ---
 
