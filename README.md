@@ -2,7 +2,9 @@
 
 ### Learn SQL by solving a corporate fraud mystery.
 
-A narrative-driven game by [Michael Nocito](https://github.com/michaelnocito).
+A narrative-driven game by [Michael Nocito](https://www.linkedin.com/in/michaelnocito).
+
+**[🌐 nexus-sql-mystery website](https://michaelnocito.github.io/nexus-sql-mystery/)** &nbsp;·&nbsp; [Releases](https://github.com/michaelnocito/nexus-sql-mystery/releases) &nbsp;·&nbsp; [SQL Foundations Guide](https://github.com/michaelnocito/nexus-sql-mystery/blob/master/docs/sql-foundations.md)
 
 <!--
 VISUAL PLACEMENT 1 — Hero banner / gameplay screenshot
@@ -221,15 +223,17 @@ every experience level is welcome.
 
 ---
 
-## More Tools
+## More from Michael Nocito
 
-**[Spreadsheet Cleaner](https://github.com/michaelnocito/spreadsheet-cleaner)** —
-A Python learning project where you build a real data-cleaning tool in three layers.
-Pairs well with NEXUS if you're learning both SQL and Python.
+**[🗂️ RecordForge](https://michaelnocito.github.io/recordforge/)** —
+Generate fictional PDFs, Word docs, Excel datasets, and HTML files for QA, demos, and ETL testing.
+Free Windows app + Python package. No real data, fully offline.
 
-**[Test Data & Document Generator](https://github.com/michaelnocito/test-data-doc-generator)** —
-Generate fictional PDFs, Word docs, and Excel datasets for testing and demos.
-Free Windows app, no Python required.
+**[🧼 Spreadsheet Cleaner](https://michaelnocito.github.io/spreadsheet-cleaner/)** —
+A beginner Python project where you build a real data-cleaning tool layer by layer.
+Guided comments throughout. No experience needed.
+
+**[LinkedIn](https://www.linkedin.com/in/michaelnocito)** — data analyst · 8 years enterprise implementation
 
 ---
 
