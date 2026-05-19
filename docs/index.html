@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEXUS — Learn SQL by Solving a Corporate Fraud Mystery</title>
+  <meta name="description" content="A free desktop game where you learn real SQL by playing a data analyst uncovering corporate fraud. Write actual queries. Catch a real thief. Two full seasons." />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="NEXUS — Learn SQL by Solving a Mystery" />
+  <meta property="og:description" content="A free desktop game where you write real SQL to uncover $1.87M in corporate fraud. Two seasons. No fluff. Real queries." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://michaelnocito.github.io/nexus-sql-mystery/" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="NEXUS — Learn SQL by Solving a Mystery" />
+  <meta name="twitter:description" content="Free desktop game. Write real SQL. Catch a thief. Two full seasons." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d1117;
+      --surface:   #161b22;
+      --surface2:  #21262d;
+      --border:    #30363d;
+      --accent:    #6366f1;
+      --accent-lt: #818cf8;
+      --green:     #22c55e;
+      --amber:     #f59e0b;
+      --red:       #ef4444;
+      --text:      #e6edf3;
+      --text-dim:  #8b949e;
+      --text-muted:#57606a;
+      --mono:      'JetBrains Mono', 'Courier New', monospace;
+      --sans:      'Inter', system-ui, sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 16px;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    a { color: var(--accent-lt); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ── NAV ─────────────────────────────────────────────────────────────── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13, 17, 23, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 40px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-logo {
+      font-family: var(--mono);
+      font-weight: 700;
+      font-size: 18px;
+      letter-spacing: 4px;
+      color: var(--accent-lt);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 32px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--text-dim);
+      font-size: 14px;
+      font-weight: 500;
+      transition: color 0.15s;
+    }
+
+    .nav-links a:hover { color: var(--text); text-decoration: none; }
+
+    .nav-cta {
+      background: var(--accent);
+      color: #fff !important;
+      padding: 8px 20px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 14px;
+      transition: background 0.15s;
+    }
+    .nav-cta:hover { background: #4f46e5 !important; text-decoration: none !important; }
+
+    /* ── HERO ─────────────────────────────────────────────────────────────── */
+    .hero {
+      min-height: calc(100vh - 60px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 80px 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(99,102,241,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(99,102,241,0.06) 1px, transparent 1px);
+      background-size: 40px 40px;
+      mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, black 40%, transparent 100%);
+    }
+
+    .hero-glow {
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    .hero-content { position: relative; max-width: 800px; }
+
+    .hero-eyebrow {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      color: var(--accent-lt);
+      background: rgba(99,102,241,0.12);
+      border: 1px solid rgba(99,102,241,0.3);
+      padding: 6px 16px;
+      border-radius: 100px;
+      margin-bottom: 28px;
+    }
+
+    h1 {
+      font-size: clamp(40px, 7vw, 72px);
+      font-weight: 900;
+      line-height: 1.1;
+      letter-spacing: -1.5px;
+      margin-bottom: 24px;
+      color: var(--text);
+    }
+
+    h1 span { color: var(--accent-lt); }
+
+    .hero-sub {
+      font-size: clamp(17px, 2.5vw, 21px);
+      color: var(--text-dim);
+      max-width: 600px;
+      margin: 0 auto 16px;
+      line-height: 1.6;
+    }
+
+    .hero-proof {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 44px;
+    }
+
+    .hero-proof strong { color: var(--text-dim); }
+
+    .btn-group {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 700;
+      font-size: 16px;
+      padding: 14px 32px;
+      border-radius: 10px;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .btn-primary:hover {
+      background: #4f46e5;
+      text-decoration: none;
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface2);
+      color: var(--text);
+      font-weight: 600;
+      font-size: 16px;
+      padding: 14px 32px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      transition: border-color 0.15s, transform 0.1s;
+    }
+    .btn-secondary:hover {
+      border-color: var(--accent-lt);
+      text-decoration: none;
+      transform: translateY(-1px);
+    }
+
+    /* ── TERMINAL DEMO ───────────────────────────────────────────────────── */
+    .terminal-section {
+      padding: 0 24px 100px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .terminal-demo {
+      width: 100%;
+      max-width: 760px;
+      background: #0a0e1a;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(99,102,241,0.15);
+    }
+
+    .terminal-titlebar {
+      background: var(--surface);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .dot { width: 12px; height: 12px; border-radius: 50%; }
+    .dot-r { background: #ff5f57; }
+    .dot-y { background: #febc2e; }
+    .dot-g { background: #28c840; }
+
+    .terminal-title {
+      flex: 1;
+      text-align: center;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .terminal-body {
+      padding: 28px 32px 32px;
+      font-family: var(--mono);
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
+    .t-dim    { color: #4b5563; }
+    .t-prompt { color: var(--accent-lt); }
+    .t-sql    { color: #93c5fd; }
+    .t-kw     { color: #c084fc; }
+    .t-str    { color: #86efac; }
+    .t-num    { color: #fbbf24; }
+    .t-col    { color: var(--text-dim); }
+    .t-out    { color: #e2e8f0; }
+    .t-success{ color: var(--green); font-weight: 700; }
+    .t-story  { color: #94a3b8; font-style: italic; }
+    .t-cursor { display: inline-block; width: 8px; height: 15px; background: var(--accent-lt); animation: blink 1s step-end infinite; vertical-align: text-bottom; }
+
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    /* ── SECTION SHARED ─────────────────────────────────────────────────── */
+    section { padding: 100px 24px; }
+    .section-inner { max-width: 1100px; margin: 0 auto; }
+
+    .section-label {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      color: var(--accent-lt);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    h2 {
+      font-size: clamp(28px, 4vw, 44px);
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+      margin-bottom: 16px;
+    }
+
+    .section-sub {
+      font-size: 18px;
+      color: var(--text-dim);
+      max-width: 560px;
+      line-height: 1.6;
+      margin-bottom: 60px;
+    }
+
+    /* ── WHO IT'S FOR ────────────────────────────────────────────────────── */
+    .audiences {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .audience-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px;
+      background: var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .audience-card {
+      background: var(--surface);
+      padding: 48px 44px;
+    }
+
+    .audience-icon {
+      font-size: 40px;
+      margin-bottom: 20px;
+    }
+
+    .audience-card h3 {
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+
+    .audience-card p {
+      color: var(--text-dim);
+      font-size: 15px;
+      line-height: 1.7;
+      margin-bottom: 24px;
+    }
+
+    .audience-bullets {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .audience-bullets li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 14px;
+      color: var(--text-dim);
+    }
+
+    .audience-bullets li::before {
+      content: "✓";
+      color: var(--green);
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    /* ── FEATURES ────────────────────────────────────────────────────────── */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 32px 28px;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+
+    .feature-card:hover {
+      border-color: rgba(99,102,241,0.5);
+      transform: translateY(-2px);
+    }
+
+    .feature-icon {
+      font-size: 28px;
+      margin-bottom: 16px;
+    }
+
+    .feature-card h3 {
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .feature-card p {
+      font-size: 14px;
+      color: var(--text-dim);
+      line-height: 1.65;
+    }
+
+    /* ── SKILLS TABLE ─────────────────────────────────────────────────────── */
+    .skills-bg {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .skills-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      align-items: start;
+    }
+
+    .skills-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .skill-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 16px;
+      border-radius: 8px;
+      transition: background 0.15s;
+    }
+
+    .skill-row:hover { background: var(--surface2); }
+
+    .skill-tag {
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent-lt);
+      background: rgba(99,102,241,0.12);
+      border: 1px solid rgba(99,102,241,0.2);
+      padding: 3px 10px;
+      border-radius: 6px;
+      min-width: 130px;
+      text-align: center;
+    }
+
+    .skill-desc {
+      font-size: 14px;
+      color: var(--text-dim);
+    }
+
+    .skills-story {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 32px;
+    }
+
+    .story-beat {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .story-beat:last-child { margin-bottom: 0; }
+
+    .beat-num {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--accent-lt);
+      background: rgba(99,102,241,0.15);
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .beat-text strong {
+      display: block;
+      font-size: 14px;
+      color: var(--text);
+      margin-bottom: 2px;
+    }
+
+    .beat-text span {
+      font-size: 13px;
+      color: var(--text-dim);
+    }
+
+    /* ── SEASONS ──────────────────────────────────────────────────────────── */
+    .seasons-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    .season-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .season-header {
+      padding: 28px 32px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .season-tag {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      padding: 4px 12px;
+      border-radius: 100px;
+      margin-bottom: 16px;
+      display: inline-block;
+    }
+
+    .s1-tag { background: rgba(34,197,94,0.12); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
+    .s2-tag { background: rgba(99,102,241,0.12); color: var(--accent-lt); border: 1px solid rgba(99,102,241,0.3); }
+
+    .season-card h3 {
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .season-card .season-sub {
+      font-size: 14px;
+      color: var(--text-dim);
+    }
+
+    .season-body {
+      padding: 24px 32px 32px;
+    }
+
+    .season-body p {
+      font-size: 15px;
+      color: var(--text-dim);
+      line-height: 1.7;
+      margin-bottom: 20px;
+    }
+
+    .season-skills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .season-skill {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text-dim);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+
+    /* ── QUOTE ──────────────────────────────────────────────────────────── */
+    .quote-section {
+      text-align: center;
+    }
+
+    .quote-block {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    blockquote {
+      font-size: clamp(20px, 3vw, 28px);
+      font-weight: 700;
+      line-height: 1.5;
+      color: var(--text);
+      margin-bottom: 20px;
+      position: relative;
+    }
+
+    blockquote::before {
+      content: '"';
+      font-size: 80px;
+      color: rgba(99,102,241,0.2);
+      font-family: Georgia, serif;
+      line-height: 0;
+      position: absolute;
+      top: 20px;
+      left: -20px;
+    }
+
+    .quote-attr {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    /* ── INSTALL ─────────────────────────────────────────────────────────── */
+    .install-bg {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .install-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+    }
+
+    .install-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .install-step {
+      display: flex;
+      gap: 18px;
+      align-items: flex-start;
+    }
+
+    .step-num {
+      background: var(--accent);
+      color: white;
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 700;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .step-text strong {
+      display: block;
+      font-size: 15px;
+      margin-bottom: 2px;
+    }
+
+    .step-text span {
+      font-size: 14px;
+      color: var(--text-dim);
+    }
+
+    .install-cmd {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .cmd-bar {
+      background: var(--surface2);
+      padding: 10px 16px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .cmd-body {
+      padding: 20px 20px;
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 2;
+    }
+
+    .cmd-comment { color: #4b5563; }
+    .cmd-dollar  { color: var(--accent-lt); }
+    .cmd-text    { color: #86efac; }
+
+    /* ── FOOTER ──────────────────────────────────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 48px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .footer-logo {
+      font-family: var(--mono);
+      font-weight: 700;
+      font-size: 16px;
+      letter-spacing: 4px;
+      color: var(--accent-lt);
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 24px;
+      list-style: none;
+    }
+
+    .footer-links a {
+      color: var(--text-muted);
+      font-size: 14px;
+      transition: color 0.15s;
+    }
+
+    .footer-links a:hover { color: var(--text); text-decoration: none; }
+
+    .footer-copy {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* ── RESPONSIVE ──────────────────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      nav { padding: 0 20px; }
+      .nav-links { display: none; }
+
+      .audience-grid,
+      .seasons-grid,
+      .skills-grid,
+      .install-grid { grid-template-columns: 1fr; }
+
+      .features-grid { grid-template-columns: 1fr; }
+
+      .audience-card { padding: 36px 28px; }
+
+      footer { flex-direction: column; text-align: center; }
+      .footer-links { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── NAV ─────────────────────────────────────────────────────────────────── -->
+<nav>
+  <span class="nav-logo">NEXUS</span>
+  <ul class="nav-links">
+    <li><a href="#for-you">Who It's For</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#skills">What You'll Learn</a></li>
+    <li><a href="#seasons">Seasons</a></li>
+    <li><a href="#install">Install</a></li>
+    <li><a href="https://github.com/michaelnocito/nexus-sql-mystery" target="_blank">GitHub ↗</a></li>
+  </ul>
+  <a href="https://github.com/michaelnocito/nexus-sql-mystery/releases/latest" class="nav-cta">Download Free →</a>
+</nav>
+
+
+<!-- ── HERO ─────────────────────────────────────────────────────────────────── -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-content">
+    <div class="hero-eyebrow">Free Desktop Game · Python + SQL</div>
+    <h1>Learn SQL by<br/><span>Solving a Crime.</span></h1>
+    <p class="hero-sub">
+      You're a data analyst. $1.87 million is missing. Write real SQL queries,
+      follow the evidence, and catch the CFO before he disappears to Cabo.
+    </p>
+    <p class="hero-proof">
+      <strong>Two full seasons.</strong> &nbsp;28 SQL objectives. &nbsp;No tutorials. No multiple choice. &nbsp;<strong>Real queries only.</strong>
+    </p>
+    <div class="btn-group">
+      <a href="https://github.com/michaelnocito/nexus-sql-mystery/releases/latest" class="btn-primary">
+        ⬇ &nbsp;Download for Free
+      </a>
+      <a href="https://github.com/michaelnocito/nexus-sql-mystery" class="btn-secondary">
+        ★ &nbsp;Star on GitHub
+      </a>
+    </div>
+  </div>
+</section>
+
+
+<!-- ── TERMINAL DEMO ─────────────────────────────────────────────────────────── -->
+<div class="terminal-section">
+  <div class="terminal-demo">
+    <div class="terminal-titlebar">
+      <div class="dot dot-r"></div>
+      <div class="dot dot-y"></div>
+      <div class="dot dot-g"></div>
+      <div class="terminal-title">nexus — sql terminal</div>
+    </div>
+    <div class="terminal-body">
+      <div class="t-story">Diana Reeves drops a sticky note on your keyboard.</div>
+      <div class="t-story">"Two vendors. No address. Follow the money." &nbsp;— D</div>
+      <br/>
+      <div><span class="t-prompt">nexus&gt; </span><span class="t-kw">SELECT</span> <span class="t-col">vendor_id</span><span class="t-dim">,</span> <span class="t-kw">SUM</span><span class="t-dim">(</span><span class="t-col">amount</span><span class="t-dim">)</span> <span class="t-kw">AS</span> <span class="t-col">total</span></div>
+      <div><span class="t-dim">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="t-kw">FROM</span> <span class="t-col">transactions</span></div>
+      <div><span class="t-dim">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="t-kw">GROUP BY</span> <span class="t-col">vendor_id</span></div>
+      <div><span class="t-dim">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="t-kw">ORDER BY</span> <span class="t-col">total</span> <span class="t-kw">DESC</span><span class="t-dim">;</span></div>
+      <br/>
+      <div class="t-dim">┌────────────┬────────────────┐</div>
+      <div class="t-dim">│ <span class="t-out">vendor_id</span>  │ <span class="t-out">total</span>          │</div>
+      <div class="t-dim">├────────────┼────────────────┤</div>
+      <div class="t-dim">│ <span class="t-num">4</span>          │ <span class="t-num">1,243,500.00</span>   │</div>
+      <div class="t-dim">│ <span class="t-num">7</span>          │ <span class="t-num">626,000.00</span>     │</div>
+      <div class="t-dim">│ <span class="t-num">2</span>          │ <span class="t-num">84,200.00</span>      │</div>
+      <div class="t-dim">└────────────┴────────────────┘</div>
+      <br/>
+      <div class="t-success">✔ &nbsp;Clue found: Two vendors dominate the spend.</div>
+      <div class="t-story">Sam: "Vendor 4 pulled $1.2M and has no address.</div>
+      <div class="t-story">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That's not a vendor. That's a problem."</div>
+      <br/>
+      <div><span class="t-prompt">nexus&gt; </span><span class="t-cursor"></span></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ── WHO IT'S FOR ──────────────────────────────────────────────────────────── -->
+<section class="audiences" id="for-you">
+  <div class="section-inner">
+    <div style="text-align:center; margin-bottom: 48px;">
+      <div class="section-label">Who It's For</div>
+      <h2>Pick your angle.</h2>
+      <p class="section-sub" style="margin: 0 auto;">NEXUS was built for two kinds of people. Both get the full game.</p>
+    </div>
+    <div class="audience-grid">
+      <div class="audience-card">
+        <div class="audience-icon">📊</div>
+        <h3>Data Professionals & Learners</h3>
+        <p>
+          You know SQL exists. Maybe you've done a tutorial or two.
+          But nothing sticks like actually needing it to solve something.
+          NEXUS puts you in a real investigation with real data — the queries
+          you write matter to the story.
+        </p>
+        <ul class="audience-bullets">
+          <li>16 SQL objectives across 6 investigation scenes (Season 1)</li>
+          <li>Concepts taught exactly once — then immediately applied</li>
+          <li>Every query runs against a real SQLite database</li>
+          <li>Field Guide pages recap what you learned per scene</li>
+          <li>Season 2 adds subqueries, CASE, HAVING, string functions</li>
+        </ul>
+      </div>
+      <div class="audience-card">
+        <div class="audience-icon">🎮</div>
+        <h3>Gamers Who Want a Brain Workout</h3>
+        <p>
+          Corporate noir mystery. A CFO stealing millions through shell companies.
+          A spirit guide named Sam who may or may not be a ghost.
+          A Matrix-rain animation when you unlock a new power.
+          This is a game first.
+        </p>
+        <ul class="audience-bullets">
+          <li>Cinematic dialogue — Diana, Sam, and a cast of suspects</li>
+          <li>Cliffhanger scene transitions with episode-style cards</li>
+          <li>Concept unlock animation: Matrix rain → Morpheus message</li>
+          <li>Two full seasons with a "Ghost in the Machine" S2 twist</li>
+          <li>Investigation log, clue tracking, completion milestones</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ── FEATURES ──────────────────────────────────────────────────────────────── -->
+<section id="features">
+  <div class="section-inner">
+    <div class="section-label">Features</div>
+    <h2>Built different.</h2>
+    <p class="section-sub">Every design decision pushes toward one goal: the query has to matter to the story.</p>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🖥️</div>
+        <h3>Cartoon CRT Terminal</h3>
+        <p>A cel-shaded monitor sits at the center of every scene. Your SQL goes in. Results come out. Errors stay on-screen — they never bleed into the story thread.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🌧️</div>
+        <h3>Matrix Unlock Animation</h3>
+        <p>Master a new SQL concept and the terminal erupts in green rain. The characters lock into focus. A Morpheus-style message appears. Then you move on.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💬</div>
+        <h3>Living Dialogue Thread</h3>
+        <p>Diana narrates. Sam tips you off. The conversation flows in real time alongside your queries — like a messaging thread woven into the investigation.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🎬</div>
+        <h3>Cliffhanger Scene Cards</h3>
+        <p>Each scene ends with a dark-mode episode card — headline, teaser, next location. The case escalates. The stakes mount. Then you're back in the terminal.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📄</div>
+        <h3>The Analyst's Field Guide</h3>
+        <p>One parchment-styled journal page unlocks per completed scene. Each page recaps the SQL technique you used and the rule behind it. A record of your growth.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔁</div>
+        <h3>Recall Gates</h3>
+        <p>Between scenes, a low-stakes quiz fires: "prove you've still got this." Two misses and the answer is revealed. No hard blocking. Spaced retrieval, done right.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💡</div>
+        <h3>2-Click Hint System</h3>
+        <p>Stuck? Click once for a Sam tip. Click again for the exact answer with a copy button. No judgment. The goal is to keep you moving, not to gatekeep progress.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">◆</div>
+        <h3>Concepts Browser</h3>
+        <p>Every unlocked SQL concept lives in a browsable reference. Open it any time. Green pulse on the button tells you something new just dropped.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">👻</div>
+        <h3>Spirit Guide (Sam)</h3>
+        <p>If you go quiet for 90 seconds, Sam whispers. Tips on shortcuts, hints, command history. Helpful without being annoying. Probably not a ghost. Probably.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ── SKILLS ────────────────────────────────────────────────────────────────── -->
+<section class="skills-bg" id="skills">
+  <div class="section-inner">
+    <div class="skills-grid">
+      <div>
+        <div class="section-label">What You'll Learn</div>
+        <h2>Real SQL.<br/>Two seasons.</h2>
+        <p class="section-sub">No syntax drills. No fill-in-the-blank. Every concept is taught once, applied immediately, and reinforced through the investigation.</p>
+
+        <div class="skills-list">
+          <div class="skill-row"><span class="skill-tag">SELECT / FROM</span><span class="skill-desc">Pulling data from tables</span></div>
+          <div class="skill-row"><span class="skill-tag">WHERE</span><span class="skill-desc">Filtering rows by condition</span></div>
+          <div class="skill-row"><span class="skill-tag">COUNT / SUM</span><span class="skill-desc">Aggregating records</span></div>
+          <div class="skill-row"><span class="skill-tag">GROUP BY</span><span class="skill-desc">Bundling data into groups</span></div>
+          <div class="skill-row"><span class="skill-tag">JOIN</span><span class="skill-desc">Linking tables by key</span></div>
+          <div class="skill-row"><span class="skill-tag">ORDER BY</span><span class="skill-desc">Sorting results</span></div>
+          <div class="skill-row"><span class="skill-tag">IN clause</span><span class="skill-desc">Matching a list of values</span></div>
+          <div class="skill-row" style="opacity:0.7"><span class="skill-tag">LIKE</span><span class="skill-desc">Pattern matching — Season 2</span></div>
+          <div class="skill-row" style="opacity:0.7"><span class="skill-tag">Subqueries</span><span class="skill-desc">Query inside a query — Season 2</span></div>
+          <div class="skill-row" style="opacity:0.7"><span class="skill-tag">CASE WHEN</span><span class="skill-desc">Conditional logic — Season 2</span></div>
+          <div class="skill-row" style="opacity:0.7"><span class="skill-tag">HAVING</span><span class="skill-desc">Filtering aggregates — Season 2</span></div>
+          <div class="skill-row" style="opacity:0.7"><span class="skill-tag">strftime</span><span class="skill-desc">Date/time extraction — Season 2</span></div>
+        </div>
+      </div>
+
+      <div class="skills-story">
+        <div class="section-label" style="margin-bottom: 24px;">The Investigation</div>
+        <div class="story-beat">
+          <div class="beat-num">1</div>
+          <div class="beat-text">
+            <strong>Your Desk — Day One</strong>
+            <span>Pull the employee table. Get your bearings. Something feels off about the vendor list.</span>
+          </div>
+        </div>
+        <div class="story-beat">
+          <div class="beat-num">2</div>
+          <div class="beat-text">
+            <strong>Server Room — Basement B1</strong>
+            <span>Group the transactions. Sort by total. Two vendors are pulling in millions with no address, no phone.</span>
+          </div>
+        </div>
+        <div class="story-beat">
+          <div class="beat-num">3</div>
+          <div class="beat-text">
+            <strong>HR Files — 2nd Floor</strong>
+            <span>Every suspicious payment has the same approved_by ID. Put a name to the number.</span>
+          </div>
+        </div>
+        <div class="story-beat">
+          <div class="beat-num">4</div>
+          <div class="beat-text">
+            <strong>CFO's Department</strong>
+            <span>Total the damage. Watch the payments escalate month over month. He was getting bolder.</span>
+          </div>
+        </div>
+        <div class="story-beat">
+          <div class="beat-num">5</div>
+          <div class="beat-text">
+            <strong>Audit Trail</strong>
+            <span>Two shell companies. One approver. $1,869,500. Build the case that holds up in a room with lawyers.</span>
+          </div>
+        </div>
+        <div class="story-beat">
+          <div class="beat-num">6</div>
+          <div class="beat-text">
+            <strong>Rachel Kim's Office</strong>
+            <span>Close the door. Present the evidence. Watch the CFO's story fall apart query by query.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ── SEASONS ───────────────────────────────────────────────────────────────── -->
+<section id="seasons">
+  <div class="section-inner">
+    <div class="section-label">Content</div>
+    <h2>Two seasons. Both included.</h2>
+    <p class="section-sub">Season 1 teaches SQL fundamentals through a corporate fraud case. Season 2 goes deeper — and gets strange.</p>
+
+    <div class="seasons-grid">
+      <div class="season-card">
+        <div class="season-header">
+          <div class="season-tag s1-tag">SEASON 1 · AVAILABLE NOW</div>
+          <h3>The Audit</h3>
+          <p class="season-sub">6 scenes · 16 objectives · $1.87M in fraud</p>
+        </div>
+        <div class="season-body">
+          <p>
+            A new data analyst at Nexus Analytics Corp. Day one. A sticky note on your keyboard.
+            Two vendors with no address pulling in millions. One CFO with a business trip to Cabo booked.
+            You have SQL and you have time.
+          </p>
+          <div class="season-skills">
+            <span class="season-skill">SELECT</span>
+            <span class="season-skill">WHERE</span>
+            <span class="season-skill">COUNT</span>
+            <span class="season-skill">SUM</span>
+            <span class="season-skill">GROUP BY</span>
+            <span class="season-skill">JOIN</span>
+            <span class="season-skill">ORDER BY</span>
+            <span class="season-skill">IN</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="season-card">
+        <div class="season-header">
+          <div class="season-tag s2-tag">SEASON 2 · AVAILABLE NOW</div>
+          <h3>The Ghost in the Machine</h3>
+          <p class="season-sub">6 scenes · 12 objectives · something is wrong</p>
+        </div>
+        <div class="season-body">
+          <p>
+            The fraud case closed. But something in the server room didn't. Deleted records
+            keep coming back. Queries run at 3:03am. The logs show access from an account
+            that hasn't existed since 2023. Someone left a message in the data.
+          </p>
+          <div class="season-skills">
+            <span class="season-skill">LIKE</span>
+            <span class="season-skill">strftime</span>
+            <span class="season-skill">Subqueries</span>
+            <span class="season-skill">HAVING</span>
+            <span class="season-skill">SUBSTR</span>
+            <span class="season-skill">GROUP_CONCAT</span>
+            <span class="season-skill">CASE WHEN</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ── QUOTE ─────────────────────────────────────────────────────────────────── -->
+<section class="quote-section">
+  <div class="section-inner">
+    <div class="quote-block">
+      <blockquote>
+        "You started with db.tables(). You end with a complete fraud report.
+        Not bad for day one, Alex."
+      </blockquote>
+      <p class="quote-attr">— NEXUS, Season 1 ending</p>
+    </div>
+  </div>
+</section>
+
+
+<!-- ── INSTALL ───────────────────────────────────────────────────────────────── -->
+<section class="install-bg" id="install">
+  <div class="section-inner">
+    <div class="install-grid">
+      <div>
+        <div class="section-label">Get Started</div>
+        <h2>Up in 60 seconds.</h2>
+        <p class="section-sub">Python 3.10+ and PySide6. That's the whole dependency list.</p>
+
+        <div class="install-steps">
+          <div class="install-step">
+            <div class="step-num">1</div>
+            <div class="step-text">
+              <strong>Clone the repo</strong>
+              <span>Or download the ZIP from the latest GitHub Release</span>
+            </div>
+          </div>
+          <div class="install-step">
+            <div class="step-num">2</div>
+            <div class="step-text">
+              <strong>Install the one dependency</strong>
+              <span>pip install PySide6 — that's it</span>
+            </div>
+          </div>
+          <div class="install-step">
+            <div class="step-num">3</div>
+            <div class="step-text">
+              <strong>Run the game</strong>
+              <span>python main.py — database auto-creates on first launch</span>
+            </div>
+          </div>
+          <div style="margin-top: 8px;">
+            <a href="https://github.com/michaelnocito/nexus-sql-mystery/releases/latest" class="btn-primary" style="display:inline-flex;">
+              ⬇ &nbsp;Download Latest Release
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="install-cmd">
+        <div class="cmd-bar">terminal</div>
+        <div class="cmd-body">
+          <div><span class="cmd-comment"># clone</span></div>
+          <div><span class="cmd-dollar">$ </span><span class="cmd-text">git clone https://github.com/michaelnocito/nexus-sql-mystery</span></div>
+          <div><span class="cmd-dollar">$ </span><span class="cmd-text">cd nexus-sql-mystery</span></div>
+          <br/>
+          <div><span class="cmd-comment"># install</span></div>
+          <div><span class="cmd-dollar">$ </span><span class="cmd-text">pip install PySide6</span></div>
+          <br/>
+          <div><span class="cmd-comment"># play</span></div>
+          <div><span class="cmd-dollar">$ </span><span class="cmd-text">python main.py</span></div>
+          <br/>
+          <div style="color: #22c55e;">✔  NEXUS is running. Good luck, analyst.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ── FOOTER ────────────────────────────────────────────────────────────────── -->
+<footer>
+  <div class="footer-logo">NEXUS</div>
+  <ul class="footer-links">
+    <li><a href="https://github.com/michaelnocito/nexus-sql-mystery" target="_blank">GitHub</a></li>
+    <li><a href="https://github.com/michaelnocito/nexus-sql-mystery/releases" target="_blank">Releases</a></li>
+    <li><a href="https://github.com/michaelnocito/nexus-sql-mystery/issues" target="_blank">Issues</a></li>
+    <li><a href="https://buymeacoffee.com/michaelnocito" target="_blank">Buy Me a Coffee ☕</a></li>
+  </ul>
+  <div class="footer-copy">Free & open source · MIT License</div>
+</footer>
+
+</body>
+</html>

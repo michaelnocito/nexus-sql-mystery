@@ -18,10 +18,14 @@ from ui.collectibles_panel import CollectiblesPanel
 from ui.celebrations import ToastBanner, ScreenFlash, ParticleOverlay, play_chime, play_victory_chime
 
 from core.db import DatabaseInterface
-from core.game import GameState
-from core.scenes import SCENES, STEP_TEXT, OBJECTIVE_FOCUS
+from core.game import GameState, S1_OBJECTIVE_FOCUS
+from core.scenes import SCENES
 from core.codex import get_concept, all_concepts
 from core.collectibles import FIELD_GUIDE_PAGES
+from core.season2_scenes import S2_SCENES
+from core.season2_game import S2_OBJECTIVE_FOCUS
+from core.season2_codex import S2_CONCEPTS
+from core.season2_collectibles import S2_FIELD_GUIDE_PAGES
 
 
 # ── Light theme palette ───────────────────────────────────────────────────────
@@ -120,14 +124,22 @@ class MainWindow(QMainWindow):
         self._game._db = self._db           # complete the circular reference
 
         # Wire game callbacks
-        self._game.on_output       = self._on_output
-        self._game.on_popup        = self._on_popup
-        self._game.on_scene_change = self._on_scene_change
-        self._game.on_status       = self._on_status
-        self._game.on_progress     = self._on_progress
+        self._game.on_output        = self._on_output
+        self._game.on_dialogue      = self._on_dialogue
+        self._game.on_popup         = self._on_popup
+        self._game.on_scene_change  = self._on_scene_change
+        self._game.on_status        = self._on_status
+        self._game.on_progress      = self._on_progress
+        self._game.on_season_change = self._on_season_change
+        self._game.on_story         = self._on_story
+        self._game.on_briefing      = self._on_briefing
+        self._game.on_cliffhanger   = self._on_cliffhanger
 
         # ── Try to load existing save ────────────────────────────────────────
         self._game.load()
+        # If a save resumes mid-Season-2, make sure its tables are seeded.
+        if self._game.current_season == 2:
+            self._db.setup_season2()
 
         # ── Build UI ─────────────────────────────────────────────────────────
         central = QWidget()
@@ -146,25 +158,13 @@ class MainWindow(QMainWindow):
         sep.setFixedHeight(1)
         root_layout.addWidget(sep)
 
-        # Main content: scene art (left) | cmd panel (right)
-        self._splitter = QSplitter(Qt.Orientation.Horizontal)
-        self._splitter.setHandleWidth(1)
-        root_layout.addWidget(self._splitter, stretch=1)
-
-        # Left — scene art
-        self._scene_view = SceneView()
-        self._scene_view.setMinimumWidth(300)
-        self._scene_view.setMaximumWidth(480)
-        self._splitter.addWidget(self._scene_view)
-
-        # Right — command panel
+        # Main content: cmd panel (full width — scene art panel removed)
         self._cmd = CmdPanel(self._game, self._db)
-        self._splitter.addWidget(self._cmd)
+        root_layout.addWidget(self._cmd, stretch=1)
 
-        # Splitter proportions: ~38% art, ~62% cmd
-        self._splitter.setSizes([SCENE_PANEL_W, WINDOW_W - SCENE_PANEL_W])
-        self._splitter.setStretchFactor(0, 0)
-        self._splitter.setStretchFactor(1, 1)
+        # Keep scene_view as a hidden stub (other code references it)
+        self._scene_view = SceneView()
+        self._scene_view.hide()
 
         # ── Concept popup (hidden until needed) ─────────────────────────────
         self._popup = ConceptPopup(self)
@@ -178,7 +178,7 @@ class MainWindow(QMainWindow):
         # ── Codex browser ────────────────────────────────────────────────────
         self._codex = CodexPanel(
             self._game,
-            all_concepts(),
+            all_concepts() + list(S2_CONCEPTS.values()),
             self._show_concept_card,
             parent=self,
         )
@@ -200,18 +200,39 @@ class MainWindow(QMainWindow):
         self._scene_view.set_clues(self._game.clues)
         self._render_current_scene()
 
+        # ── Post-load scene check ────────────────────────────────────────────
+        # If the save has a scene where all objectives are already complete
+        # (e.g., session closed before scene advancement fired), advance now.
+        # 300 ms delay lets the UI fully paint before callbacks fire.
+        QTimer.singleShot(300, self._game._check_scene_unlock)
+
     # ── Game callbacks ────────────────────────────────────────────────────────
 
     def _on_output(self, text: str, style: str = "normal") -> None:
         self._cmd.append_output(text, style)
 
+    def _on_dialogue(self, speaker: str, text: str) -> None:
+        self._cmd.append_dialogue(speaker, text)
+
+    def _on_cliffhanger(self, card: dict) -> None:
+        self._cmd.append_cliffhanger(card)
+
+    def _on_story(self, kind: str, text: str) -> None:
+        self._cmd.set_story(kind, text)
+
+    def _on_briefing(self, goal: str, move: str) -> None:
+        self._cmd.set_goal(goal)
+        self._cmd.set_your_move(move)
+
     def _on_popup(self, concept_id: str) -> None:
-        concept = get_concept(concept_id)
+        concept = get_concept(concept_id) or S2_CONCEPTS.get(concept_id)
         if concept:
-            self._show_concept_card(concept)
+            self._cmd.append_concept(concept, self._build_story_recap())
+            # Flash the Concepts button in the HUD to draw attention
+            self._hud.flash_concept_btn()
 
     def _show_concept_card(self, concept: dict) -> None:
-        # Build "Story So Far" — narrative recap of what the player did
+        # Used by the Codex browser (explicit lookup) — modal is fine here.
         story = self._build_story_recap()
         self._popup.load_concept(concept, story_so_far=story)
         self._popup.show_centered(self)
@@ -307,6 +328,23 @@ class MainWindow(QMainWindow):
         self._scene_view.set_scene(scene_id)
         self._render_current_scene()
 
+    def _on_season_change(self, season: int) -> None:
+        """Called when the game transitions from Season 1 to Season 2."""
+        # Seed S2 tables in the database
+        self._db.setup_season2()
+        # Swap collectibles panel to S2
+        self._collectibles.set_pages(S2_FIELD_GUIDE_PAGES)
+        # Show the season transition card
+        self._cmd.append_output(
+            "\n" + "═" * 60 + "\n"
+            "  SEASON 2: THE GHOST IN THE MACHINE\n"
+            "  Something is wrong in the server room.\n"
+            "  You'll need more than SQL this time.\n"
+            + "═" * 60 + "\n",
+            style="scene",
+        )
+        self._render_current_scene()
+
     def _on_status(self, label: str, value) -> None:
         if label == "clues":
             self._hud.set_clues(value)
@@ -318,12 +356,16 @@ class MainWindow(QMainWindow):
         self._update_focus_box()
         self._show_next_objective_guidance()
 
-        # ── Update clue sidebar ──────────────────────────────────────────────
-        self._scene_view.set_clues(self._game.clues)
+        # ── Update right panel ───────────────────────────────────────────────
+        self._sync_right_panel()
 
         # ── Celebration ──────────────────────────────────────────────────────
-        from core.game import OBJECTIVES_BY_ID
-        obj = OBJECTIVES_BY_ID.get(completed_objective_id, {})
+        if self._game.current_season == 2:
+            from core.season2_game import S2_OBJECTIVES_BY_ID
+            obj = S2_OBJECTIVES_BY_ID.get(completed_objective_id, {})
+        else:
+            from core.game import OBJECTIVES_BY_ID
+            obj = OBJECTIVES_BY_ID.get(completed_objective_id, {})
         label = obj.get("label", "Clue found!")
         done = len(self._game.completed)
 
@@ -333,10 +375,10 @@ class MainWindow(QMainWindow):
         # Toast banner + particles
         if pct == 100:
             # Final objective — massive celebration
-            self._toast.show_toast(
-                "🏆  CASE CLOSED  🏆\nYou uncovered $1,869,500 in fraud.",
-                style="final", duration=15000,
-            )
+            final_msg = ("🏆  CASE CLOSED  🏆\nThe ghost was a warning — and you read it."
+                         if self._game.current_season == 2
+                         else "🏆  CASE CLOSED  🏆\nYou uncovered $1,869,500 in fraud.")
+            self._toast.show_toast(final_msg, style="final", duration=15000)
             self._particles.burst("final")
             play_victory_chime()
         elif done % 3 == 0:
@@ -367,8 +409,11 @@ class MainWindow(QMainWindow):
 
     # ── Scene rendering ───────────────────────────────────────────────────────
 
+    def _active_scenes(self) -> dict:
+        return S2_SCENES if self._game.current_season == 2 else SCENES
+
     def _render_current_scene(self) -> None:
-        scene = SCENES.get(self._game.scene)
+        scene = self._active_scenes().get(self._game.scene)
         if not scene:
             return
 
@@ -377,41 +422,49 @@ class MainWindow(QMainWindow):
         self._hud.set_progress(self._game.progress_pct())
         self._hud.set_clues(len(self._game.clues))
 
-        # Update scene art
-        self._scene_view.set_scene(self._game.scene)
-
-        # Update focus command in cmd panel
         self._update_focus_box()
+        self._sync_right_panel()
 
-        # Show intro text (if first visit)
-        visit_key = f"_visited_{self._game.scene}"
-        if not getattr(self, visit_key, False):
-            setattr(self, visit_key, True)
-            self._cmd.append_output(scene["intro"], style="scene")
-
-        # Show guidance for first incomplete objective
-        self._show_next_objective_guidance()
+        # Both seasons: STORY panel + BRIEFING are driven by the engine;
+        # the console stays mechanical-only (no narration in the feed).
+        self._game.emit_scene_state()
 
     def _update_focus_box(self) -> None:
         """Set focus box to the first incomplete objective's command."""
+        focus_map = (S2_OBJECTIVE_FOCUS if self._game.current_season == 2
+                     else S1_OBJECTIVE_FOCUS)
         for obj in self._game.objectives_for_scene(self._game.scene):
             oid = obj["id"]
             if oid not in self._game.completed:
-                if oid in OBJECTIVE_FOCUS:
-                    label, cmd = OBJECTIVE_FOCUS[oid]
+                if oid in focus_map:
+                    label, cmd = focus_map[oid]
                     self._cmd.set_focus(label, cmd)
                 return
-        # All done in this scene — hide the box
         self._cmd.set_focus("", "")
 
+    def _sync_right_panel(self) -> None:
+        """Sync all right-panel elements: investigation log, progress."""
+        clues = self._game.clues
+        total = len(self._game._active_objectives()) or 1
+        done  = len(clues)
+        pct   = int(done / total * 100)
+
+        # Build human-readable log entries from clue strings
+        log_items = []
+        for clue in clues:
+            display = clue
+            if clue.startswith("[CLUE"):
+                parts = clue.split("]", 1)
+                if len(parts) == 2:
+                    display = parts[1].strip()
+            log_items.append(display)
+
+        self._cmd.set_investigation_log(log_items)
+        self._cmd.set_progress(pct)
+
     def _show_next_objective_guidance(self) -> None:
-        for obj in self._game.objectives_for_scene(self._game.scene):
-            oid = obj["id"]
-            if oid not in self._game.completed:
-                text = STEP_TEXT.get(oid)
-                if text:
-                    self._cmd.append_output(f"\n{text}\n", style="guidance")
-                break
+        # Guidance now lives in the STORY panel / BRIEFING, not the feed.
+        return
 
     # ── Window close ──────────────────────────────────────────────────────────
 

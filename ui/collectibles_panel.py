@@ -57,6 +57,11 @@ class CollectiblesPanel(QDialog):
 
         self._build_ui()
 
+    def set_pages(self, pages: list) -> None:
+        """Swap to a different season's collectible pages."""
+        self._all_pages = pages
+        self.setWindowTitle("The Python Codex")
+
     def _build_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 20, 24, 20)
