@@ -1,100 +1,450 @@
 <!DOCTYPE html>
 <html lang="{{ site.lang | default: "en-US" }}">
-  <head>
-    <meta charset="UTF-8">
-    {% seo %}
-    <link rel="preconnect" href="https://fonts.gstatic.com">
-    <link rel="preload" href="https://fonts.googleapis.com/css?family=Open+Sans:400,700&display=swap" as="style" type="text/css" crossorigin>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#157878">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="stylesheet" href="{{ '/assets/css/style.css?v=' | append: site.github.build_revision | relative_url }}">
-    {% include head-custom.html %}
-    <style>
-      .support-section {
-        margin-top: 3rem;
-        padding-top: 2rem;
-        border-top: 1px solid #dce6f0;
-        text-align: center;
-        color: #6a737d;
-        font-size: 0.9rem;
-        line-height: 1.6;
-      }
-      .support-section p {
-        margin: 0 0 0.75rem;
-      }
-      .support-section a.bmac-link {
-        display: inline-block;
-        margin-top: 0.5rem;
-        padding: 0.5rem 1.25rem;
-        background-color: #FFDD00;
-        color: #000000;
-        border-radius: 6px;
-        font-weight: 600;
-        font-size: 0.9rem;
-        text-decoration: none;
-        transition: opacity 0.15s ease;
-      }
-      .support-section a.bmac-link:hover {
-        opacity: 0.85;
-        text-decoration: none;
-      }
-      .support-section .project-links {
-        margin-top: 1rem;
-        font-size: 0.85rem;
-      }
-      .support-section .project-links a {
-        color: #0366d6;
-        margin: 0 0.4rem;
-      }
-    </style>
-  </head>
-  <body>
-    <a id="skip-to-content" href="#content">Skip to the content.</a>
+<head>
+  <meta charset="UTF-8">
+  {% seo %}
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#4F8EF7">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:      #F8FAFC;
+      --surface: #FFFFFF;
+      --border:  #E2E8F0;
+      --accent:  #4F8EF7;
+      --teal:    #0D9488;
+      --text:    #0F172A;
+      --muted:   #64748B;
+      --dim:     #F1F5F9;
+      --code-bg: #F8FAFC;
+    }
 
-    <header class="page-header" role="banner">
-      <h1 class="project-name">{{ page.title | default: site.title | default: site.github.repository_name }}</h1>
-      <h2 class="project-tagline">{{ page.description | default: site.description | default: site.github.project_tagline }}</h2>
-      {% if site.github.is_project_page %}
-        <a href="{{ site.github.repository_url }}" class="btn">View on GitHub</a>
-      {% endif %}
-      {% if site.show_downloads %}
-        <a href="{{ site.github.zip_url }}" class="btn">Download .zip</a>
-        <a href="{{ site.github.tar_url }}" class="btn">Download .tar.gz</a>
-      {% endif %}
-    </header>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
 
-    <main id="content" class="main-content" role="main">
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 39px, var(--border) 39px, var(--border) 40px),
+        repeating-linear-gradient(90deg, transparent, transparent 39px, var(--border) 39px, var(--border) 40px);
+      opacity: 0.3;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(140px);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .orb-1 { width: 500px; height: 500px; background: rgba(79,142,247,0.07); top: -100px; right: -100px; }
+    .orb-2 { width: 400px; height: 400px; background: rgba(13,148,136,0.05); bottom: 5%; left: -80px; }
+
+    /* Nav */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      background: rgba(248,250,252,0.88);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 0 24px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nav-logo {
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      color: var(--accent);
+      letter-spacing: 0.05em;
+      text-decoration: none;
+      font-weight: 700;
+    }
+    .nav-links { display: flex; gap: 24px; align-items: center; }
+    .nav-links a {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 0.04em;
+      transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-tag {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      background: var(--dim);
+      border: 1px solid var(--border);
+      color: var(--teal);
+      padding: 2px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.08em;
+    }
+
+    /* Page hero */
+    .page-hero {
+      padding: 100px 24px 48px;
+      max-width: 780px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+    .page-eyebrow {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      color: var(--teal);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+    }
+    .page-eyebrow::before {
+      content: '';
+      width: 28px;
+      height: 2px;
+      background: var(--teal);
+    }
+    .page-title {
+      font-size: clamp(28px, 5vw, 48px);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      margin-bottom: 14px;
+    }
+    .page-title span { color: var(--accent); }
+    .page-desc {
+      font-size: 15px;
+      color: var(--muted);
+      line-height: 1.7;
+      max-width: 520px;
+      font-weight: 400;
+    }
+
+    /* Content area */
+    .content-wrap {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 0 24px 80px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Markdown content styles */
+    .md-content h1 {
+      font-size: clamp(22px, 4vw, 32px);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      margin: 2.4rem 0 0.9rem;
+      line-height: 1.15;
+    }
+    .md-content h1:first-child { display: none; } /* title already in hero */
+
+    .md-content h2 {
+      font-size: clamp(17px, 3vw, 22px);
+      font-weight: 700;
+      color: var(--text);
+      margin: 2.2rem 0 0.8rem;
+      letter-spacing: -0.01em;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .md-content h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+      margin: 1.6rem 0 0.5rem;
+    }
+
+    .md-content h4 {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--teal);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin: 1.4rem 0 0.4rem;
+    }
+
+    .md-content p {
+      font-size: 15px;
+      color: var(--muted);
+      line-height: 1.8;
+      margin-bottom: 1rem;
+      font-weight: 400;
+    }
+    .md-content p strong { color: var(--text); font-weight: 600; }
+
+    .md-content a {
+      color: var(--accent);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(79,142,247,0.3);
+      transition: border-color .2s;
+    }
+    .md-content a:hover { border-color: var(--accent); }
+
+    .md-content ul, .md-content ol {
+      margin: 0.6rem 0 1rem 1.4rem;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.8;
+    }
+    .md-content li + li { margin-top: 0.25rem; }
+    .md-content li strong { color: var(--text); font-weight: 600; }
+
+    .md-content blockquote {
+      margin: 1.4rem 0;
+      padding: 1rem 1.25rem;
+      background: var(--dim);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 6px 6px 0;
+    }
+    .md-content blockquote p {
+      margin: 0;
+      font-size: 14px;
+      color: var(--muted);
+    }
+    .md-content blockquote strong { color: var(--accent); }
+
+    .md-content pre {
+      background: var(--text);
+      border-radius: 8px;
+      padding: 1.1rem 1.25rem;
+      overflow-x: auto;
+      margin: 1rem 0 1.4rem;
+      border: 1px solid #1E293B;
+    }
+    .md-content pre code {
+      font-family: 'Space Mono', monospace;
+      font-size: 12.5px;
+      color: #94A3B8;
+      background: none;
+      padding: 0;
+      border: none;
+      line-height: 1.7;
+    }
+
+    .md-content code {
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      background: var(--dim);
+      border: 1px solid var(--border);
+      color: var(--teal);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .md-content hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 2.5rem 0;
+    }
+
+    .md-content table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.2rem 0;
+      font-size: 14px;
+    }
+    .md-content th {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      background: var(--dim);
+      border: 1px solid var(--border);
+      padding: 8px 12px;
+      text-align: left;
+    }
+    .md-content td {
+      border: 1px solid var(--border);
+      padding: 8px 12px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .md-content tr:hover td { background: var(--dim); }
+
+    /* Support section */
+    .support-card {
+      margin-top: 3rem;
+      padding: 2rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      text-align: center;
+      box-shadow: 0 1px 3px rgba(15,23,42,0.05);
+    }
+    .support-card p {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.7;
+      margin-bottom: 0.6rem;
+    }
+    .support-card p strong { color: var(--text); }
+    .support-card a.star-link {
+      color: var(--accent);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(79,142,247,0.3);
+    }
+    .bmac-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      margin: 0.75rem 0 1.25rem;
+      padding: 10px 22px;
+      background: #FFDD00;
+      color: #0F172A;
+      border-radius: 6px;
+      font-family: 'Space Mono', monospace;
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      text-decoration: none;
+      transition: all .2s;
+      box-shadow: 0 2px 8px rgba(255,221,0,0.3);
+    }
+    .bmac-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(255,221,0,0.4); }
+    .more-tools {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 0.5rem;
+    }
+    .tool-tag {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      background: var(--dim);
+      border: 1px solid var(--border);
+      padding: 4px 10px;
+      border-radius: 4px;
+      text-decoration: none;
+      transition: all .2s;
+    }
+    .tool-tag:hover { border-color: var(--accent); color: var(--accent); }
+    .more-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    /* Footer */
+    .site-footer {
+      border-top: 1px solid var(--border);
+      padding: 24px 0;
+      margin-top: 3rem;
+      position: relative;
+      z-index: 1;
+    }
+    .footer-inner {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .footer-inner span, .footer-inner a {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 0.04em;
+    }
+    .footer-inner a:hover { color: var(--accent); }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .nav-links .nav-tag { display: none; }
+      .page-hero { padding: 88px 20px 36px; }
+      .content-wrap { padding: 0 20px 60px; }
+      .support-card { padding: 1.5rem 1.25rem; }
+      .footer-inner { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+
+  <nav>
+    <div class="nav-inner">
+      <a class="nav-logo" href="https://michaelnocito.github.io">MN</a>
+      <div class="nav-links">
+        <span class="nav-tag">FREE GUIDE</span>
+        <a href="https://github.com/michaelnocito/nexus-sql-mystery" target="_blank" rel="noopener">GitHub ↗</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="page-hero">
+    <div class="page-eyebrow">SQL Guide</div>
+    <h1 class="page-title">{{ page.title | default: site.title }}</h1>
+    {% if page.description %}
+    <p class="page-desc">{{ page.description }}</p>
+    {% endif %}
+  </div>
+
+  <div class="content-wrap">
+    <div class="md-content">
       {{ content }}
+    </div>
 
-      <div class="support-section">
-        <p>
-          If this was useful, the best thing you can do is
-          <a href="{{ site.github.repository_url }}">star the repo</a> —
-          it helps other learners find it.
-        </p>
-        <p>Tips are never expected, but always appreciated.</p>
-        <a href="https://buymeacoffee.com/michaelnocito" class="bmac-link" target="_blank" rel="noopener">
-          ☕ Buy Me a Coffee
-        </a>
-        <div class="project-links">
-          <strong>More free tools:</strong>
-          <a href="https://github.com/michaelnocito/nexus-sql-mystery">NEXUS — Learn SQL</a> ·
-          <a href="https://github.com/michaelnocito/spreadsheet-cleaner">Spreadsheet Cleaner</a> ·
-          <a href="https://github.com/michaelnocito/recordforge">RecordForge</a>
+    <div class="support-card">
+      <p>If this helped, the best thing you can do is <a href="https://github.com/michaelnocito/nexus-sql-mystery" class="star-link">⭐ star the repo</a> — it helps other learners find it.</p>
+      <p>Tips are never expected, but always appreciated.</p>
+      <a href="https://buymeacoffee.com/michaelnocito" class="bmac-btn" target="_blank" rel="noopener">
+        ☕ Buy Me a Coffee
+      </a>
+      <div>
+        <span class="more-label">More free tools</span>
+        <div class="more-tools">
+          <a href="https://github.com/michaelnocito/nexus-sql-mystery" class="tool-tag">NEXUS — Learn SQL</a>
+          <a href="https://github.com/michaelnocito/spreadsheet-cleaner" class="tool-tag">Spreadsheet Cleaner</a>
+          <a href="https://github.com/michaelnocito/recordforge" class="tool-tag">RecordForge</a>
         </div>
       </div>
+    </div>
+  </div>
 
-      <footer class="site-footer">
-        {% if site.github.is_project_page %}
-          <span class="site-footer-owner">
-            <a href="{{ site.github.repository_url }}">{{ site.github.repository_name }}</a>
-            is maintained by
-            <a href="{{ site.github.owner_url }}">{{ site.github.owner_name }}</a>.
-          </span>
-        {% endif %}
-        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a>.</span>
-      </footer>
-    </main>
-  </body>
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <span>Part of the <a href="https://github.com/michaelnocito/nexus-sql-mystery">NEXUS</a> project · <a href="https://michaelnocito.github.io">Michael Nocito</a></span>
+      <span>Built with <a href="https://pages.github.com">GitHub Pages</a></span>
+    </div>
+  </footer>
+</body>
 </html>
