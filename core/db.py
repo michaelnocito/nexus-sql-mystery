@@ -278,4 +278,4 @@ class DatabaseInterface:
         return self.query(f"PRAGMA table_info({table})")
 
     def __repr__(self):
-        return "<NexusDB — type db.tables() to see what's available>"
+        return "<NexusDB — type db.tables() to list tables, then write SQL directly>"

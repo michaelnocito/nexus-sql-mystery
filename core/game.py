@@ -485,104 +485,104 @@ S1_RESULT_REACTION = {
 }
 
 S1_OBJECTIVE_FOCUS = {
-    "list_tables":        ("See everything in employees:", "db.query(\"SELECT * FROM employees\")"),
-    "view_employees":     ("Pick specific columns:",  "db.query(\"SELECT name, salary FROM employees\")"),
-    "count_headcount":    ("Count the rows:",         "db.query(\"SELECT COUNT(*) FROM employees\")"),
-    "vendor_spend":       ("Group + sum + sort:",     "db.query(\"SELECT vendor_id, SUM(amount) FROM transactions GROUP BY vendor_id ORDER BY SUM(amount) DESC\")"),
-    "unverified_vendors": ("Filter with WHERE:",      "db.query(\"SELECT * FROM vendors WHERE verified = 0\")"),
-    "join_vendor_names":  ("Join two tables:",        "db.query(\"SELECT t.*, v.name FROM transactions t JOIN vendors v ON t.vendor_id = v.id\")"),
-    "lookup_webb":        ("Exact lookup:",           "db.query(\"SELECT * FROM employees WHERE id = 4\")"),
-    "approver_counts":    ("Group by approver:",      "db.query(\"SELECT approved_by, COUNT(*) FROM transactions GROUP BY approved_by ORDER BY COUNT(*) DESC\")"),
-    "dept_budgets":       ("Order by budget:",        "db.query(\"SELECT * FROM departments ORDER BY budget DESC\")"),
-    "apex_total":         ("Sum with a filter:",      "db.query(\"SELECT SUM(amount) FROM transactions WHERE vendor_id = 4\")"),
-    "apex_count":         ("Count with a filter:",    "db.query(\"SELECT COUNT(*) FROM transactions WHERE vendor_id = 4\")"),
-    "escalation":         ("Order by date:",          "db.query(\"SELECT date, amount FROM transactions WHERE vendor_id = 4 ORDER BY date\")"),
-    "dual_vendor":        ("Match a list with IN:",   "db.query(\"SELECT * FROM transactions WHERE vendor_id IN (4, 7)\")"),
-    "special_total":      ("Sum by department:",      "db.query(\"SELECT SUM(amount) FROM transactions WHERE department = 'Special Projects'\")"),
-    "approver_join":      ("Join on approved_by:",    "db.query(\"SELECT t.id, e.name FROM transactions t JOIN employees e ON t.approved_by = e.id WHERE t.vendor_id IN (4,7)\")"),
-    "finance_exec":       ("IN on a text list:",      "db.query(\"SELECT * FROM employees WHERE department IN ('Finance','Executive')\")"),
+    "list_tables":        ("See everything in employees:", "SELECT * FROM employees"),
+    "view_employees":     ("Pick specific columns:",  "SELECT name, salary FROM employees"),
+    "count_headcount":    ("Count the rows:",         "SELECT COUNT(*) FROM employees"),
+    "vendor_spend":       ("Group + sum + sort:",     "SELECT vendor_id, SUM(amount) FROM transactions GROUP BY vendor_id ORDER BY SUM(amount) DESC"),
+    "unverified_vendors": ("Filter with WHERE:",      "SELECT * FROM vendors WHERE verified = 0"),
+    "join_vendor_names":  ("Join two tables:",        "SELECT t.*, v.name FROM transactions t JOIN vendors v ON t.vendor_id = v.id"),
+    "lookup_webb":        ("Exact lookup:",           "SELECT * FROM employees WHERE id = 4"),
+    "approver_counts":    ("Group by approver:",      "SELECT approved_by, COUNT(*) FROM transactions GROUP BY approved_by ORDER BY COUNT(*) DESC"),
+    "dept_budgets":       ("Order by budget:",        "SELECT * FROM departments ORDER BY budget DESC"),
+    "apex_total":         ("Sum with a filter:",      "SELECT SUM(amount) FROM transactions WHERE vendor_id = 4"),
+    "apex_count":         ("Count with a filter:",    "SELECT COUNT(*) FROM transactions WHERE vendor_id = 4"),
+    "escalation":         ("Order by date:",          "SELECT date, amount FROM transactions WHERE vendor_id = 4 ORDER BY date"),
+    "dual_vendor":        ("Match a list with IN:",   "SELECT * FROM transactions WHERE vendor_id IN (4, 7)"),
+    "special_total":      ("Sum by department:",      "SELECT SUM(amount) FROM transactions WHERE department = 'Special Projects'"),
+    "approver_join":      ("Join on approved_by:",    "SELECT t.id, e.name FROM transactions t JOIN employees e ON t.approved_by = e.id WHERE t.vendor_id IN (4,7)"),
+    "finance_exec":       ("IN on a text list:",      "SELECT * FROM employees WHERE department IN ('Finance','Executive')"),
 }
 
 S1_HINTS = {
     "list_tables": [
         "You can't investigate what you can't see. Pull the employees table and look.",
         "SELECT * FROM employees — the * means 'every column'.",
-        "db.query(\"SELECT * FROM employees\")",
+        "SELECT * FROM employees",
     ],
     "view_employees": [
         "You don't need every column — just name and salary. Name the columns instead of using *.",
         "SELECT name, salary FROM employees.",
-        "db.query(\"SELECT name, salary FROM employees\")",
+        "SELECT name, salary FROM employees",
     ],
     "count_headcount": [
         "Don't count rows by eye. SQL has a function for it.",
         "SELECT COUNT(*) FROM employees.",
-        "db.query(\"SELECT COUNT(*) FROM employees\")",
+        "SELECT COUNT(*) FROM employees",
     ],
     "vendor_spend": [
         "You want one total per vendor, biggest first. Bucket the rows, sum each bucket, sort.",
         "GROUP BY vendor_id, SUM(amount), ORDER BY SUM(amount) DESC.",
-        "db.query(\"SELECT vendor_id, SUM(amount) FROM transactions GROUP BY vendor_id ORDER BY SUM(amount) DESC\")",
+        "SELECT vendor_id, SUM(amount) FROM transactions GROUP BY vendor_id ORDER BY SUM(amount) DESC",
     ],
     "unverified_vendors": [
         "A fake vendor was never verified. Filter the vendors table on that flag.",
         "WHERE verified = 0.",
-        "db.query(\"SELECT * FROM vendors WHERE verified = 0\")",
+        "SELECT * FROM vendors WHERE verified = 0",
     ],
     "join_vendor_names": [
         "transactions has vendor_id; vendors has the name. Connect them on that key.",
         "JOIN vendors ON transactions.vendor_id = vendors.id.",
-        "db.query(\"SELECT t.*, v.name FROM transactions t JOIN vendors v ON t.vendor_id = v.id\")",
+        "SELECT t.*, v.name FROM transactions t JOIN vendors v ON t.vendor_id = v.id",
     ],
     "lookup_webb": [
         "One exact employee. Filter the employees table to that id.",
         "WHERE id = 4.",
-        "db.query(\"SELECT * FROM employees WHERE id = 4\")",
+        "SELECT * FROM employees WHERE id = 4",
     ],
     "approver_counts": [
         "Count rows per approver — same bucketing skill, different column.",
         "GROUP BY approved_by, COUNT(*), ORDER BY COUNT(*) DESC.",
-        "db.query(\"SELECT approved_by, COUNT(*) FROM transactions GROUP BY approved_by ORDER BY COUNT(*) DESC\")",
+        "SELECT approved_by, COUNT(*) FROM transactions GROUP BY approved_by ORDER BY COUNT(*) DESC",
     ],
     "dept_budgets": [
         "Which department could hide seven figures? Sort them by budget.",
         "ORDER BY budget DESC on the departments table.",
-        "db.query(\"SELECT * FROM departments ORDER BY budget DESC\")",
+        "SELECT * FROM departments ORDER BY budget DESC",
     ],
     "apex_total": [
         "Add up every payment to Apex (vendor_id 4). One number.",
         "SUM(amount) with WHERE vendor_id = 4.",
-        "db.query(\"SELECT SUM(amount) FROM transactions WHERE vendor_id = 4\")",
+        "SELECT SUM(amount) FROM transactions WHERE vendor_id = 4",
     ],
     "apex_count": [
         "Same filter, different question: how MANY payments, not how much.",
         "COUNT(*) with WHERE vendor_id = 4.",
-        "db.query(\"SELECT COUNT(*) FROM transactions WHERE vendor_id = 4\")",
+        "SELECT COUNT(*) FROM transactions WHERE vendor_id = 4",
     ],
     "escalation": [
         "Pull Apex's payments and sort them in time order to see the trend.",
         "WHERE vendor_id = 4 ORDER BY date.",
-        "db.query(\"SELECT date, amount FROM transactions WHERE vendor_id = 4 ORDER BY date\")",
+        "SELECT date, amount FROM transactions WHERE vendor_id = 4 ORDER BY date",
     ],
     "dual_vendor": [
         "Two vendor ids at once — don't write two queries. There's a keyword for a list.",
         "WHERE vendor_id IN (4, 7).",
-        "db.query(\"SELECT * FROM transactions WHERE vendor_id IN (4, 7)\")",
+        "SELECT * FROM transactions WHERE vendor_id IN (4, 7)",
     ],
     "special_total": [
         "Total the money charged to one department.",
         "SUM(amount) WHERE department = 'Special Projects'.",
-        "db.query(\"SELECT SUM(amount) FROM transactions WHERE department = 'Special Projects'\")",
+        "SELECT SUM(amount) FROM transactions WHERE department = 'Special Projects'",
     ],
     "approver_join": [
         "The report needs a name, not id 4. Join employees on the approved_by key.",
         "JOIN employees ON transactions.approved_by = employees.id, filter vendor_id IN (4,7).",
-        "db.query(\"SELECT t.id, e.name FROM transactions t JOIN employees e ON t.approved_by = e.id WHERE t.vendor_id IN (4,7)\")",
+        "SELECT t.id, e.name FROM transactions t JOIN employees e ON t.approved_by = e.id WHERE t.vendor_id IN (4,7)",
     ],
     "finance_exec": [
         "Same IN skill as the vendors — now on a text column with two values.",
         "WHERE department IN ('Finance','Executive').",
-        "db.query(\"SELECT * FROM employees WHERE department IN ('Finance','Executive')\")",
+        "SELECT * FROM employees WHERE department IN ('Finance','Executive')",
     ],
 }
 
@@ -879,6 +879,12 @@ class GameState:
         return needed.issubset(set(self.completed))
 
     def _check_scene_unlock(self) -> None:
+        # Guard: if a recall gate is already waiting for an answer, do nothing.
+        # Without this, every call (hint click, post-load timer, etc.) would
+        # re-show the question and reset the tries counter.
+        if self._recall_pending is not None:
+            return
+
         # One season-agnostic path. Keep advancing while the current scene
         # is fully complete; a between-scene RECALL GATE practises a prior
         # skill before each transition (non-punishing, never hard-blocks).
@@ -980,14 +986,20 @@ class GameState:
     def _save(self) -> None:
         try:
             conn = self._db._connect()
+            # Migrate: add recall_done column if missing
+            cols = [r[1] for r in conn.execute("PRAGMA table_info(save_state)").fetchall()]
+            if "recall_done" not in cols:
+                conn.execute("ALTER TABLE save_state ADD COLUMN recall_done TEXT DEFAULT '[]'")
+                conn.commit()
             conn.execute(
-                "UPDATE save_state SET scene=?, clues=?, objectives=?, saved_at=?, season=? WHERE id=1",
+                "UPDATE save_state SET scene=?, clues=?, objectives=?, saved_at=?, season=?, recall_done=? WHERE id=1",
                 (
                     self.scene,
                     json.dumps(self.clues),
                     json.dumps(self.completed),
                     datetime.now().isoformat(timespec="seconds"),
                     self.current_season,
+                    json.dumps(list(self._recall_done)),
                 )
             )
             conn.commit()
@@ -995,13 +1007,15 @@ class GameState:
             pass  # Save failure should never crash the game
 
     def load(self) -> None:
-        """Restore from save_state table. Migrates older saves that lack the season column."""
+        """Restore from save_state table. Migrates older saves that lack columns."""
         try:
             conn = self._db._connect()
-            # Add season column if this is an older save without it
             cols = [r[1] for r in conn.execute("PRAGMA table_info(save_state)").fetchall()]
             if "season" not in cols:
                 conn.execute("ALTER TABLE save_state ADD COLUMN season INTEGER DEFAULT 1")
+                conn.commit()
+            if "recall_done" not in cols:
+                conn.execute("ALTER TABLE save_state ADD COLUMN recall_done TEXT DEFAULT '[]'")
                 conn.commit()
             row = conn.execute("SELECT * FROM save_state WHERE id=1").fetchone()
             if row:
@@ -1009,6 +1023,7 @@ class GameState:
                 self.clues          = json.loads(row["clues"]       or "[]")
                 self.completed      = json.loads(row["objectives"]  or "[]")
                 self.current_season = row["season"] if row["season"] is not None else 1
+                self._recall_done   = set(json.loads(row["recall_done"] or "[]"))
         except Exception:
             pass
 

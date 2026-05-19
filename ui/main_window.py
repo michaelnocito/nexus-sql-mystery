@@ -157,25 +157,13 @@ class MainWindow(QMainWindow):
         sep.setFixedHeight(1)
         root_layout.addWidget(sep)
 
-        # Main content: scene art (left) | cmd panel (right)
-        self._splitter = QSplitter(Qt.Orientation.Horizontal)
-        self._splitter.setHandleWidth(1)
-        root_layout.addWidget(self._splitter, stretch=1)
-
-        # Left — scene art
-        self._scene_view = SceneView()
-        self._scene_view.setMinimumWidth(300)
-        self._scene_view.setMaximumWidth(480)
-        self._splitter.addWidget(self._scene_view)
-
-        # Right — command panel
+        # Main content: cmd panel (full width — scene art panel removed)
         self._cmd = CmdPanel(self._game, self._db)
-        self._splitter.addWidget(self._cmd)
+        root_layout.addWidget(self._cmd, stretch=1)
 
-        # Splitter proportions: ~38% art, ~62% cmd
-        self._splitter.setSizes([SCENE_PANEL_W, WINDOW_W - SCENE_PANEL_W])
-        self._splitter.setStretchFactor(0, 0)
-        self._splitter.setStretchFactor(1, 1)
+        # Keep scene_view as a hidden stub (other code references it)
+        self._scene_view = SceneView()
+        self._scene_view.hide()
 
         # ── Concept popup (hidden until needed) ─────────────────────────────
         self._popup = ConceptPopup(self)
@@ -211,6 +199,12 @@ class MainWindow(QMainWindow):
         self._scene_view.set_clues(self._game.clues)
         self._render_current_scene()
 
+        # ── Post-load scene check ────────────────────────────────────────────
+        # If the save has a scene where all objectives are already complete
+        # (e.g., session closed before scene advancement fired), advance now.
+        # 300 ms delay lets the UI fully paint before callbacks fire.
+        QTimer.singleShot(300, self._game._check_scene_unlock)
+
     # ── Game callbacks ────────────────────────────────────────────────────────
 
     def _on_output(self, text: str, style: str = "normal") -> None:
@@ -223,15 +217,15 @@ class MainWindow(QMainWindow):
         self._cmd.set_story(kind, text)
 
     def _on_briefing(self, goal: str, move: str) -> None:
-        self._scene_view.set_goal(goal)
-        self._scene_view.set_your_move(move)
+        self._cmd.set_goal(goal)
+        self._cmd.set_your_move(move)
 
     def _on_popup(self, concept_id: str) -> None:
-        # Auto trigger after an objective — render INLINE in the message
-        # stream (no modal, no flow break).
         concept = get_concept(concept_id) or S2_CONCEPTS.get(concept_id)
         if concept:
             self._cmd.append_concept(concept, self._build_story_recap())
+            # Flash the Concepts button in the HUD to draw attention
+            self._hud.flash_concept_btn()
 
     def _show_concept_card(self, concept: dict) -> None:
         # Used by the Codex browser (explicit lookup) — modal is fine here.
@@ -358,9 +352,8 @@ class MainWindow(QMainWindow):
         self._update_focus_box()
         self._show_next_objective_guidance()
 
-        # ── Update side info panel ───────────────────────────────────────────
-        self._scene_view.set_clues(self._game.clues)
-        self._sync_side_panel()
+        # ── Update right panel ───────────────────────────────────────────────
+        self._sync_right_panel()
 
         # ── Celebration ──────────────────────────────────────────────────────
         if self._game.current_season == 2:
@@ -425,12 +418,8 @@ class MainWindow(QMainWindow):
         self._hud.set_progress(self._game.progress_pct())
         self._hud.set_clues(len(self._game.clues))
 
-        # Update scene art + side info panel
-        self._scene_view.set_scene(self._game.scene)
-        self._scene_view.set_scene_title(scene["title"])
-        self._scene_view.set_progress(
-            len(self._game.clues), len(self._game._active_objectives()))
         self._update_focus_box()
+        self._sync_right_panel()
 
         # Both seasons: STORY panel + BRIEFING are driven by the engine;
         # the console stays mechanical-only (no narration in the feed).
@@ -449,10 +438,25 @@ class MainWindow(QMainWindow):
                 return
         self._cmd.set_focus("", "")
 
-    def _sync_side_panel(self) -> None:
-        """Progress bar only — GOAL/YOUR MOVE come from the engine's on_briefing."""
-        self._scene_view.set_progress(
-            len(self._game.clues), len(self._game._active_objectives()))
+    def _sync_right_panel(self) -> None:
+        """Sync all right-panel elements: investigation log, progress."""
+        clues = self._game.clues
+        total = len(self._game._active_objectives()) or 1
+        done  = len(clues)
+        pct   = int(done / total * 100)
+
+        # Build human-readable log entries from clue strings
+        log_items = []
+        for clue in clues:
+            display = clue
+            if clue.startswith("[CLUE"):
+                parts = clue.split("]", 1)
+                if len(parts) == 2:
+                    display = parts[1].strip()
+            log_items.append(display)
+
+        self._cmd.set_investigation_log(log_items)
+        self._cmd.set_progress(pct)
 
     def _show_next_objective_guidance(self) -> None:
         # Guidance now lives in the STORY panel / BRIEFING, not the feed.

@@ -72,7 +72,7 @@ SCENES = {
             "That weird feeling in your stomach? That's called instinct. Follow it."
         ),
         "focus_label": "Investigate vendor spend:",
-        "focus":       'db.query("SELECT vendor_id, SUM(amount) as total\\n  FROM transactions\\n  GROUP BY vendor_id\\n  ORDER BY total DESC")',
+        "focus":       'SELECT vendor_id, SUM(amount) as total\n  FROM transactions\n  GROUP BY vendor_id\n  ORDER BY total DESC',
         "objectives":  ["find_high_spend_vendors", "spot_unverified_vendors", "join_transactions_vendors"],
         "ambient": [
             "The server racks hum at a frequency you can feel in your molars.",
@@ -102,7 +102,7 @@ SCENES = {
             "Time to put a name to a number."
         ),
         "focus_label": "Find the approver:",
-        "focus":       'db.query("SELECT approved_by, COUNT(*) as approvals\\n  FROM transactions\\n  GROUP BY approved_by\\n  ORDER BY approvals DESC")',
+        "focus":       'SELECT approved_by, COUNT(*) as approvals\n  FROM transactions\n  GROUP BY approved_by\n  ORDER BY approvals DESC',
         "objectives":  ["find_approver", "lookup_employee_4", "check_special_projects_budget"],
         "ambient": [
             "The filing cabinet drawer slides open with a metallic shink. You flinch.",
@@ -130,7 +130,7 @@ SCENES = {
             "Your hands are shaking slightly. You tell yourself it's the coffee."
         ),
         "focus_label": "Quantify the damage:",
-        "focus":       'db.query("SELECT SUM(amount) as total_paid\\n  FROM transactions\\n  WHERE vendor_id = 4")',
+        "focus":       'SELECT SUM(amount) as total_paid\n  FROM transactions\n  WHERE vendor_id = 4',
         "objectives":  ["total_apex_spend", "escalation_pattern"],
         "ambient": [
             "A Bloomberg terminal scrolls market data nobody's reading.",
@@ -159,7 +159,7 @@ SCENES = {
             "No more gut feelings. Just data."
         ),
         "focus_label": "Complete the audit:",
-        "focus":       'db.query("SELECT vendor_id, SUM(amount) as total\\n  FROM transactions\\n  WHERE vendor_id IN (4, 7)\\n  GROUP BY vendor_id")',
+        "focus":       'SELECT vendor_id, SUM(amount) as total\n  FROM transactions\n  WHERE vendor_id IN (4, 7)\n  GROUP BY vendor_id',
         "objectives":  ["dual_vendor_fraud", "total_fraud_amount"],
         "ambient": [
             "The cleaning crew vacuums somewhere two floors up. At least someone's working.",
@@ -221,14 +221,16 @@ SCENES = {
 
 STEP_TEXT = {
     "list_tables": (
-        "Type  db.tables()  below and press Enter.\n\n"
+        "Type  db.tables()  below and press Ctrl+Enter.\n\n"
+        "That's a shortcut to list every table in the database.\n"
         "A table in SQL is like a spreadsheet tab — rows and columns.\n"
-        "You can't analyze what you don't know exists."
+        "You can't analyze what you don't know exists.\n\n"
+        "From here on, you'll write real SQL. The game handles the rest."
     ),
     "examine_employees": (
         "Good. You can see the tables.\n\n"
         "Now look at the  employees  table.\n"
-        "Type:  db.query(\"SELECT * FROM employees\")\n\n"
+        "Type:  SELECT * FROM employees\n\n"
         "SELECT * means 'give me every column.'\n"
         "FROM employees tells SQL which table to read.\n"
         "You should see yourself in there — Alex Chen, Junior Analyst."
@@ -237,7 +239,7 @@ STEP_TEXT = {
         "Nice work. The roster is visible.\n\n"
         "Sam just pinged you: 'Quick question — how many people are we at now?'\n\n"
         "Use COUNT(*) to answer:\n"
-        "  db.query(\"SELECT COUNT(*) FROM employees\")\n\n"
+        "  SELECT COUNT(*) FROM employees\n\n"
         "COUNT(*) counts every row. Handy when someone needs a headcount fast."
     ),
     "find_high_spend_vendors": (
@@ -252,7 +254,7 @@ STEP_TEXT = {
         "Interesting pattern in the totals.\n\n"
         "Now check the vendors table itself. Not every vendor has been vetted.\n"
         "There's a  verified  column — 1 means approved, 0 means not.\n\n"
-        "db.query(\"SELECT * FROM vendors WHERE verified = 0\")\n\n"
+        "SELECT * FROM vendors WHERE verified = 0\n\n"
         "WHERE filters rows. Only rows matching the condition come back."
     ),
     "join_transactions_vendors": (
@@ -261,27 +263,27 @@ STEP_TEXT = {
         "A JOIN connects two tables on a shared column:\n"
         "  transactions.vendor_id  →  vendors.id\n\n"
         "Try:\n"
-        "  db.query(\"SELECT t.date, t.amount, v.name, v.verified\n"
+        "  SELECT t.date, t.amount, v.name, v.verified\n"
         "    FROM transactions t\n"
         "    JOIN vendors v ON t.vendor_id = v.id\n"
         "    WHERE v.verified = 0\n"
-        "    ORDER BY t.date\")\n\n"
+        "    ORDER BY t.date\n\n"
         "Now you can see names. And the pattern becomes clear."
     ),
     "find_approver": (
         "Every transaction was approved by someone — the approved_by column holds their employee id.\n\n"
         "Is the same person approving all the suspicious payments?\n\n"
         "Group transactions by approved_by and count them:\n"
-        "  db.query(\"SELECT approved_by, COUNT(*) as approvals\n"
+        "  SELECT approved_by, COUNT(*) as approvals\n"
         "    FROM transactions\n"
         "    GROUP BY approved_by\n"
-        "    ORDER BY approvals DESC\")\n\n"
+        "    ORDER BY approvals DESC\n\n"
         "One id is going to stand out."
     ),
     "lookup_employee_4": (
         "Employee id 4 approved a lot of transactions.\n\n"
         "Now find out who that is:\n"
-        "  db.query(\"SELECT * FROM employees WHERE id = 4\")\n\n"
+        "  SELECT * FROM employees WHERE id = 4\n\n"
         "WHERE id = 4 returns only the row with that primary key.\n"
         "One row. One person. This is who signed off on everything."
     ),
@@ -289,24 +291,24 @@ STEP_TEXT = {
         "All the suspicious transactions are charged to 'Special Projects.'\n\n"
         "Look at the departments table. How does Special Projects' budget\n"
         "compare to every other department?\n\n"
-        "  db.query(\"SELECT * FROM departments ORDER BY budget DESC\")\n\n"
+        "  SELECT * FROM departments ORDER BY budget DESC\n\n"
         "ORDER BY budget DESC sorts biggest first. You're going to raise an eyebrow."
     ),
     "total_apex_spend": (
         "Apex Solutions LLC. Vendor id 4. Unverified. No address.\n\n"
         "How much has Nexus paid them in total?\n\n"
-        "  db.query(\"SELECT SUM(amount) as total_paid\n"
+        "  SELECT SUM(amount) as total_paid\n"
         "    FROM transactions\n"
-        "    WHERE vendor_id = 4\")\n\n"
+        "    WHERE vendor_id = 4\n\n"
         "SUM adds up all the  amount  values that match your WHERE filter.\n"
         "The number is going to be uncomfortable."
     ),
     "escalation_pattern": (
         "Now pull those transactions in order by date.\n\n"
-        "  db.query(\"SELECT date, amount, description\n"
+        "  SELECT date, amount, description\n"
         "    FROM transactions\n"
         "    WHERE vendor_id = 4\n"
-        "    ORDER BY date\")\n\n"
+        "    ORDER BY date\n\n"
         "Watch what happens to the amounts. Month by month.\n"
         "This is not a flat consulting retainer. This is a pattern."
     ),
@@ -315,19 +317,19 @@ STEP_TEXT = {
         "Pull all transactions for both in a single query.\n\n"
         "SQL's  IN  clause matches any value in a list:\n"
         "  WHERE vendor_id IN (4, 7)\n\n"
-        "  db.query(\"SELECT date, amount, v.name, approved_by\n"
+        "  SELECT date, amount, v.name, approved_by\n"
         "    FROM transactions t\n"
         "    JOIN vendors v ON t.vendor_id = v.id\n"
         "    WHERE t.vendor_id IN (4, 7)\n"
-        "    ORDER BY date\")\n\n"
+        "    ORDER BY date\n\n"
         "One approver. Two vendors. Thirteen months."
     ),
     "total_fraud_amount": (
         "Last query. The number that goes in the report.\n\n"
         "Total payments to both shell vendors combined:\n"
-        "  db.query(\"SELECT SUM(amount) as total_fraud\n"
+        "  SELECT SUM(amount) as total_fraud\n"
         "    FROM transactions\n"
-        "    WHERE vendor_id IN (4, 7)\")\n\n"
+        "    WHERE vendor_id IN (4, 7)\n\n"
         "This is the figure Rachel Kim needs.\n"
         "This is what you found."
     ),
@@ -340,18 +342,18 @@ STEP_TEXT = {
 
 OBJECTIVE_FOCUS = {
     "list_tables":              ("Try this first:",        'db.tables()'),
-    "examine_employees":        ("Now look inside:",       'db.query("SELECT * FROM employees")'),
-    "count_employees":          ("Count the headcount:",   'db.query("SELECT COUNT(*) FROM employees")'),
-    "find_high_spend_vendors":  ("Find top spenders:",     'db.query("SELECT vendor_id, SUM(amount) as total FROM transactions GROUP BY vendor_id ORDER BY total DESC")'),
-    "spot_unverified_vendors":  ("Check vendor status:",   'db.query("SELECT * FROM vendors WHERE verified = 0")'),
-    "join_transactions_vendors":("Link names to ids:",     'db.query("SELECT t.date, t.amount, v.name FROM transactions t JOIN vendors v ON t.vendor_id = v.id WHERE v.verified = 0")'),
-    "find_approver":            ("Who approved these?",    'db.query("SELECT approved_by, COUNT(*) as n FROM transactions GROUP BY approved_by ORDER BY n DESC")'),
-    "lookup_employee_4":        ("Look up that employee:", 'db.query("SELECT * FROM employees WHERE id = 4")'),
-    "check_special_projects_budget": ("Compare budgets:",  'db.query("SELECT * FROM departments ORDER BY budget DESC")'),
-    "total_apex_spend":         ("Total the damage:",      'db.query("SELECT SUM(amount) as total_paid FROM transactions WHERE vendor_id = 4")'),
-    "escalation_pattern":       ("See the pattern:",       'db.query("SELECT date, amount, description FROM transactions WHERE vendor_id = 4 ORDER BY date")'),
-    "dual_vendor_fraud":        ("Both shell companies:",  'db.query("SELECT t.date, t.amount, v.name FROM transactions t JOIN vendors v ON t.vendor_id = v.id WHERE t.vendor_id IN (4, 7) ORDER BY date")'),
-    "total_fraud_amount":       ("Grand total stolen:",    'db.query("SELECT SUM(amount) as total_fraud FROM transactions WHERE vendor_id IN (4, 7)")'),
+    "examine_employees":        ("Now look inside:",       'SELECT * FROM employees'),
+    "count_employees":          ("Count the headcount:",   'SELECT COUNT(*) FROM employees'),
+    "find_high_spend_vendors":  ("Find top spenders:",     'SELECT vendor_id, SUM(amount) as total\nFROM transactions\nGROUP BY vendor_id\nORDER BY total DESC'),
+    "spot_unverified_vendors":  ("Check vendor status:",   'SELECT * FROM vendors WHERE verified = 0'),
+    "join_transactions_vendors":("Link names to ids:",     'SELECT t.date, t.amount, v.name\nFROM transactions t\nJOIN vendors v ON t.vendor_id = v.id\nWHERE v.verified = 0'),
+    "find_approver":            ("Who approved these?",    'SELECT approved_by, COUNT(*) as n\nFROM transactions\nGROUP BY approved_by\nORDER BY n DESC'),
+    "lookup_employee_4":        ("Look up that employee:", 'SELECT * FROM employees WHERE id = 4'),
+    "check_special_projects_budget": ("Compare budgets:",  'SELECT * FROM departments ORDER BY budget DESC'),
+    "total_apex_spend":         ("Total the damage:",      'SELECT SUM(amount) as total_paid\nFROM transactions\nWHERE vendor_id = 4'),
+    "escalation_pattern":       ("See the pattern:",       'SELECT date, amount, description\nFROM transactions\nWHERE vendor_id = 4\nORDER BY date'),
+    "dual_vendor_fraud":        ("Both shell companies:",  'SELECT t.date, t.amount, v.name\nFROM transactions t\nJOIN vendors v ON t.vendor_id = v.id\nWHERE t.vendor_id IN (4, 7)\nORDER BY date'),
+    "total_fraud_amount":       ("Grand total stolen:",    'SELECT SUM(amount) as total_fraud\nFROM transactions\nWHERE vendor_id IN (4, 7)'),
 }
 
 

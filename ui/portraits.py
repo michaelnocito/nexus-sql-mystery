@@ -29,6 +29,8 @@ NPC_COLORS = {
 _ALIASES = {
     "sam": "Sam",
     "diana": "Diana", "diana reeves": "Diana", "d.r.": "Diana", "d. r.": "Diana",
+    "narrator": "Diana",  # Diana narrates the story — she leaves the desk note
+    "narration": "Diana",
     "rachel": "Rachel", "rachel kim": "Rachel", "kim": "Rachel",
     "vanessa": "Vanessa", "vanessa cole": "Vanessa",
 }

@@ -9,8 +9,7 @@ VISUAL PLACEMENT 1 — Hero banner / gameplay screenshot
 Future path: docs/images/hero-banner.png
 Alt text: NEXUS — learn SQL by investigating corporate fraud
 To create: a wide screenshot (~1600x900) showing the game in action —
-scene art on the left, narrative + SQL editor on the right, concept card
-popup visible. Capture during a mid-game moment with clues in the sidebar.
+3-column layout visible: dialogue thread left, cartoon terminal center, investigation log right.
 When ready, replace this comment with:
 ![NEXUS — learn SQL by investigating corporate fraud](docs/images/hero-banner.png)
 -->
@@ -28,8 +27,9 @@ No slides. No lectures. You write real queries against a live database,
 and the story moves forward when you find something. Every `SELECT`,
 every `WHERE`, every `JOIN` — they're not exercises. They're evidence.
 
-Things get weird around 6pm. The office empties out. Your monitor flickers.
-A query you didn't type appears on screen for half a second.
+Things get weird after you close the Webb case. The building empties out.
+The server logs show queries running at 3:03am when nobody's in the building.
+A deleted employee's record keeps coming back from the dead.
 
 Day one isn't over yet.
 
@@ -41,17 +41,16 @@ Day one isn't over yet.
 VISUAL PLACEMENT 2 — Gameplay GIF or screenshot
 Future path: docs/images/gameplay.gif (or .png)
 Alt text: Running a SQL query in NEXUS and discovering a clue
-To create: a 10-15 second GIF of typing a query, seeing results,
-and the celebration toast + concept card popup. Or a clean PNG of
-mid-game state showing narrative, SQL results, and clue sidebar.
+To create: a 10-15 second GIF of typing a query in the cartoon terminal,
+seeing results, and a concept unlock with Matrix rain animation.
 When ready, replace this comment with:
 ![Running a SQL query in NEXUS and discovering a clue](docs/images/gameplay.gif)
 -->
 
-You type real SQL. The game runs it against a live SQLite database.
-When your query uncovers something, the story advances — you get a clue,
-a concept card explaining what you just learned, and a nudge toward the
-next piece of the puzzle.
+You type real SQL into a cartoon cel-shaded terminal. The game runs it against
+a live SQLite database. When your query uncovers something, the story advances —
+Diana and Sam react in the dialogue thread, you get a concept card explaining
+what you just learned, and a nudge toward the next piece of the puzzle.
 
 No right/wrong binary. No fill-in-the-blank. You investigate.
 
@@ -68,14 +67,31 @@ python main.py
 
 **Requirements:** Python 3.10+ and PySide6. Windows recommended (uses `winsound` for audio cues).
 
-> The game auto-saves your progress. Type `reset` in the game to start fresh.
+> The game auto-saves your progress. Type `reset` in the terminal to start fresh.
+
+---
+
+## The UI
+
+The game uses a **3-column layout**:
+
+| Column | What It Shows |
+|--------|---------------|
+| **Left — Dialogue thread** | Diana and Sam talk. Scene narration, hints, recall gate prompts, and your command echoes all flow here as chat bubbles. |
+| **Center — Cartoon terminal** | A cel-shaded CRT monitor. Type queries here. SQL errors and Python errors appear only in this panel — never in the dialogue thread. |
+| **Right — Investigation log** | Completed objectives, clues found, and your progress through the case. |
+
+**Hint system (2-click):** Press the hint button once and Sam drops a story-style nudge. Press it again and a full answer card appears with a copy button. Between scenes, a **recall gate** asks you to recall a concept you just used — it validates your SQL text directly (no execution needed) and advances you on 2 misses anyway.
+
+**Concepts panel:** When you unlock a new SQL concept, a Matrix rain animation plays, a Morpheus-style message appears, and the "◆ Concepts" HUD button flashes green. Click it to browse every concept card you've unlocked.
 
 ---
 
 ## What You'll Learn
 
-Season 1 teaches SQL fundamentals through 13 guided objectives across 6 scenes.
-By the end, you'll have used every one of these in a real investigation:
+### Season 1 — The Audit (16 objectives, 6 scenes)
+
+SQL fundamentals, taught by catching a CFO:
 
 | Concept | What It Does | When You'll Use It |
 |---|---|---|
@@ -87,24 +103,40 @@ By the end, you'll have used every one of these in a real investigation:
 | `ORDER BY` | Sort results | Spotting the escalation pattern |
 | `JOIN` | Connect two tables | Linking vendor names to transaction IDs |
 | `IN` | Match a list of values | Querying both shell companies at once |
-| Primary / foreign keys | How tables relate | Understanding why `vendor_id` matters |
 
 You don't memorize syntax. You use it to catch a thief.
+
+### Season 2 — The Ghost in the Machine (12 objectives, 6 scenes)
+
+Advanced SQL, taught by chasing a phantom:
+
+| Concept | What It Does | When You'll Use It |
+|---|---|---|
+| `LIKE` | Pattern-match text | Finding the 3:03am log entries |
+| `strftime` | Extract date/time parts | Proving the timestamp is exactly 03:03 |
+| Subqueries | A query inside a query | Finding a row above the table's own average |
+| `GROUP BY` + `HAVING` | Aggregate with a filter | Proving the time pattern isn't coincidence |
+| `SUBSTR` / `GROUP_CONCAT` | String surgery | Reading the hidden message in the logs |
+| `CASE WHEN` | Conditional column labels | Tagging every row PHANTOM or normal |
+
+Each concept is taught twice — once as an introduction, once as varied practice in a new context.
 
 ---
 
 ## Features
 
-- **Real SQL execution** — your queries run against a live SQLite database
-- **13 guided objectives** across 6 investigation scenes
-- **Concept cards** — unlock SQL reference cards as you progress
+- **Real SQL execution** — queries run against a live SQLite database
+- **3-column layout** — dialogue thread, cartoon terminal, investigation log
+- **Cartoon cel-shaded terminal** — the game's visual centerpiece
+- **16 Season 1 objectives** across 6 investigation scenes
+- **12 Season 2 objectives** across 6 server-room scenes
+- **◆ Concepts panel** — unlock SQL reference cards as you progress; Matrix rain plays on each unlock
 - **The Analyst's Field Guide** — collectible documents that recap each chapter
 - **SQL autocomplete** — Tab-completion for keywords, tables, and columns
-- **Progressive hints** — story-style nudges that escalate to full solutions
-- **Story So Far** — every concept card shows a running recap of your investigation
+- **2-click hints** — Sam tip on click 1, full answer card with copy button on click 2
+- **Recall gates** — between-scene spaced-retrieval quizzes (2-miss safety net)
+- **Error isolation** — SQL and Python errors route to the terminal only, never the dialogue thread
 - **Celebrations** — toast banners, particle effects, and career motivation messages
-- **Cliffhanger endings** — each episode ends with a dramatic teaser
-- **Spirit guide** — Sam drops contextual tips when you're stuck
 - **Auto-save** — pick up where you left off
 - **Keyboard shortcuts** — Ctrl+Enter run, Ctrl+H hint, Ctrl+S solution, Ctrl+D copy
 
@@ -118,9 +150,9 @@ new story, and a new collectible document. All seasons ship in this repo.
 | Season | Title | Skills | Story | Status |
 |--------|-------|--------|-------|--------|
 | 1 | **The Audit** | SQL fundamentals | Corporate fraud, $1.87M embezzlement scheme | **Available now** |
-| 2 | **The Ghost in the Machine** | Python basics + SQL | Supernatural twist — server room anomalies, data that shouldn't exist | Planned |
+| 2 | **The Ghost in the Machine** | Advanced SQL | Server anomalies, a phantom cron job, a dead man's switch | **Available now** |
 | 3 | **The Network** | Advanced SQL + pandas | Cross-company investigation, connected conspiracies | Planned |
-| 4 | **The Reveal** | Advanced Python + SQL | Grand conspiracy, full supernatural reveal | Planned |
+| 4 | **The Reveal** | Advanced Python + SQL | Grand conspiracy, full reveal | Planned |
 
 Each season launch = a new [GitHub Release](https://github.com/michaelnocito/nexus-sql-mystery/releases).
 
@@ -142,7 +174,7 @@ No prior SQL experience needed. You bring the curiosity; the game teaches the re
 
 - **PySide6** — Qt for Python (LGPL)
 - **SQLite** — both game engine and teaching tool
-- **QPainter** — vector scene illustrations (no image assets needed)
+- **QPainter** — vector scene illustrations and terminal widget (no image assets needed)
 
 ---
 
@@ -153,19 +185,26 @@ nexus/
 ├── main.py                          <- launch the game
 ├── requirements.txt                 <- pip install -r requirements.txt
 ├── core/
-│   ├── game.py                      <- game state, objectives, hints, save/load
-│   ├── db.py                        <- SQLite interface + seed data
-│   ├── scenes.py                    <- story text, step guidance, cliffhangers
-│   ├── codex.py                     <- SQL concept definitions
-│   └── collectibles.py             <- Field Guide page content
+│   ├── game.py                      <- GameState: objectives, hints, recall gates, save/load
+│   ├── db.py                        <- SQLite interface + seed data (both seasons)
+│   ├── scenes.py                    <- Season 1 story text, objectives, hints, recall challenges
+│   ├── season2_game.py              <- Season 2 objectives, hints, recall challenges
+│   ├── season2_scenes.py            <- Season 2 scene definitions
+│   ├── season2_data.py              <- Season 2 DB seed data
+│   ├── codex.py                     <- SQL concept definitions (Season 1)
+│   ├── season2_codex.py             <- SQL concept definitions (Season 2)
+│   ├── collectibles.py              <- Field Guide page content (Season 1)
+│   └── season2_collectibles.py     <- Field Guide page content (Season 2)
 ├── ui/
 │   ├── main_window.py               <- app shell, wires everything together
-│   ├── cmd_panel.py                 <- narrative output + SQL editor
-│   ├── scene_view.py                <- QPainter scene illustrations + clue sidebar
+│   ├── cmd_panel.py                 <- 3-column layout: dialogue thread, hint system, error routing
+│   ├── terminal_widget.py           <- cartoon cel-shaded monitor widget (SQL input/output)
+│   ├── scene_view.py                <- QPainter scene illustrations
 │   ├── sql_editor.py                <- autocomplete SQL editor widget
-│   ├── concept_popup.py             <- concept card dialog
-│   ├── hud.py                       <- top bar (scene, progress, feature buttons)
-│   ├── codex_panel.py               <- browsable concept reference
+│   ├── hud.py                       <- top bar (scene, progress, ◆ Concepts button)
+│   ├── concept_popup.py             <- concept card dialog (Matrix rain → Morpheus → card)
+│   ├── portraits.py                 <- character portrait rendering (Diana, Sam, narrator)
+│   ├── codex_panel.py               <- browsable concept reference panel
 │   ├── collectibles_panel.py        <- Field Guide document viewer
 │   └── celebrations.py             <- toast banners, particles, screen flash
 ├── data/
