@@ -225,6 +225,10 @@ every experience level is welcome.
 
 ## More from Michael Nocito
 
+**[📊 SQL Prep Kit](https://michaelnocito.github.io/sql-prep-kit/)** —
+Learn SQL for analyst interviews by reading every query out loud, line by line.
+Browser-based, real SQLite, honest readiness score. No install.
+
 **[🗂️ RecordForge](https://michaelnocito.github.io/recordforge/)** —
 Generate fictional PDFs, Word docs, Excel datasets, and HTML files for QA, demos, and ETL testing.
 Free Windows app + Python package. No real data, fully offline.
