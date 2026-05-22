@@ -4,20 +4,23 @@
   <meta charset="UTF-8">
   {% seo %}
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#4F8EF7">
+  <meta name="theme-color" content="#0d1117">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg:      #F8FAFC;
-      --surface: #FFFFFF;
-      --border:  #E2E8F0;
-      --accent:  #4F8EF7;
-      --teal:    #0D9488;
-      --text:    #0F172A;
-      --muted:   #64748B;
-      --dim:     #F1F5F9;
-      --code-bg: #F8FAFC;
+      --bg:        #0d1117;
+      --surface:   #161b22;
+      --surface2:  #21262d;
+      --border:    #30363d;
+      --accent:    #58a6ff;
+      --accent-dk: #0969da;
+      --green:     #22c55e;
+      --text:      #e6edf3;
+      --text-dim:  #8b949e;
+      --text-muted:#57606a;
+      --mono:      'JetBrains Mono', monospace;
+      --sans:      'Inter', system-ui, sans-serif;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -26,118 +29,108 @@
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: 'Syne', sans-serif;
+      font-family: var(--sans);
+      font-size: 16px;
+      line-height: 1.6;
       min-height: 100vh;
       overflow-x: hidden;
     }
 
+    /* Subtle grid overlay matching RecordForge */
     body::before {
       content: '';
       position: fixed;
       inset: 0;
       background-image:
-        repeating-linear-gradient(0deg, transparent, transparent 39px, var(--border) 39px, var(--border) 40px),
-        repeating-linear-gradient(90deg, transparent, transparent 39px, var(--border) 39px, var(--border) 40px);
-      opacity: 0.3;
+        linear-gradient(rgba(9,105,218,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(9,105,218,0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
       pointer-events: none;
       z-index: 0;
     }
-
-    .orb {
-      position: fixed;
-      border-radius: 50%;
-      filter: blur(140px);
-      pointer-events: none;
-      z-index: 0;
-    }
-    .orb-1 { width: 500px; height: 500px; background: rgba(79,142,247,0.07); top: -100px; right: -100px; }
-    .orb-2 { width: 400px; height: 400px; background: rgba(13,148,136,0.05); bottom: 5%; left: -80px; }
 
     /* Nav */
     nav {
-      position: fixed;
-      top: 0; left: 0; right: 0;
+      position: sticky;
+      top: 0;
       z-index: 100;
-      background: rgba(248,250,252,0.88);
-      backdrop-filter: blur(16px);
+      background: rgba(13,17,23,0.88);
+      backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--border);
-    }
-    .nav-inner {
-      max-width: 780px;
-      margin: 0 auto;
       padding: 0 24px;
-      height: 52px;
+      height: 56px;
       display: flex;
       align-items: center;
       justify-content: space-between;
     }
     .nav-logo {
-      font-family: 'Space Mono', monospace;
-      font-size: 12px;
-      color: var(--accent);
-      letter-spacing: 0.05em;
-      text-decoration: none;
+      font-family: var(--mono);
+      font-size: 14px;
       font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 1px;
+      text-decoration: none;
     }
     .nav-links { display: flex; gap: 24px; align-items: center; }
     .nav-links a {
-      font-family: 'Space Mono', monospace;
-      font-size: 11px;
-      color: var(--muted);
+      font-family: var(--sans);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-dim);
       text-decoration: none;
-      letter-spacing: 0.04em;
-      transition: color .2s;
+      transition: color .15s;
     }
     .nav-links a:hover { color: var(--text); }
     .nav-tag {
-      font-family: 'Space Mono', monospace;
-      font-size: 10px;
-      background: var(--dim);
-      border: 1px solid var(--border);
-      color: var(--teal);
-      padding: 2px 8px;
-      border-radius: 4px;
-      letter-spacing: 0.08em;
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      background: rgba(9,105,218,0.12);
+      border: 1px solid rgba(9,105,218,0.3);
+      color: var(--accent);
+      padding: 3px 10px;
+      border-radius: 100px;
+      letter-spacing: 0.06em;
     }
 
     /* Page hero */
     .page-hero {
-      padding: 100px 24px 48px;
+      padding: 72px 24px 40px;
       max-width: 780px;
       margin: 0 auto;
       position: relative;
       z-index: 1;
     }
     .page-eyebrow {
-      font-family: 'Space Mono', monospace;
-      font-size: 10px;
-      color: var(--teal);
-      letter-spacing: 0.2em;
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 0.18em;
       text-transform: uppercase;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
       display: flex;
       align-items: center;
       gap: 10px;
-      font-weight: 700;
     }
     .page-eyebrow::before {
       content: '';
-      width: 28px;
+      width: 24px;
       height: 2px;
-      background: var(--teal);
+      background: var(--accent);
     }
     .page-title {
-      font-size: clamp(28px, 5vw, 48px);
+      font-size: clamp(26px, 5vw, 44px);
       font-weight: 800;
       line-height: 1.1;
       letter-spacing: -0.02em;
       color: var(--text);
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
     .page-title span { color: var(--accent); }
     .page-desc {
-      font-size: 15px;
-      color: var(--muted);
+      font-size: 16px;
+      color: var(--text-dim);
       line-height: 1.7;
       max-width: 520px;
       font-weight: 400;
@@ -161,7 +154,7 @@
       margin: 2.4rem 0 0.9rem;
       line-height: 1.15;
     }
-    .md-content h1:first-child { display: none; } /* title already in hero */
+    .md-content h1:first-child { display: none; }
 
     .md-content h2 {
       font-size: clamp(17px, 3vw, 22px);
@@ -181,18 +174,18 @@
     }
 
     .md-content h4 {
-      font-family: 'Space Mono', monospace;
+      font-family: var(--mono);
       font-size: 11px;
       font-weight: 700;
-      color: var(--teal);
+      color: var(--accent);
       letter-spacing: 0.15em;
       text-transform: uppercase;
       margin: 1.4rem 0 0.4rem;
     }
 
     .md-content p {
-      font-size: 15px;
-      color: var(--muted);
+      font-size: 16px;
+      color: var(--text-dim);
       line-height: 1.8;
       margin-bottom: 1rem;
       font-weight: 400;
@@ -202,15 +195,15 @@
     .md-content a {
       color: var(--accent);
       text-decoration: none;
-      border-bottom: 1px solid rgba(79,142,247,0.3);
+      border-bottom: 1px solid rgba(88,166,255,0.3);
       transition: border-color .2s;
     }
     .md-content a:hover { border-color: var(--accent); }
 
     .md-content ul, .md-content ol {
       margin: 0.6rem 0 1rem 1.4rem;
-      color: var(--muted);
-      font-size: 15px;
+      color: var(--text-dim);
+      font-size: 16px;
       line-height: 1.8;
     }
     .md-content li + li { margin-top: 0.25rem; }
@@ -219,29 +212,29 @@
     .md-content blockquote {
       margin: 1.4rem 0;
       padding: 1rem 1.25rem;
-      background: var(--dim);
+      background: var(--surface);
       border-left: 3px solid var(--accent);
       border-radius: 0 6px 6px 0;
     }
     .md-content blockquote p {
       margin: 0;
-      font-size: 14px;
-      color: var(--muted);
+      font-size: 15px;
+      color: var(--text-dim);
     }
     .md-content blockquote strong { color: var(--accent); }
 
     .md-content pre {
-      background: var(--text);
+      background: var(--surface);
       border-radius: 8px;
       padding: 1.1rem 1.25rem;
       overflow-x: auto;
       margin: 1rem 0 1.4rem;
-      border: 1px solid #1E293B;
+      border: 1px solid var(--border);
     }
     .md-content pre code {
-      font-family: 'Space Mono', monospace;
-      font-size: 12.5px;
-      color: #94A3B8;
+      font-family: var(--mono);
+      font-size: 13px;
+      color: #86efac;
       background: none;
       padding: 0;
       border: none;
@@ -249,11 +242,11 @@
     }
 
     .md-content code {
-      font-family: 'Space Mono', monospace;
-      font-size: 12px;
-      background: var(--dim);
-      border: 1px solid var(--border);
-      color: var(--teal);
+      font-family: var(--mono);
+      font-size: 12.5px;
+      background: rgba(9,105,218,0.1);
+      border: 1px solid rgba(9,105,218,0.2);
+      color: var(--accent);
       padding: 2px 6px;
       border-radius: 4px;
     }
@@ -271,12 +264,12 @@
       font-size: 14px;
     }
     .md-content th {
-      font-family: 'Space Mono', monospace;
+      font-family: var(--mono);
       font-size: 10px;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: var(--muted);
-      background: var(--dim);
+      color: var(--text-dim);
+      background: var(--surface2);
       border: 1px solid var(--border);
       padding: 8px 12px;
       text-align: left;
@@ -284,10 +277,10 @@
     .md-content td {
       border: 1px solid var(--border);
       padding: 8px 12px;
-      color: var(--muted);
+      color: var(--text-dim);
       font-size: 14px;
     }
-    .md-content tr:hover td { background: var(--dim); }
+    .md-content tr:hover td { background: var(--surface); }
 
     /* Support section */
     .support-card {
@@ -295,13 +288,12 @@
       padding: 2rem;
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 10px;
+      border-radius: 12px;
       text-align: center;
-      box-shadow: 0 1px 3px rgba(15,23,42,0.05);
     }
     .support-card p {
       font-size: 14px;
-      color: var(--muted);
+      color: var(--text-dim);
       line-height: 1.7;
       margin-bottom: 0.6rem;
     }
@@ -309,7 +301,7 @@
     .support-card a.star-link {
       color: var(--accent);
       text-decoration: none;
-      border-bottom: 1px solid rgba(79,142,247,0.3);
+      border-bottom: 1px solid rgba(88,166,255,0.3);
     }
     .bmac-btn {
       display: inline-flex;
@@ -318,17 +310,17 @@
       margin: 0.75rem 0 1.25rem;
       padding: 10px 22px;
       background: #FFDD00;
-      color: #0F172A;
-      border-radius: 6px;
-      font-family: 'Space Mono', monospace;
+      color: #0d1117;
+      border-radius: 8px;
+      font-family: var(--mono);
       font-weight: 700;
       font-size: 12px;
       letter-spacing: 0.04em;
       text-decoration: none;
       transition: all .2s;
-      box-shadow: 0 2px 8px rgba(255,221,0,0.3);
+      box-shadow: 0 2px 8px rgba(255,221,0,0.2);
     }
-    .bmac-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(255,221,0,0.4); }
+    .bmac-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(255,221,0,0.3); }
     .more-tools {
       display: flex;
       flex-wrap: wrap;
@@ -337,22 +329,22 @@
       margin-top: 0.5rem;
     }
     .tool-tag {
-      font-family: 'Space Mono', monospace;
-      font-size: 10px;
-      letter-spacing: 0.06em;
-      color: var(--muted);
-      background: var(--dim);
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      color: var(--text-dim);
+      background: var(--surface2);
       border: 1px solid var(--border);
       padding: 4px 10px;
-      border-radius: 4px;
+      border-radius: 6px;
       text-decoration: none;
       transition: all .2s;
     }
     .tool-tag:hover { border-color: var(--accent); color: var(--accent); }
     .more-label {
-      font-family: 'Space Mono', monospace;
+      font-family: var(--mono);
       font-size: 10px;
-      color: var(--muted);
+      color: var(--text-muted);
       letter-spacing: 0.12em;
       text-transform: uppercase;
       display: block;
@@ -378,9 +370,9 @@
       gap: 10px;
     }
     .footer-inner span, .footer-inner a {
-      font-family: 'Space Mono', monospace;
-      font-size: 10px;
-      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-muted);
       text-decoration: none;
       letter-spacing: 0.04em;
     }
@@ -389,7 +381,7 @@
     /* Responsive */
     @media (max-width: 600px) {
       .nav-links .nav-tag { display: none; }
-      .page-hero { padding: 88px 20px 36px; }
+      .page-hero { padding: 72px 20px 32px; }
       .content-wrap { padding: 0 20px 60px; }
       .support-card { padding: 1.5rem 1.25rem; }
       .footer-inner { flex-direction: column; align-items: flex-start; }
@@ -397,16 +389,12 @@
   </style>
 </head>
 <body>
-  <div class="orb orb-1"></div>
-  <div class="orb orb-2"></div>
 
   <nav>
-    <div class="nav-inner">
-      <a class="nav-logo" href="https://michaelnocito.github.io">MN</a>
-      <div class="nav-links">
-        <span class="nav-tag">FREE GUIDE</span>
-        <a href="https://github.com/michaelnocito/nexus-sql-mystery" target="_blank" rel="noopener">GitHub ↗</a>
-      </div>
+    <a class="nav-logo" href="https://michaelnocito.github.io">MN</a>
+    <div class="nav-links">
+      <span class="nav-tag">FREE GUIDE</span>
+      <a href="https://github.com/michaelnocito/nexus-sql-mystery" target="_blank" rel="noopener">GitHub ↗</a>
     </div>
   </nav>
 
