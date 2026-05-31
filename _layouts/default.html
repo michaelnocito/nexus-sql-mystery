@@ -3,49 +3,86 @@
   <head>
     <meta charset="UTF-8">
     {% seo %}
-    <link rel="preconnect" href="https://fonts.gstatic.com">
-    <link rel="preload" href="https://fonts.googleapis.com/css?family=Open+Sans:400,700&display=swap" as="style" type="text/css" crossorigin>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#157878">
+    <meta name="theme-color" content="#2f6df0">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="stylesheet" href="{{ '/assets/css/style.css?v=' | append: site.github.build_revision | relative_url }}">
+    <!-- Calm-analyst design system: self-contained, system fonts, no remote-theme CSS -->
     {% include head-custom.html %}
     <style>
-      .support-section {
-        margin-top: 3rem;
-        padding-top: 2rem;
-        border-top: 1px solid #dce6f0;
-        text-align: center;
-        color: #6a737d;
-        font-size: 0.9rem;
-        line-height: 1.6;
+      /* ====================================================================
+         Calm-analyst design system — NEXUS homepage (README via Jekyll).
+         Self-contained: light theme, system fonts, blue accent, no remote CSS.
+         ==================================================================== */
+      :root{
+        --bg:#eef1f5; --panel:#ffffff; --line:#d6dce4;
+        --shadow:0 1px 2px rgba(20,30,50,.06), 0 6px 20px rgba(20,30,50,.06);
+        --ink:#1f2328; --dim:#5b6470;
+        --accent:#2f6df0; --accent-d:#1f4fc4;
+        --tint:#f7faff; --accent-soft:#eef4ff; --accent-soft-bd:#d4e1ff;
       }
-      .support-section p {
-        margin: 0 0 0.75rem;
-      }
-      .support-section a.bmac-link {
-        display: inline-block;
-        margin-top: 0.5rem;
-        padding: 0.5rem 1.25rem;
-        background-color: #FFDD00;
-        color: #000000;
-        border-radius: 6px;
-        font-weight: 600;
-        font-size: 0.9rem;
-        text-decoration: none;
-        transition: opacity 0.15s ease;
-      }
-      .support-section a.bmac-link:hover {
-        opacity: 0.85;
-        text-decoration: none;
-      }
-      .support-section .project-links {
-        margin-top: 1rem;
-        font-size: 0.85rem;
-      }
-      .support-section .project-links a {
-        color: #0366d6;
-        margin: 0 0.4rem;
+      *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+      html{scroll-behavior:smooth}
+      body{background:var(--bg);color:var(--ink);font:15px/1.55 -apple-system,"Segoe UI",Roboto,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+      a{color:var(--accent);text-decoration:none}
+      a:hover{color:var(--accent-d)}
+      code,pre{font-family:"Consolas",ui-monospace,monospace}
+      #skip-to-content{position:absolute;left:-9999px}
+      #skip-to-content:focus{left:8px;top:8px;background:#fff;padding:8px 12px;border-radius:8px;z-index:50}
+
+      /* Hero header */
+      .page-header{background:var(--panel);border-bottom:1px solid var(--line);padding:48px 24px;text-align:center}
+      .ph-logo{width:54px;height:54px;margin:0 auto 16px;display:grid;place-items:center;font-size:30px;color:var(--accent);background:linear-gradient(135deg,#eaf1ff,#dbe7ff);border-radius:14px}
+      .project-name{font-size:clamp(28px,5vw,40px);font-weight:700;letter-spacing:-.01em;color:var(--ink);margin-bottom:10px;line-height:1.1}
+      .project-tagline{font-size:17px;font-weight:400;color:var(--dim);max-width:620px;margin:0 auto 22px;line-height:1.5}
+      .page-header .btn{display:inline-block;background:var(--accent);color:#fff;font-weight:700;font-size:14.5px;padding:11px 22px;border-radius:10px;box-shadow:0 2px 8px rgba(47,109,240,.35);transition:background .15s,transform .05s}
+      .page-header .btn:hover{background:var(--accent-d);color:#fff;transform:translateY(-1px)}
+
+      /* Centered content column */
+      .main-content{max-width:860px;margin:0 auto;padding:24px 18px 48px}
+
+      /* README rendered as a white card */
+      .readme{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:30px 34px}
+      .readme > *:first-child{margin-top:0}
+      .readme > h1:first-child{display:none} /* title already shown in the hero header */
+      .readme h1{font-size:clamp(24px,4vw,32px);font-weight:700;letter-spacing:-.01em;color:var(--ink);margin:2rem 0 .8rem;line-height:1.15}
+      .readme h2{font-size:clamp(18px,3vw,23px);font-weight:700;color:var(--ink);margin:1.8rem 0 .7rem;padding-bottom:.4rem;border-bottom:1px solid var(--line)}
+      .readme h3{font-size:16px;font-weight:700;color:var(--ink);margin:1.4rem 0 .5rem}
+      .readme p{font-size:15px;color:var(--dim);line-height:1.75;margin-bottom:1rem}
+      .readme p strong,.readme li strong{color:var(--ink);font-weight:600}
+      .readme a{color:var(--accent);border-bottom:1px solid rgba(47,109,240,.3);transition:border-color .2s}
+      .readme a:hover{border-color:var(--accent)}
+      .readme ul,.readme ol{margin:.6rem 0 1rem 1.4rem;color:var(--dim);font-size:15px;line-height:1.75}
+      .readme li+li{margin-top:.25rem}
+      .readme blockquote{margin:1.4rem 0;padding:1rem 1.25rem;background:var(--tint);border-left:4px solid var(--accent);border-radius:0 8px 8px 0}
+      .readme blockquote p{margin:0;color:var(--dim)}
+      .readme blockquote strong{color:var(--accent-d)}
+      .readme code{font-family:"Consolas",ui-monospace,monospace;font-size:12.5px;background:var(--accent-soft);border:1px solid var(--accent-soft-bd);color:var(--accent-d);padding:2px 6px;border-radius:5px}
+      .readme pre{background:#0e131b;border:1px solid var(--line);border-radius:10px;padding:16px 18px;overflow-x:auto;margin:1rem 0 1.4rem}
+      .readme pre code{background:none;border:none;color:#cdd6e4;padding:0;font-size:12.5px;line-height:1.7}
+      .readme hr{border:none;border-top:1px solid var(--line);margin:2rem 0}
+      .readme table{width:100%;border-collapse:collapse;margin:1.2rem 0;font-size:14px}
+      .readme th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);background:var(--tint);border:1px solid var(--line);padding:8px 12px;text-align:left}
+      .readme td{border:1px solid var(--line);padding:8px 12px;color:var(--dim)}
+      .readme tr:hover td{background:var(--tint)}
+      .readme img{max-width:100%;height:auto;vertical-align:middle}
+
+      /* Support section */
+      .support-section{margin-top:24px;padding:24px;background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);text-align:center;color:var(--dim);font-size:14px;line-height:1.6}
+      .support-section p{margin:0 0 .6rem}
+      .support-section a{color:var(--accent)}
+      .support-section a.bmac-link{display:inline-block;margin-top:.5rem;padding:10px 22px;background:#FFDD00;color:#0f172a;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;transition:opacity .15s ease}
+      .support-section a.bmac-link:hover{opacity:.9;text-decoration:none}
+      .support-section .project-links{margin-top:1rem;font-size:13px}
+      .support-section .project-links a{color:var(--accent);margin:0 .4rem}
+
+      /* Footer */
+      .site-footer{border-top:1px solid var(--line);padding:20px 0;margin-top:24px;text-align:center}
+      .site-footer span,.site-footer a{font-size:12.5px;color:var(--dim)}
+      .site-footer a:hover{color:var(--accent-d)}
+
+      @media (max-width:600px){
+        .page-header{padding:36px 20px}
+        .readme{padding:22px 20px}
       }
     </style>
   </head>
@@ -53,6 +90,7 @@
     <a id="skip-to-content" href="#content">Skip to the content.</a>
 
     <header class="page-header" role="banner">
+      <div class="ph-logo">▦</div>
       <h1 class="project-name">{{ page.title | default: site.title | default: site.github.repository_name }}</h1>
       <h2 class="project-tagline">{{ page.description | default: site.description | default: site.github.project_tagline }}</h2>
       {% if site.github.is_project_page %}
@@ -65,7 +103,9 @@
     </header>
 
     <main id="content" class="main-content" role="main">
+      <div class="readme">
       {{ content }}
+      </div>
 
       <div class="support-section">
         <p>

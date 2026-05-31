@@ -17,730 +17,291 @@
   <meta name="twitter:title" content="NEXUS — Learn SQL by Solving a Mystery" />
   <meta name="twitter:description" content="Free desktop game. Write real SQL. Catch a thief. Two full seasons." />
 
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
-
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
+    /* =======================================================================
+       NEXUS — docs landing
+       Re-skinned to the Nocito calm-analyst design system (light theme,
+       system fonts, blue accent). Purple used as a secondary accent on
+       feature rail. Terminal/code demo stays dark — literal SQL/CLI output.
+       ======================================================================= */
     :root {
-      --bg:        #0d1117;
-      --surface:   #161b22;
-      --surface2:  #21262d;
-      --border:    #30363d;
-      --accent:    #dc2626;
-      --accent-lt: #f87171;
-      --green:     #22c55e;
-      --amber:     #f59e0b;
-      --red:       #ef4444;
-      --text:      #e6edf3;
-      --text-dim:  #8b949e;
-      --text-muted:#57606a;
-      --mono:      'JetBrains Mono', 'Courier New', monospace;
-      --sans:      'Inter', system-ui, sans-serif;
+      --bg:#eef1f5; --panel:#ffffff; --line:#d6dce4;
+      --shadow:0 1px 2px rgba(20,30,50,.06), 0 6px 20px rgba(20,30,50,.06);
+      --ink:#1f2328; --dim:#5b6470;
+      --accent:#2f6df0; --accent-d:#1f4fc4;
+      --good:#1a7f37; --good-bg:#e7f6ec; --warn:#9a6700;
+      --purple:#6639ba;
+      --tint:#f7faff; --tint-bd:#dde6f5;
+      --accent-soft:#eef4ff; --accent-soft-bd:#d4e1ff;
     }
-
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
-
     body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--sans);
-      font-size: 16px;
-      line-height: 1.6;
+      background: var(--bg); color: var(--ink);
+      font: 15px/1.55 -apple-system, "Segoe UI", Roboto, system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
       overflow-x: hidden;
     }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { color: var(--accent-d); }
+    code, .mono { font-family: "Consolas", ui-monospace, monospace; }
 
-    a { color: var(--accent-lt); text-decoration: none; }
-    a:hover { text-decoration: underline; }
-
-    /* ── NAV ─────────────────────────────────────────────────────────────── */
-    nav {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background: rgba(13, 17, 23, 0.85);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border);
-      padding: 0 40px;
-      height: 60px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+    /* TOP BAR */
+    .topbar {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      background: var(--panel); border-bottom: 1px solid var(--line); padding: 10px 22px;
     }
-
-    .nav-logo {
-      font-family: var(--mono);
-      font-weight: 700;
-      font-size: 18px;
-      letter-spacing: 4px;
-      color: var(--accent-lt);
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand .logo {
+      font-size: 22px; color: var(--accent);
+      background: linear-gradient(135deg, var(--accent-soft), var(--accent-soft-bd));
+      width: 38px; height: 38px; display: grid; place-items: center; border-radius: 9px;
     }
-
-    .nav-links {
-      display: flex;
-      gap: 32px;
-      list-style: none;
+    .brand-text { display: flex; flex-direction: column; line-height: 1.2; }
+    .brand-text strong { font-size: 15px; color: var(--ink); }
+    .brand-text .sub { font-size: 12px; color: var(--dim); }
+    .orient { display: flex; align-items: center; gap: 18px; }
+    .phase-chip {
+      font-size: 11px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase;
+      padding: 5px 10px; border-radius: 6px; white-space: nowrap;
+      background: var(--accent-soft); color: var(--accent-d); border: 1px solid var(--accent-soft-bd);
     }
-
-    .nav-links a {
-      color: var(--text-dim);
-      font-size: 14px;
-      font-weight: 500;
-      transition: color 0.15s;
-    }
-
-    .nav-links a:hover { color: var(--text); text-decoration: none; }
-
+    .nav-links { display: flex; gap: 20px; list-style: none; }
+    .nav-links a { color: var(--dim); font-size: 13.5px; font-weight: 600; }
+    .nav-links a:hover { color: var(--accent-d); }
     .nav-cta {
-      background: var(--accent);
-      color: #fff !important;
-      padding: 8px 20px;
-      border-radius: 8px;
-      font-weight: 700;
-      font-size: 14px;
-      transition: background 0.15s;
+      background: var(--accent); color: #fff !important; padding: 9px 18px; border-radius: 10px;
+      font-weight: 700; font-size: 13.5px;
+      box-shadow: 0 2px 8px rgba(47,109,240,.35); transition: background .15s;
     }
-    .nav-cta:hover { background: #b91c1c !important; text-decoration: none !important; }
+    .nav-cta:hover { background: var(--accent-d); color: #fff !important; }
 
-    /* ── HERO ─────────────────────────────────────────────────────────────── */
-    .hero {
-      min-height: calc(100vh - 60px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 80px 24px;
-      position: relative;
-      overflow: hidden;
+    /* LAYOUT */
+    section { padding: 64px 22px; }
+    .section-inner { max-width: 1080px; margin: 0 auto; }
+    .section-label {
+      font-size: 11px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase;
+      color: var(--accent-d); margin-bottom: 10px;
     }
+    h2 { font-size: clamp(24px, 4vw, 34px); font-weight: 700; line-height: 1.2; letter-spacing: -.01em; margin-bottom: 14px; color: var(--ink); }
+    .section-sub { font-size: 16px; color: var(--dim); max-width: 580px; line-height: 1.6; margin-bottom: 44px; }
 
-    .hero-grid {
-      position: absolute;
-      inset: 0;
-      background-image:
-        linear-gradient(rgba(220,38,38,0.06) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(220,38,38,0.06) 1px, transparent 1px);
-      background-size: 40px 40px;
-      mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, black 40%, transparent 100%);
+    /* HERO / WELCOME CARD */
+    .hero { padding: 40px 22px 24px; }
+    .welcome-card {
+      max-width: 1080px; margin: 0 auto;
+      background: var(--panel); border: 1px solid var(--line); border-radius: 16px;
+      box-shadow: var(--shadow); padding: 48px 44px; text-align: center;
     }
-
-    .hero-glow {
-      position: absolute;
-      width: 600px;
-      height: 600px;
-      background: radial-gradient(circle, rgba(220,38,38,0.15) 0%, transparent 70%);
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-    }
-
-    .hero-content { position: relative; max-width: 800px; }
-
     .hero-eyebrow {
-      display: inline-block;
-      font-family: var(--mono);
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 3px;
-      color: var(--accent-lt);
-      background: rgba(220,38,38,0.12);
-      border: 1px solid rgba(220,38,38,0.3);
-      padding: 6px 16px;
-      border-radius: 100px;
-      margin-bottom: 28px;
+      display: inline-block; font-size: 11px; font-weight: 800; letter-spacing: .09em;
+      text-transform: uppercase; color: var(--accent-d);
+      background: var(--accent-soft); border: 1px solid var(--accent-soft-bd);
+      padding: 6px 14px; border-radius: 999px; margin-bottom: 22px;
     }
-
-    h1 {
-      font-size: clamp(40px, 7vw, 72px);
-      font-weight: 900;
-      line-height: 1.1;
-      letter-spacing: -1.5px;
-      margin-bottom: 24px;
-      color: var(--text);
+    .welcome-card h1 {
+      font-size: clamp(32px, 6vw, 56px); font-weight: 700; line-height: 1.1;
+      letter-spacing: -.02em; margin-bottom: 18px; color: var(--ink);
     }
-
-    h1 span { color: var(--accent-lt); }
-
-    .hero-sub {
-      font-size: clamp(17px, 2.5vw, 21px);
-      color: var(--text-dim);
-      max-width: 600px;
-      margin: 0 auto 16px;
-      line-height: 1.6;
-    }
-
-    .hero-proof {
-      font-size: 14px;
-      color: var(--text-muted);
-      margin-bottom: 44px;
-    }
-
-    .hero-proof strong { color: var(--text-dim); }
-
-    .btn-group {
-      display: flex;
-      gap: 16px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
+    .welcome-card h1 span { color: var(--accent); }
+    .hero-sub { font-size: clamp(16px, 2.5vw, 19px); color: var(--dim); max-width: 620px; margin: 0 auto 14px; line-height: 1.6; }
+    .hero-proof { font-size: 13.5px; color: var(--dim); margin-bottom: 32px; }
+    .hero-proof strong { color: var(--ink); }
+    .btn-group { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
     .btn-primary {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      background: var(--accent);
-      color: #fff;
-      font-weight: 700;
-      font-size: 16px;
-      padding: 14px 32px;
-      border-radius: 10px;
-      transition: background 0.15s, transform 0.1s;
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--accent); color: #fff; font-weight: 700; font-size: 15px;
+      padding: 12px 28px; border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(47,109,240,.35); transition: background .15s, transform .05s;
     }
-    .btn-primary:hover {
-      background: #b91c1c;
-      text-decoration: none;
-      transform: translateY(-1px);
-    }
-
+    .btn-primary:hover { background: var(--accent-d); color: #fff; transform: translateY(-1px); }
     .btn-secondary {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      background: var(--surface2);
-      color: var(--text);
-      font-weight: 600;
-      font-size: 16px;
-      padding: 14px 32px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      transition: border-color 0.15s, transform 0.1s;
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--panel); color: var(--dim); font-weight: 600; font-size: 15px;
+      padding: 12px 28px; border-radius: 10px; border: 1px solid var(--line);
+      transition: border-color .15s, color .15s, transform .05s;
     }
-    .btn-secondary:hover {
-      border-color: var(--accent-lt);
-      text-decoration: none;
-      transform: translateY(-1px);
-    }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent-d); transform: translateY(-1px); }
 
-    /* ── TERMINAL DEMO ───────────────────────────────────────────────────── */
-    .terminal-section {
-      padding: 0 24px 100px;
-      display: flex;
-      justify-content: center;
-    }
-
+    /* TERMINAL DEMO (kept dark — literal SQL output) */
+    .terminal-wrap { padding: 0 22px 64px; }
     .terminal-demo {
-      width: 100%;
-      max-width: 760px;
-      background: #0a0e1a;
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      overflow: hidden;
-      box-shadow: 0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(220,38,38,0.15);
+      background: #0a0e1a; border: 1px solid var(--line); border-radius: 14px; overflow: hidden;
+      box-shadow: var(--shadow); max-width: 760px; margin: 0 auto;
     }
-
-    .terminal-titlebar {
-      background: var(--surface);
-      padding: 12px 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      border-bottom: 1px solid var(--border);
-    }
-
+    .terminal-titlebar { background: #1a212c; padding: 12px 16px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #2a313d; }
     .dot { width: 12px; height: 12px; border-radius: 50%; }
-    .dot-r { background: #ff5f57; }
-    .dot-y { background: #febc2e; }
-    .dot-g { background: #28c840; }
-
-    .terminal-title {
-      flex: 1;
-      text-align: center;
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--text-muted);
-    }
-
-    .terminal-body {
-      padding: 28px 32px 32px;
-      font-family: var(--mono);
-      font-size: 14px;
-      line-height: 1.8;
-    }
-
+    .dot-r { background: #ff5f57; } .dot-y { background: #febc2e; } .dot-g { background: #28c840; }
+    .terminal-title { flex: 1; text-align: center; font-family: "Consolas", ui-monospace, monospace; font-size: 12px; color: #8a94a6; }
+    .terminal-body { padding: 28px 32px 32px; font-family: "Consolas", ui-monospace, monospace; font-size: 14px; line-height: 1.8; }
     .t-dim    { color: #4b5563; }
-    .t-prompt { color: var(--accent-lt); }
+    .t-prompt { color: #818cf8; }
     .t-sql    { color: #93c5fd; }
     .t-kw     { color: #c084fc; }
     .t-str    { color: #86efac; }
     .t-num    { color: #fbbf24; }
-    .t-col    { color: var(--text-dim); }
+    .t-col    { color: #cbd5e1; }
     .t-out    { color: #e2e8f0; }
-    .t-success{ color: var(--green); font-weight: 700; }
+    .t-success{ color: #22c55e; font-weight: 700; }
     .t-story  { color: #94a3b8; font-style: italic; }
-    .t-cursor { display: inline-block; width: 8px; height: 15px; background: var(--accent-lt); animation: blink 1s step-end infinite; vertical-align: text-bottom; }
-
+    .t-cursor { display: inline-block; width: 8px; height: 15px; background: #818cf8; animation: blink 1s step-end infinite; vertical-align: text-bottom; }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
 
-    /* ── SECTION SHARED ─────────────────────────────────────────────────── */
-    section { padding: 100px 24px; }
-    .section-inner { max-width: 1100px; margin: 0 auto; }
-
-    .section-label {
-      font-family: var(--mono);
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 3px;
-      color: var(--accent-lt);
-      text-transform: uppercase;
-      margin-bottom: 12px;
-    }
-
-    h2 {
-      font-size: clamp(28px, 4vw, 44px);
-      font-weight: 800;
-      letter-spacing: -0.5px;
-      line-height: 1.2;
-      margin-bottom: 16px;
-    }
-
-    .section-sub {
-      font-size: 18px;
-      color: var(--text-dim);
-      max-width: 560px;
-      line-height: 1.6;
-      margin-bottom: 60px;
-    }
-
-    /* ── WHO IT'S FOR ────────────────────────────────────────────────────── */
-    .audiences {
-      background: var(--surface);
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-    }
-
-    .audience-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 2px;
-      background: var(--border);
-      border-radius: 12px;
-      overflow: hidden;
-    }
-
+    /* WHO IT'S FOR */
+    .audiences { background: var(--panel); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .audience-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
     .audience-card {
-      background: var(--surface);
-      padding: 48px 44px;
+      background: var(--bg); border: 1px solid var(--line); border-radius: 14px;
+      box-shadow: var(--shadow); padding: 32px 28px;
+      transition: transform .18s, box-shadow .18s;
     }
+    .audience-card:hover { transform: translateY(-2px); box-shadow: 0 2px 4px rgba(20,30,50,.07), 0 10px 28px rgba(20,30,50,.10); }
+    .audience-icon { font-size: 32px; margin-bottom: 16px; }
+    .audience-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 10px; color: var(--ink); }
+    .audience-card p { color: var(--dim); font-size: 14.5px; line-height: 1.7; margin-bottom: 20px; }
+    .audience-bullets { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .audience-bullets li { display: flex; align-items: flex-start; gap: 10px; font-size: 13.5px; color: var(--dim); }
+    .audience-bullets li::before { content: "✓"; color: var(--good); font-weight: 700; flex-shrink: 0; margin-top: 1px; }
 
-    .audience-icon {
-      font-size: 40px;
-      margin-bottom: 20px;
-    }
-
-    .audience-card h3 {
-      font-size: 22px;
-      font-weight: 800;
-      margin-bottom: 12px;
-    }
-
-    .audience-card p {
-      color: var(--text-dim);
-      font-size: 15px;
-      line-height: 1.7;
-      margin-bottom: 24px;
-    }
-
-    .audience-bullets {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .audience-bullets li {
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      font-size: 14px;
-      color: var(--text-dim);
-    }
-
-    .audience-bullets li::before {
-      content: "✓";
-      color: var(--green);
-      font-weight: 700;
-      flex-shrink: 0;
-      margin-top: 1px;
-    }
-
-    /* ── FEATURES ────────────────────────────────────────────────────────── */
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
-    }
-
+    /* FEATURES */
+    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
     .feature-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 32px 28px;
-      transition: border-color 0.2s, transform 0.2s;
+      background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--purple);
+      border-radius: 14px; padding: 24px 22px; box-shadow: var(--shadow);
+      transition: transform .18s, box-shadow .18s;
     }
+    .feature-card:hover { transform: translateY(-2px); box-shadow: 0 2px 4px rgba(20,30,50,.07), 0 10px 28px rgba(20,30,50,.10); }
+    .feature-icon { font-size: 26px; margin-bottom: 12px; }
+    .feature-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 8px; color: var(--ink); }
+    .feature-card p { font-size: 13.5px; color: var(--dim); line-height: 1.65; }
 
-    .feature-card:hover {
-      border-color: rgba(220,38,38,0.5);
-      transform: translateY(-2px);
-    }
-
-    .feature-icon {
-      font-size: 28px;
-      margin-bottom: 16px;
-    }
-
-    .feature-card h3 {
-      font-size: 17px;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-
-    .feature-card p {
-      font-size: 14px;
-      color: var(--text-dim);
-      line-height: 1.65;
-    }
-
-    /* ── SKILLS TABLE ─────────────────────────────────────────────────────── */
-    .skills-bg {
-      background: var(--surface);
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-    }
-
-    .skills-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 48px;
-      align-items: start;
-    }
-
-    .skills-list {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
+    /* SKILLS */
+    .skills-bg { background: var(--panel); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .skills-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start; }
+    .skills-list { display: flex; flex-direction: column; gap: 4px; }
     .skill-row {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 14px 16px;
-      border-radius: 8px;
-      transition: background 0.15s;
+      display: flex; align-items: center; gap: 16px;
+      padding: 12px 14px; border-radius: 8px; transition: background .15s;
     }
-
-    .skill-row:hover { background: var(--surface2); }
-
+    .skill-row:hover { background: var(--bg); }
     .skill-tag {
-      font-family: var(--mono);
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--accent-lt);
-      background: rgba(220,38,38,0.12);
-      border: 1px solid rgba(220,38,38,0.2);
-      padding: 3px 10px;
-      border-radius: 6px;
-      min-width: 130px;
-      text-align: center;
+      font-family: "Consolas", ui-monospace, monospace; font-size: 12px; font-weight: 700;
+      color: var(--accent-d); background: var(--accent-soft); border: 1px solid var(--accent-soft-bd);
+      padding: 3px 10px; border-radius: 6px; min-width: 130px; text-align: center;
     }
-
-    .skill-desc {
-      font-size: 14px;
-      color: var(--text-dim);
-    }
-
+    .skill-desc { font-size: 13.5px; color: var(--dim); }
     .skills-story {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 32px;
+      background: var(--bg); border: 1px solid var(--line); border-radius: 14px;
+      box-shadow: var(--shadow); padding: 28px;
     }
-
-    .story-beat {
-      display: flex;
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-
+    .story-beat { display: flex; gap: 16px; margin-bottom: 22px; }
     .story-beat:last-child { margin-bottom: 0; }
-
     .beat-num {
-      font-family: var(--mono);
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--accent-lt);
-      background: rgba(220,38,38,0.15);
-      border-radius: 50%;
-      width: 28px;
-      height: 28px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      margin-top: 2px;
+      font-family: "Consolas", ui-monospace, monospace; font-size: 12px; font-weight: 700;
+      color: #fff; background: var(--accent); border-radius: 50%;
+      width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; margin-top: 2px;
     }
+    .beat-text strong { display: block; font-size: 14px; color: var(--ink); margin-bottom: 2px; }
+    .beat-text span { font-size: 13px; color: var(--dim); }
 
-    .beat-text strong {
-      display: block;
-      font-size: 14px;
-      color: var(--text);
-      margin-bottom: 2px;
-    }
-
-    .beat-text span {
-      font-size: 13px;
-      color: var(--text-dim);
-    }
-
-    /* ── SEASONS ──────────────────────────────────────────────────────────── */
-    .seasons-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 24px;
-    }
-
-    .season-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      overflow: hidden;
-    }
-
-    .season-header {
-      padding: 28px 32px 20px;
-      border-bottom: 1px solid var(--border);
-    }
-
+    /* SEASONS */
+    .seasons-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+    .season-card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
+    .season-header { padding: 24px 28px 18px; border-bottom: 1px solid var(--line); }
     .season-tag {
-      font-family: var(--mono);
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 2px;
-      padding: 4px 12px;
-      border-radius: 100px;
-      margin-bottom: 16px;
-      display: inline-block;
+      font-size: 11px; font-weight: 800; letter-spacing: .07em;
+      padding: 4px 12px; border-radius: 999px; margin-bottom: 14px; display: inline-block; text-transform: uppercase;
     }
-
-    .s1-tag { background: rgba(34,197,94,0.12); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
-    .s2-tag { background: rgba(220,38,38,0.12); color: var(--accent-lt); border: 1px solid rgba(220,38,38,0.3); }
-
-    .season-card h3 {
-      font-size: 22px;
-      font-weight: 800;
-      margin-bottom: 8px;
-    }
-
-    .season-card .season-sub {
-      font-size: 14px;
-      color: var(--text-dim);
-    }
-
-    .season-body {
-      padding: 24px 32px 32px;
-    }
-
-    .season-body p {
-      font-size: 15px;
-      color: var(--text-dim);
-      line-height: 1.7;
-      margin-bottom: 20px;
-    }
-
-    .season-skills {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
+    .s1-tag { background: var(--good-bg); color: var(--good); border: 1px solid #bfe5ca; }
+    .s2-tag { background: var(--accent-soft); color: var(--accent-d); border: 1px solid var(--accent-soft-bd); }
+    .season-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 6px; color: var(--ink); }
+    .season-card .season-sub { font-size: 13.5px; color: var(--dim); }
+    .season-body { padding: 22px 28px 28px; }
+    .season-body p { font-size: 14.5px; color: var(--dim); line-height: 1.7; margin-bottom: 18px; }
+    .season-skills { display: flex; flex-wrap: wrap; gap: 7px; }
     .season-skill {
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--text-dim);
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      padding: 4px 10px;
-      border-radius: 6px;
+      font-family: "Consolas", ui-monospace, monospace; font-size: 12px; color: var(--dim);
+      background: #f3f5f8; border: 1px solid var(--line); padding: 3px 9px; border-radius: 999px;
     }
 
-    /* ── QUOTE ──────────────────────────────────────────────────────────── */
-    .quote-section {
-      text-align: center;
-    }
-
+    /* QUOTE */
+    .quote-section { text-align: center; }
     .quote-block {
-      max-width: 680px;
-      margin: 0 auto;
+      max-width: 720px; margin: 0 auto;
+      background: var(--panel); border: 1px solid var(--line); border-radius: 16px;
+      box-shadow: var(--shadow); padding: 48px 44px;
     }
-
     blockquote {
-      font-size: clamp(20px, 3vw, 28px);
-      font-weight: 700;
-      line-height: 1.5;
-      color: var(--text);
-      margin-bottom: 20px;
-      position: relative;
+      font-size: clamp(18px, 2.8vw, 26px); font-weight: 600; line-height: 1.5;
+      color: var(--ink); margin-bottom: 18px; position: relative;
     }
-
     blockquote::before {
-      content: '"';
-      font-size: 80px;
-      color: rgba(220,38,38,0.2);
-      font-family: Georgia, serif;
-      line-height: 0;
-      position: absolute;
-      top: 20px;
-      left: -20px;
+      content: '\201C';
+      font-size: 80px; color: var(--accent-soft-bd);
+      font-family: Georgia, serif; line-height: 0;
+      position: absolute; top: 20px; left: -16px;
     }
+    .quote-attr { font-size: 13.5px; color: var(--dim); }
 
-    .quote-attr {
-      font-size: 14px;
-      color: var(--text-muted);
-    }
-
-    /* ── INSTALL ─────────────────────────────────────────────────────────── */
-    .install-bg {
-      background: var(--surface);
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-    }
-
-    .install-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 60px;
-      align-items: center;
-    }
-
-    .install-steps {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    .install-step {
-      display: flex;
-      gap: 18px;
-      align-items: flex-start;
-    }
-
+    /* INSTALL */
+    .install-bg { background: var(--panel); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .install-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start; }
+    .install-steps { display: flex; flex-direction: column; gap: 18px; }
+    .install-step { display: flex; gap: 16px; align-items: flex-start; }
     .step-num {
-      background: var(--accent);
-      color: white;
-      font-family: var(--mono);
-      font-size: 13px;
-      font-weight: 700;
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
+      background: var(--accent); color: #fff; font-family: "Consolas", ui-monospace, monospace;
+      font-size: 13px; font-weight: 700; width: 30px; height: 30px; border-radius: 50%;
+      display: grid; place-items: center; flex-shrink: 0;
     }
+    .step-text strong { display: block; font-size: 14.5px; margin-bottom: 2px; color: var(--ink); }
+    .step-text span { font-size: 13.5px; color: var(--dim); }
 
-    .step-text strong {
-      display: block;
-      font-size: 15px;
-      margin-bottom: 2px;
-    }
-
-    .step-text span {
-      font-size: 14px;
-      color: var(--text-dim);
-    }
-
-    .install-cmd {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      overflow: hidden;
-    }
-
-    .cmd-bar {
-      background: var(--surface2);
-      padding: 10px 16px;
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--text-muted);
-      border-bottom: 1px solid var(--border);
-    }
-
-    .cmd-body {
-      padding: 20px 20px;
-      font-family: var(--mono);
-      font-size: 13px;
-      line-height: 2;
-    }
-
-    .cmd-comment { color: #4b5563; }
-    .cmd-dollar  { color: var(--accent-lt); }
+    /* CODE BLOCK (dark — literal CLI) */
+    .code-block { background: #0e131b; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); }
+    .code-bar { background: #1a212c; padding: 10px 16px; font-family: "Consolas", ui-monospace, monospace; font-size: 12px; color: #8a94a6; border-bottom: 1px solid #2a313d; }
+    .code-body { padding: 20px; font-family: "Consolas", ui-monospace, monospace; font-size: 13px; line-height: 2; color: #cdd6e4; }
+    .cmd-comment { color: #5b6573; }
+    .cmd-dollar  { color: #57d977; }
     .cmd-text    { color: #86efac; }
 
-    /* ── FOOTER ──────────────────────────────────────────────────────────── */
-    footer {
-      border-top: 1px solid var(--border);
-      padding: 48px 40px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 16px;
+    /* SQL GUIDE CALLOUT */
+    .guide-strip { background: var(--bg); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 56px 22px; }
+    .guide-strip-inner { max-width: 1080px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 40px; flex-wrap: wrap; }
+    .guide-strip h2 { margin-bottom: 10px; }
+    .guide-strip p { color: var(--dim); font-size: 16px; max-width: 540px; line-height: 1.6; }
+
+    /* MORE FROM — syllabus cross-links */
+    .nav-strip { background: var(--panel); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 40px 22px; }
+    .nav-strip-inner { max-width: 1080px; margin: 0 auto; }
+    .nav-strip h3 { font-size: 11px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; color: var(--dim); margin-bottom: 18px; }
+    .project-links { display: flex; gap: 12px; flex-wrap: wrap; }
+    .project-link {
+      display: flex; align-items: center; gap: 12px; flex: 1 1 280px;
+      background: #ffffff; border: 1px solid var(--line); border-radius: 10px; padding: 13px 16px;
+      transition: background .12s, border-color .12s;
     }
+    .project-link:hover { background: #eef4ff; border-color: #b6c8ee; }
+    .project-link-icon { font-size: 20px; }
+    .project-link-text strong { display: block; font-size: 14px; color: var(--ink); }
+    .project-link-text span { font-size: 12.5px; color: var(--dim); }
 
-    .footer-logo {
-      font-family: var(--mono);
-      font-weight: 700;
-      font-size: 16px;
-      letter-spacing: 4px;
-      color: var(--accent-lt);
-    }
+    /* FOOTER */
+    footer { border-top: 1px solid var(--line); padding: 36px 22px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; max-width: 1080px; margin: 0 auto; }
+    .footer-logo { font-family: "Consolas", ui-monospace, monospace; font-weight: 700; font-size: 14px; color: var(--accent-d); }
+    .footer-links { display: flex; gap: 20px; list-style: none; }
+    .footer-links a { color: var(--dim); font-size: 13.5px; }
+    .footer-links a:hover { color: var(--accent-d); }
+    .footer-copy { font-size: 12.5px; color: var(--dim); }
 
-    .footer-links {
-      display: flex;
-      gap: 24px;
-      list-style: none;
-    }
-
-    .footer-links a {
-      color: var(--text-muted);
-      font-size: 14px;
-      transition: color 0.15s;
-    }
-
-    .footer-links a:hover { color: var(--text); text-decoration: none; }
-
-    .footer-copy {
-      font-size: 13px;
-      color: var(--text-muted);
-    }
-
-    /* ── RESPONSIVE ──────────────────────────────────────────────────────── */
     @media (max-width: 768px) {
-      nav { padding: 0 20px; }
+      .topbar { padding: 10px 16px; }
       .nav-links { display: none; }
-
-      .audience-grid,
-      .seasons-grid,
-      .skills-grid,
-      .install-grid { grid-template-columns: 1fr; }
-
+      .welcome-card { padding: 28px 20px; }
+      .audience-grid, .seasons-grid, .skills-grid, .install-grid { grid-template-columns: 1fr; }
       .features-grid { grid-template-columns: 1fr; }
-
-      .audience-card { padding: 36px 28px; }
-
+      .quote-block { padding: 32px 24px; }
       footer { flex-direction: column; text-align: center; }
       .footer-links { justify-content: center; }
     }
@@ -748,26 +309,32 @@
 </head>
 <body>
 
-<!-- ── NAV ─────────────────────────────────────────────────────────────────── -->
-<nav>
-  <span class="nav-logo">NEXUS</span>
-  <ul class="nav-links">
-    <li><a href="#for-you">Who It's For</a></li>
-    <li><a href="#features">Features</a></li>
-    <li><a href="#skills">What You'll Learn</a></li>
-    <li><a href="#seasons">Seasons</a></li>
-    <li><a href="#install">Install</a></li>
-    <li><a href="https://github.com/michaelnocito/nexus-sql-mystery" target="_blank">GitHub ↗</a></li>
-  </ul>
-  <a href="https://github.com/michaelnocito/nexus-sql-mystery/releases/latest" class="nav-cta">Download Free →</a>
-</nav>
+<!-- ── TOP BAR ──────────────────────────────────────────────────────────────── -->
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">▦</span>
+    <span class="brand-text">
+      <strong>NEXUS</strong>
+      <span class="sub">Learn SQL by solving a mystery</span>
+    </span>
+  </div>
+  <div class="orient">
+    <span class="phase-chip">Free · SQL Game</span>
+    <ul class="nav-links">
+      <li><a href="#for-you">Who It's For</a></li>
+      <li><a href="#features">Features</a></li>
+      <li><a href="#skills">What You'll Learn</a></li>
+      <li><a href="#seasons">Seasons</a></li>
+      <li><a href="#install">Install</a></li>
+    </ul>
+    <a href="https://github.com/michaelnocito/nexus-sql-mystery/releases/latest" class="nav-cta">⬇ Download Free</a>
+  </div>
+</header>
 
 
 <!-- ── HERO ─────────────────────────────────────────────────────────────────── -->
 <section class="hero">
-  <div class="hero-grid"></div>
-  <div class="hero-glow"></div>
-  <div class="hero-content">
+  <div class="welcome-card">
     <div class="hero-eyebrow">Free Desktop Game · Python + SQL</div>
     <h1>Learn SQL by<br/><span>Solving a Crime.</span></h1>
     <p class="hero-sub">
@@ -790,7 +357,7 @@
 
 
 <!-- ── TERMINAL DEMO ─────────────────────────────────────────────────────────── -->
-<div class="terminal-section">
+<div class="terminal-wrap">
   <div class="terminal-demo">
     <div class="terminal-titlebar">
       <div class="dot dot-r"></div>
@@ -828,7 +395,7 @@
 <!-- ── WHO IT'S FOR ──────────────────────────────────────────────────────────── -->
 <section class="audiences" id="for-you">
   <div class="section-inner">
-    <div style="text-align:center; margin-bottom: 48px;">
+    <div style="text-align:center; margin-bottom: 40px;">
       <div class="section-label">Who It's For</div>
       <h2>Pick your angle.</h2>
       <p class="section-sub" style="margin: 0 auto;">NEXUS was built for two kinds of people. Both get the full game.</p>
@@ -836,7 +403,7 @@
     <div class="audience-grid">
       <div class="audience-card">
         <div class="audience-icon">📊</div>
-        <h3>Data Professionals & Learners</h3>
+        <h3>Data Professionals &amp; Learners</h3>
         <p>
           You know SQL exists. Maybe you've done a tutorial or two.
           But nothing sticks like actually needing it to solve something.
@@ -948,16 +515,16 @@
           <div class="skill-row"><span class="skill-tag">JOIN</span><span class="skill-desc">Linking tables by key</span></div>
           <div class="skill-row"><span class="skill-tag">ORDER BY</span><span class="skill-desc">Sorting results</span></div>
           <div class="skill-row"><span class="skill-tag">IN clause</span><span class="skill-desc">Matching a list of values</span></div>
-          <div class="skill-row" style="opacity:0.7"><span class="skill-tag">LIKE</span><span class="skill-desc">Pattern matching — Season 2</span></div>
-          <div class="skill-row" style="opacity:0.7"><span class="skill-tag">Subqueries</span><span class="skill-desc">Query inside a query — Season 2</span></div>
-          <div class="skill-row" style="opacity:0.7"><span class="skill-tag">CASE WHEN</span><span class="skill-desc">Conditional logic — Season 2</span></div>
-          <div class="skill-row" style="opacity:0.7"><span class="skill-tag">HAVING</span><span class="skill-desc">Filtering aggregates — Season 2</span></div>
-          <div class="skill-row" style="opacity:0.7"><span class="skill-tag">strftime</span><span class="skill-desc">Date/time extraction — Season 2</span></div>
+          <div class="skill-row" style="opacity:0.6"><span class="skill-tag">LIKE</span><span class="skill-desc">Pattern matching — Season 2</span></div>
+          <div class="skill-row" style="opacity:0.6"><span class="skill-tag">Subqueries</span><span class="skill-desc">Query inside a query — Season 2</span></div>
+          <div class="skill-row" style="opacity:0.6"><span class="skill-tag">CASE WHEN</span><span class="skill-desc">Conditional logic — Season 2</span></div>
+          <div class="skill-row" style="opacity:0.6"><span class="skill-tag">HAVING</span><span class="skill-desc">Filtering aggregates — Season 2</span></div>
+          <div class="skill-row" style="opacity:0.6"><span class="skill-tag">strftime</span><span class="skill-desc">Date/time extraction — Season 2</span></div>
         </div>
       </div>
 
       <div class="skills-story">
-        <div class="section-label" style="margin-bottom: 24px;">The Investigation</div>
+        <div class="section-label" style="margin-bottom: 20px;">The Investigation</div>
         <div class="story-beat">
           <div class="beat-num">1</div>
           <div class="beat-text">
@@ -1120,9 +687,9 @@
         </div>
       </div>
 
-      <div class="install-cmd">
-        <div class="cmd-bar">terminal</div>
-        <div class="cmd-body">
+      <div class="code-block">
+        <div class="code-bar">terminal</div>
+        <div class="code-body">
           <div><span class="cmd-comment"># clone</span></div>
           <div><span class="cmd-dollar">$ </span><span class="cmd-text">git clone https://github.com/michaelnocito/nexus-sql-mystery</span></div>
           <div><span class="cmd-dollar">$ </span><span class="cmd-text">cd nexus-sql-mystery</span></div>
@@ -1133,7 +700,7 @@
           <div><span class="cmd-comment"># play</span></div>
           <div><span class="cmd-dollar">$ </span><span class="cmd-text">python main.py</span></div>
           <br/>
-          <div style="color: #22c55e;">✔  NEXUS is running. Good luck, analyst.</div>
+          <div style="color: #57d977;">✔  NEXUS is running. Good luck, analyst.</div>
         </div>
       </div>
     </div>
@@ -1142,22 +709,53 @@
 
 
 <!-- ── SQL GUIDE CALLOUT ──────────────────────────────────────────────────────── -->
-<section style="background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 60px 24px;">
-  <div class="section-inner" style="display: flex; align-items: center; justify-content: space-between; gap: 40px; flex-wrap: wrap;">
+<div class="guide-strip">
+  <div class="guide-strip-inner">
     <div>
       <div class="section-label">Free Resource</div>
-      <h2 style="margin-bottom: 10px;">SQL Foundations Guide</h2>
-      <p style="color: var(--text-dim); font-size: 17px; max-width: 540px; line-height: 1.6;">
+      <h2>SQL Foundations Guide</h2>
+      <p>
         A standalone beginner SQL guide — SELECT to JOIN to GROUP BY, with plain-English
         explanations, real-world analogies, and 16 practice exercises across four difficulty
         tiers. No game required. Just SQL.
       </p>
     </div>
-    <a href="sql-foundations" style="display:inline-flex; align-items:center; gap:10px; background: var(--surface2); color: var(--text); font-weight:700; font-size:15px; padding:14px 28px; border-radius:10px; border:1px solid var(--border); white-space:nowrap; text-decoration:none; transition: border-color 0.15s;" onmouseover="this.style.borderColor='#f87171'" onmouseout="this.style.borderColor='#30363d'">
+    <a href="sql-foundations" class="btn-secondary" style="white-space:nowrap;">
       📖 &nbsp;Read the Guide →
     </a>
   </div>
-</section>
+</div>
+
+
+<!-- ── MORE FROM MICHAEL ─────────────────────────────────────────────────────── -->
+<div class="nav-strip">
+  <div class="nav-strip-inner">
+    <h3>More from Michael Nocito</h3>
+    <div class="project-links">
+      <a href="https://michaelnocito.github.io/recordforge/" class="project-link">
+        <div class="project-link-icon">🗂️</div>
+        <div class="project-link-text">
+          <strong>RecordForge</strong>
+          <span>Generate fictional test files — PDFs, Word, Excel, HTML.</span>
+        </div>
+      </a>
+      <a href="https://michaelnocito.github.io/spreadsheet-cleaner/" class="project-link">
+        <div class="project-link-icon">🧼</div>
+        <div class="project-link-text">
+          <strong>Spreadsheet Cleaner</strong>
+          <span>A beginner Python project. Build a real data-cleaning tool.</span>
+        </div>
+      </a>
+      <a href="https://www.linkedin.com/in/michaelnocito" target="_blank" class="project-link">
+        <div class="project-link-icon">💼</div>
+        <div class="project-link-text">
+          <strong>LinkedIn</strong>
+          <span>Data analyst · 8 years enterprise implementation</span>
+        </div>
+      </a>
+    </div>
+  </div>
+</div>
 
 
 <!-- ── FOOTER ────────────────────────────────────────────────────────────────── -->
@@ -1170,7 +768,7 @@
     <li><a href="https://www.linkedin.com/in/michaelnocito" target="_blank">LinkedIn</a></li>
     <li><a href="https://buymeacoffee.com/michaelnocito" target="_blank">Buy Me a Coffee ☕</a></li>
   </ul>
-  <div class="footer-copy">Free & open source · MIT License</div>
+  <div class="footer-copy">Free &amp; open source · MIT License</div>
 </footer>
 
 </body>
