@@ -237,7 +237,7 @@ Free Windows app + Python package. No real data, fully offline.
 A beginner Python project where you build a real data-cleaning tool layer by layer.
 Guided comments throughout. No experience needed.
 
-**[LinkedIn](https://www.linkedin.com/in/michaelnocito)** — data analyst · 8 years enterprise implementation
+**[LinkedIn](https://www.linkedin.com/in/michaelnocito)** — implementation analyst · 8 years enterprise implementation
 
 ---
 
