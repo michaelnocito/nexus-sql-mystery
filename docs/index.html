@@ -806,5 +806,28 @@
   <div class="footer-copy">Free &amp; open source · MIT License</div>
 </footer>
 
+<script>/* apk-gtag-download-v01: app_download_click on download and repo links */
+(function(){
+  var APP='nexus', RULES=[[/^https:\/\/github\.com\/michaelnocito\/nexus\-sql\-mystery\/releases/,'release'],[/^https:\/\/github\.com\/michaelnocito\/nexus\-sql\-mystery\/?(#.*)?$/,'repo']];
+  function send(e){
+    var a=e.target&&e.target.closest&&e.target.closest('a[href]');
+    if(!a||!window.gtag)return;
+    if(e.type==='auxclick'&&e.button!==1)return;
+    var u=a.href;
+    for(var i=0;i<RULES.length;i++){
+      if(RULES[i][0].test(u)){
+        gtag('event','app_download_click',{
+          app:APP, target:RULES[i][1],
+          link_text:(a.textContent||'').replace(/\s+/g,' ').trim().slice(0,60),
+          link_url:u
+        });
+        return;
+      }
+    }
+  }
+  document.addEventListener('click',send,true);
+  document.addEventListener('auxclick',send,true);
+})();
+</script>
 </body>
 </html>
